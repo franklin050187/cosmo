@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Demo Excelsior | Cosmoteer</title>
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico">
+
+    <link rel="stylesheet" type="text/css" href="css/interface.css">
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/index.js"></script>
+</head>
+
+<body>
+    <header>
+        <button id="menu-btn" class="menu-btn blue-btn" type="button"><span></span><span></span><span></span></button>
+        <nav id="main-menu">
+            <ul class="menu-links">
+                <li><a title="Example Link 1" href="#">Example Link 1</a></li>
+                <li><a title="Example Link 2" href="#">Example Link 2</a></li>
+                <li><a title="Example Link 3" href="#">Example Link 3</a></li>
+                <li><a title="Example Link 4" href="#">Example Link 4</a></li>
+            </ul>
+        </nav>
+        <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp">
+        <ul class="user-container">
+            <li>
+                <button id="login-btn" class="blue-btn login" type="button"><span>Log in</span></button>
+                <form id="login-form" class="login-container" method="post" autocomplete="off">
+                    <label>
+                        Username
+                        <input type="text">
+                    </label>
+                    <label>
+                        Password
+                        <input type="password">
+                    </label>
+                    <a title="Forgot your password?" href="#">Forgot your password?</a>
+                    <div class="btn-container">
+                        <button class="blue-btn" type="submit">Log in</button>
+                    </div>
+                </form>
+            </li>
+            <li><a title="Upload" class="blue-btn register" href="/upload"><span>Upload</span></a></li>
+        </ul>
+    </header>
+
+    <main>
+        <h1>Example title</h1>
+        <section id="competitive" class="content-container">
+            <div class="section-description">
+                <h2>Competitive Ships</h2>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+            </div>
+            <div class="tabs-container">
+                <div id="elim-competitive-tab" class="tab active">
+                    <p>Praesent ut orci ipsum. Donec efficitur tincidunt aliquet. Nullam quis iaculis mi, eu convallis lorem. Aenean posuere in dui sit amet pellentesque.</p>
+                    <ul class="ships-list">
+                        
+                        {% for image in images %}
+                        <li class="ship-card">
+                            <button type="button" class="stars" title="Give it a star">0</button>
+                            <button type="button" class="likes" title="Like it">0</button>
+                            <img loading="lazy" src="data:image/png;base64,{{ image[1] }}">
+                            <div class="ship-data">
+                                <span class="data"><span>Ship name:</span> {{ image[0] }}</span>
+                                <span class="data"><span>Ship type:</span> Nuke Barge</span>
+                                <span class="data credits"><span>Cost:</span> 1,500,000₡</span>
+                                <span class="data"><span>Creator:</span> <a title="See more ships made by Gaxxian" href="#">Gaxxian</a></span>
+                            </div>
+                            <div class="actions-container">
+                                <a class="blue-btn" title="See the ship page" href="#"></a>
+                                <button type="button" class="blue-btn" title="Download this ship"></button>
+                            </div>
+                        </li>
+                        {% endfor %}
+                        
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp">
+            <ul>
+                <li><a title="Cookies policy" href="#">Cookies policy</a></li>
+                <li><a title="Another footer link" href="#">Another footer link</a></li>
+                <li><a title="More footer links" href="#">More footer links</a></li>
+            </ul>
+        </div>
+    </footer>
+</body>
+
+</html>
