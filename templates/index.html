@@ -1,5 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
+<style>
+.cssTable td 
+{
+    text-align: center; 
+    vertical-align: middle;
+}
+</style>
 
 <head>
     <meta charset="utf-8">
@@ -22,10 +29,35 @@
         <button id="menu-btn" class="menu-btn blue-btn" type="button"><span></span><span></span><span></span></button>
         <nav id="main-menu">
             <ul class="menu-links">
-                <li><a title="Example Link 1" href="#">Example Link 1</a></li>
-                <li><a title="Example Link 2" href="#">Example Link 2</a></li>
-                <li><a title="Example Link 3" href="#">Example Link 3</a></li>
-                <li><a title="Example Link 4" href="#">Example Link 4</a></li>
+                <form action="/" method="post" enctype="multipart/form-data">
+                       <table style="width:70%" class=".cssTable">
+                          <tr>
+                             <th scope="col">Item</th>
+                             <th scope="col">Must have</th>
+                             <th scope="col">Can have</th>
+                             <th scope="col">Must NOT have</th>
+                          </tr>
+                            <tr>
+                                <td><label for="cannon">Cannon:</label></td>
+                                <td><input type="radio" name="cannon" id="cannon_must_have" value="must_have"></td>
+                                <td><input type="radio" name="cannon" id="cannon_can_have" value="can_have" checked="yes"></td>
+                                <td><input type="radio" name="cannon" id="cannon_must_not_have" value="must_not_have"></td>
+                            </tr>
+                            <tr>
+                                <td><label for="deck_cannon">Deck Cannon:</label></td>
+                                <td><input type="radio" name="deck_cannon" id="deck_cannon_must_have" value="must_have"></td>
+                                <td><input type="radio" name="deck_cannon" id="deck_cannon_can_have" value="can_have" checked="yes"></td>
+                                <td><input type="radio" name="deck_cannon" id="deck_cannon_must_not_have" value="must_not_have"></td>
+                            </tr>
+                            <tr>
+                                <td><label for="emp_missiles">EMP Missiles:</label></td>
+                                <td><input type="radio" name="emp_missiles" id="emp_missiles_must_have" value="must_have"></td>
+                                <td><input type="radio" name="emp_missiles" id="emp_missiles_can_have" value="can_have" checked="yes"></td>
+                                <td><input type="radio" name="emp_missiles" id="emp_missiles_must_not_have" value="must_not_have"></td>
+                            </tr>
+                        </table>
+                        <button type="submit" class="blue-btn register" >Search</button>
+                    </form>                  
             </ul>
         </nav>
         <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp">
@@ -67,16 +99,16 @@
                         <li class="ship-card">
                             <button type="button" class="stars" title="Give it a star">0</button>
                             <button type="button" class="likes" title="Like it">0</button>
-                            <img loading="lazy" src="data:image/png;base64,{{ image[1] }}">
+                            <img loading="lazy" src="data:image/png;base64,{{ image[2] }}">
                             <div class="ship-data">
-                                <span class="data"><span>Ship name:</span> {{ image[0] }}</span>
-                                <span class="data"><span>Ship type:</span> Nuke Barge</span>
-                                <span class="data credits"><span>Cost:</span> 1,500,000₡</span>
+                                <span class="data"><span>Ship name:</span> {{ image[1] }}</span>
+                                <span class="data"><span>Ship type:</span> {{ image[5] }}</span>
+                                <span class="data credits"><span>Cost:</span> {{ image[4] }}₡</span>
                                 <span class="data"><span>Creator:</span> <a title="See more ships made by Gaxxian" href="#">Gaxxian</a></span>
                             </div>
                             <div class="actions-container">
                                 <a class="blue-btn" title="See the ship page" href="#"></a>
-                                <button type="button" class="blue-btn" title="Download this ship"></button>
+                                <button type="button" class="blue-btn download-btn" title="Download this ship" onclick="downloadShip('{{ image[2] }}', '{{ image[1] }}')"></button>
                             </div>
                         </li>
                         {% endfor %}
@@ -100,3 +132,22 @@
 </body>
 
 </html>
+
+<script>
+function downloadShip(imageData, imageName) {
+    // Convert the base64 image data to a Blob object
+    var byteString = atob(imageData);
+    var arrayBuffer = new ArrayBuffer(byteString.length);
+    var uint8Array = new Uint8Array(arrayBuffer);
+    for (var i = 0; i < byteString.length; i++) {
+        uint8Array[i] = byteString.charCodeAt(i);
+    }
+    var blob = new Blob([arrayBuffer], { type: 'image/png' });
+
+    // Create a temporary link element and trigger the download
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = imageName + '.png';
+    link.click();
+}
+</script>

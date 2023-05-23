@@ -1,89 +1,184 @@
 <!DOCTYPE html>
+<style>
+   .form-container {
+   display: flex;
+   justify-content: space-between;
+   }
+   .form-list {
+   list-style: none;
+   padding: 0;
+   margin: 0;
+   }
+   .form-table {
+   display: table;
+   width: 100%;
+   }
+   .form-table-row {
+   display: table-row;
+   }
+   .form-table-cell {
+   display: table-cell;
+   width: 100%; /* Adjust the width as needed */
+   padding-right: 20px; /* Adjust the spacing between cells as needed */
+   }
+
+    input#price {
+        background-color: darkblue;
+        color: white;
+    }
+
+</style>
 <html lang="es">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>Demo Excelsior | Cosmoteer</title>
-    <meta name="robots" content="noindex,nofollow">
-    <link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico">
-
-    <link rel="stylesheet" type="text/css" href="css/interface.css">
-    <link rel="stylesheet" type="text/css" href="css/index.css">
-
-    <script src="js/jquery-3.6.0.min.js"></script>
-    <script src="js/common.js"></script>
-    <script src="js/index.js"></script>
-</head>
-
-<body>
-    <header>
-        <button id="menu-btn" class="menu-btn blue-btn" type="button"><span></span><span></span><span></span></button>
-        <nav id="main-menu">
-            <ul class="menu-links">
-                <li><a title="Example Link 1" href="#">Example Link 1</a></li>
-                <li><a title="Example Link 2" href="#">Example Link 2</a></li>
-                <li><a title="Example Link 3" href="#">Example Link 3</a></li>
-                <li><a title="Example Link 4" href="#">Example Link 4</a></li>
-            </ul>
-        </nav>
-        <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp">
-        <ul class="user-container">
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Demo Excelsior | Cosmoteer</title>
+      <meta name="robots" content="noindex,nofollow">
+      <link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico">
+      <link rel="stylesheet" type="text/css" href="css/interface.css">
+      <link rel="stylesheet" type="text/css" href="css/index.css">
+      <script src="js/jquery-3.6.0.min.js"></script>
+      <script src="js/common.js"></script>
+      <script src="js/index.js"></script>
+   </head>
+   <body>
+      <header>
+         <button id="menu-btn" class="menu-btn blue-btn" type="button" href="/"><span></span><span></span><span></span></button>
+         <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp">
+         <ul class="user-container">
             <li>
-                <button id="login-btn" class="blue-btn login" type="button"><span>Log in</span></button>
-                <form id="login-form" class="login-container" method="post" autocomplete="off">
-                    <label>
-                        Username
-                        <input type="text">
-                    </label>
-                    <label>
-                        Password
-                        <input type="password">
-                    </label>
-                    <a title="Forgot your password?" href="#">Forgot your password?</a>
-                    <div class="btn-container">
-                        <button class="blue-btn" type="submit">Log in</button>
-                    </div>
-                </form>
+               <button id="login-btn" class="blue-btn login" type="button"><span>Log in</span></button>
+               <form id="login-form" class="login-container" method="post" autocomplete="off">
+                  <label>
+                  Username
+                  <input type="text">
+                  </label>
+                  <label>
+                  Password
+                  <input type="password">
+                  </label>
+                  <a title="Forgot your password?" href="#">Forgot your password?</a>
+                  <div class="btn-container">
+                     <button class="blue-btn" type="submit">Log in</button>
+                  </div>
+               </form>
             </li>
             <li><a title="Upload" class="blue-btn register" href="/upload"><span>Upload</span></a></li>
-        </ul>
-    </header>
-
-    <main>
-        <h1>Upload your ship !</h1>
-        <section id="competitive" class="content-container">
+         </ul>
+      </header>
+      <main>
+         <h1>Upload your ship !</h1>
+         <section id="competitive" class="content-container">
             <div class="section-description">
-                <h2>Share your ships with the community</h2>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+               <h2>Share your ships with the community</h2>
+               <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
             </div>
             <div class="tabs-container">
-                <div id="elim-competitive-tab" class="tab active">
-                    <p>Praesent ut orci ipsum. Donec efficitur tincidunt aliquet. Nullam quis iaculis mi, eu convallis lorem. Aenean posuere in dui sit amet pellentesque.</p>
-                    <ul class="ships-list">
-                        
-                        <h1>Image Upload</h1>
-                        <form action="/upload/" method="post" enctype="multipart/form-data">
-                            <input type="file" name="file" accept=".jpg, .jpeg, .png">
-                            <button type="submit" class="blue-btn register" >Upload</button>
-                        </form>  
-                    </ul>
-                </div>
+               <div id="elim-competitive-tab" class="tab active">
+                  <p>Praesent ut orci ipsum. Donec efficitur tincidunt aliquet. Nullam quis iaculis mi, eu convallis lorem. Aenean posuere in dui sit amet pellentesque.</p>
+                  <ul>
+                     <h1>Image Upload</h1>
+                     <form action="/upload/" method="post" enctype="multipart/form-data">
+                        <table style="width:70%">
+                           <tr>
+                              <th scope="col">ammunition weapons</th>
+                              <th scope="col">combat factories</th>
+                              <th scope="col">energy weapons</th>
+                           </tr>
+                           <tr>
+                              <td>
+                  </ul>
+                  <ul><label for="cannon">Cannon:</label>
+                  <input type="checkbox" name="cannon" id="cannon"></ul>
+                  <ul>
+                  <label for="deck_cannon">Deck Cannon:</label>
+                  <input type="checkbox" name="deck_cannon" id="deck_cannon"></ul>
+                  <ul>
+                  <label for="emp_missiles">EMP Missiles:</label>
+                  <input type="checkbox" name="emp_missiles" id="emp_missiles"></ul>
+                  <ul>
+                  <label for="flak_battery">Flak Battery:</label>
+                  <input type="checkbox" name="flak_battery" id="flak_battery"></ul>
+                  <ul>
+                  <label for="he_missiles">HE Missiles:</label>
+                  <input type="checkbox" name="he_missiles" id="he_missiles"></ul>
+                  <ul>
+                  <label for="large_cannon">Large Cannon:</label>
+                  <input type="checkbox" name="large_cannon" id="large_cannon"></ul>
+                  <ul>
+                  <label for="mines">Mines:</label>
+                  <input type="checkbox" name="mines" id="mines"></ul>
+                  <ul>
+                  <label for="nukes">Nukes:</label>
+                  <input type="checkbox" name="nukes" id="nukes"></ul>
+                  <ul>
+                  <label for="railgun">Railgun:</label>
+                  <input type="checkbox" name="railgun" id="railgun"></ul>
+                  </td>
+                  <td>
+                  <ul>
+                  <label for="ammo_factory">Ammo Factory:</label>
+                  <input type="checkbox" name="ammo_factory" id="ammo_factory"></ul>
+                  <ul>
+                  <label for="emp_factory">EMP Factory:</label>
+                  <input type="checkbox" name="emp_factory" id="emp_factory"></ul>
+                  <ul>
+                  <label for="he_factory">HE Factory:</label>
+                  <input type="checkbox" name="he_factory" id="he_factory"></ul>
+                  <ul>
+                  <label for="mine_factory">Mine Factory:</label>
+                  <input type="checkbox" name="mine_factory" id="mine_factory"></ul>
+                  <ul>
+                  <label for="nuke_factory">Nuke Factory:</label>
+                  <input type="checkbox" name="nuke_factory" id="nuke_factory"></ul>
+                  </td>
+                  <td>
+                  <ul>
+                  <label for="disruptors">Disruptors:</label>
+                  <input type="checkbox" name="disruptors" id="disruptors"></ul>
+                  <ul>
+                  <label for="heavy_Laser">Heavy Laser:</label>
+                  <input type="checkbox" name="heavy_Laser" id="heavy_Laser"></ul>
+                  <ul>
+                  <label for="ion_Beam">Ion Beam:</label>
+                  <input type="checkbox" name="ion_Beam" id="ion_Beam"></ul>
+                  <ul>
+                  <label for="ion_Prism">Ion Prism:</label>
+                  <input type="checkbox" name="ion_Prism" id="ion_Prism"></ul>
+                  <ul>
+                  <label for="laser">Laser:</label>
+                  <input type="checkbox" name="laser" id="laser"></ul>
+                  <ul>
+                  <label for="mining_Laser">Mining Laser:</label>
+                  <input type="checkbox" name="mining_Laser" id="mining_Laser"></ul>
+                  <ul>
+                  <label for="point_Defense">Point Defense:</label>
+                  <input type="checkbox" name="point_Defense" id="point_Defense"></ul>
+                  <ul>
+                  <label for="boost_thruster">Boost Thruster:</label>
+                  <input type="checkbox" name="boost_thruster" id="boost_thruster"></ul>
+                  </td>
+                  </tr>
+                  </table>
+                  <input type="file" name="file" accept=".png" required>
+                  <label for="price">Price:</label>
+                  <input type="number" name="price" id="price" step="1" required>
+                  <button type="submit" class="blue-btn register" >Upload</button>
+                  </form>  
+                  </ul>
+               </div>
             </div>
-        </section>
-    </main>
-
-    <footer>
-        <div class="footer-content">
+         </section>
+      </main>
+      <footer>
+         <div class="footer-content">
             <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp">
             <ul>
-                <li><a title="Cookies policy" href="#">Cookies policy</a></li>
-                <li><a title="Another footer link" href="#">Another footer link</a></li>
-                <li><a title="More footer links" href="#">More footer links</a></li>
+               <li><a title="Cookies policy" href="#">Cookies policy</a></li>
+               <li><a title="Another footer link" href="#">Another footer link</a></li>
+               <li><a title="More footer links" href="#">More footer links</a></li>
             </ul>
-        </div>
-    </footer>
-</body>
-
+         </div>
+      </footer>
+   </body>
 </html>

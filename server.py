@@ -36,7 +36,7 @@ client = DiscordOAuthClient(client_id, client_secret, redirect_uri, ("identify",
 def create_table():
     conn = sqlite3.connect('example.db')
     cursor = conn.cursor()
-    cursor.execute('CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, data TEXT)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, data TEXT, submitted_by TEXT, price INT, cannon INT, deck_cannon INT, emp_missiles INT, flak_battery INT, he_missiles INT, large_cannon INT, mines INT, nukes INT, railgun INT, ammo_factory INT, emp_factory INT, he_factory INT, mine_factory INT, nuke_factory INT, disruptors INT, heavy_Laser INT, ion_Beam INT, ion_Prism INT, laser INT, mining_Laser INT, point_Defense INT, boost_thruster INT)')
     conn.commit()
     conn.close()
     
@@ -79,30 +79,93 @@ async def upload_page(request: Request):
     return FileResponse(path)
 
 # Endpoint for uploading files
-@app.post("/upload")
-async def upload(file: UploadFile = File(...)):
+@app.post("/upload/")
+async def upload(request: Request, file: UploadFile = File(...)):
     # Read the image file
     contents = await file.read()
     # Encode the contents as base64
     encoded_data = base64.b64encode(contents).decode("utf-8")
     # Store the image data in the database
+    user = request.session.get("discord_user")
     conn = sqlite3.connect('example.db')
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO images (name, data) VALUES (?, ?)', (file.filename, encoded_data))
+    form_data = await request.form()
+    cursor.execute("INSERT INTO images (name, data, submitted_by, price, cannon, deck_cannon, emp_missiles, flak_battery, he_missiles, large_cannon, mines, nukes, railgun, ammo_factory, emp_factory, he_factory, mine_factory, nuke_factory, disruptors, heavy_Laser, ion_Beam, ion_Prism, laser, mining_Laser, point_Defense, boost_thruster) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+               (file.filename, 
+                encoded_data, 
+                user, 
+                int(form_data["price"]), 
+                1 if 'cannon' in form_data else 0,
+                1 if 'deck_cannon' in form_data else 0,
+                1 if 'emp_missiles' in form_data else 0,
+                1 if 'flak_battery' in form_data else 0,
+                1 if 'he_missiles' in form_data else 0,
+                1 if 'large_cannon' in form_data else 0,
+                1 if 'mines' in form_data else 0,
+                1 if 'nukes' in form_data else 0,
+                1 if 'railgun' in form_data else 0,
+                1 if 'ammo_factory' in form_data else 0,
+                1 if 'emp_factory' in form_data else 0,
+                1 if 'he_factory' in form_data else 0,
+                1 if 'mine_factory' in form_data else 0,
+                1 if 'nuke_factory' in form_data else 0,
+                1 if 'disruptors' in form_data else 0,
+                1 if 'heavy_Laser' in form_data else 0,
+                1 if 'ion_Beam' in form_data else 0,
+                1 if 'ion_Prism' in form_data else 0,
+                1 if 'laser' in form_data else 0,
+                1 if 'mining_Laser' in form_data else 0,
+                1 if 'point_Defense' in form_data else 0,
+                1 if 'boost_thruster' in form_data else 0))
     conn.commit()
     conn.close()
     # Redirect to the index page
     return RedirectResponse(url="/", status_code=303)
 
-# Endpoint for displaying the home page
-@app.get("/", response_class=HTMLResponse)
+@app.route("/", methods=["GET", "POST"])
 async def home(request: Request):
-    conn = sqlite3.connect('example.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT name, data FROM images')
-    images = cursor.fetchall()
-    conn.close()
-    return templates.TemplateResponse("index.html", {"request": request, "images": images})
+    if request.method == "POST":
+        form_data = await request.form()
+        cannon_value = form_data.get("cannon")
+        deck_cannon_value = form_data.get("deck_cannon")
+        emp_missiles_value = form_data.get("emp_missiles")
+
+        conn = sqlite3.connect('example.db')
+        cursor = conn.cursor()
+
+        # Build the SQL query based on the form data
+        query = "SELECT * FROM images"
+        conditions = []
+        if cannon_value == "must_have":
+            conditions.append("cannon = 1")
+        elif cannon_value == "must_not_have":
+            conditions.append("cannon = 0")
+        if deck_cannon_value == "must_have":
+            conditions.append("deck_cannon = 1")
+        elif deck_cannon_value == "must_not_have":
+            conditions.append("deck_cannon = 0")
+        if emp_missiles_value == "must_have":
+            conditions.append("emp_missiles = 1")
+        elif emp_missiles_value == "must_not_have":
+            conditions.append("emp_missiles = 0")
+
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+
+        cursor.execute(query)
+        images = cursor.fetchall()
+        conn.close()
+
+        return templates.TemplateResponse("index.html", {"request": request, "images": images})
+
+    else:
+        conn = sqlite3.connect('example.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM images')
+        images = cursor.fetchall()
+        conn.close()
+
+        return templates.TemplateResponse("index.html", {"request": request, "images": images})
 
 # Catch-all endpoint for serving static files or the index page
 @app.get("/{catchall:path}", response_class=FileResponse)
