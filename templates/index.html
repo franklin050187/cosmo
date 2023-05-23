@@ -101,10 +101,17 @@
                             <button type="button" class="likes" title="Like it">0</button>
                             <img loading="lazy" src="data:image/png;base64,{{ image[2] }}">
                             <div class="ship-data">
-                                <span class="data"><span>Ship name:</span> {{ image[1] }}</span>
-                                <span class="data"><span>Ship type:</span> {{ image[5] }}</span>
+                                <span class="data"><span>Ship name:</span> {{ image[28] }}</span>
+                                <span class="data"><span>Ship tags:</span>     
+                                {% set column_names = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense', 'boost_thruster'] %}
+                                {% for index in range(5, image|length) %}
+                                {% set tag = image[index] %}
+                                {% if tag == 1 %}
+                                    {{ column_names[index - 5] }}
+                                {% endif %}
+                            {% endfor %}</span>
                                 <span class="data credits"><span>Cost:</span> {{ image[4] }}₡</span>
-                                <span class="data"><span>Creator:</span> <a title="See more ships made by Gaxxian" href="#">Gaxxian</a></span>
+                                <span class="data"><span>Submitted by:</span> {{ image[3] }}</span>
                             </div>
                             <div class="actions-container">
                                 <a class="blue-btn" title="See the ship page" href="#"></a>

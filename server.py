@@ -36,7 +36,7 @@ client = DiscordOAuthClient(client_id, client_secret, redirect_uri, ("identify",
 def create_table():
     conn = sqlite3.connect('example.db')
     cursor = conn.cursor()
-    cursor.execute('CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, data TEXT, submitted_by TEXT, price INT, cannon INT, deck_cannon INT, emp_missiles INT, flak_battery INT, he_missiles INT, large_cannon INT, mines INT, nukes INT, railgun INT, ammo_factory INT, emp_factory INT, he_factory INT, mine_factory INT, nuke_factory INT, disruptors INT, heavy_Laser INT, ion_Beam INT, ion_Prism INT, laser INT, mining_Laser INT, point_Defense INT, boost_thruster INT)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, data TEXT, submitted_by TEXT, price INT, cannon INT, deck_cannon INT, emp_missiles INT, flak_battery INT, he_missiles INT, large_cannon INT, mines INT, nukes INT, railgun INT, ammo_factory INT, emp_factory INT, he_factory INT, mine_factory INT, nuke_factory INT, disruptors INT, heavy_Laser INT, ion_Beam INT, ion_Prism INT, laser INT, mining_Laser INT, point_Defense INT, boost_thruster INT, description TEXT, ship_name TEXT)')
     conn.commit()
     conn.close()
     
@@ -53,10 +53,12 @@ async def start_login():
     return client.redirect()
 
 @app.get('/callback')
-async def finish_login(code: str):
+async def finish_login(code: str, request: Request):
     async with client.session(code) as session:
         user = await session.identify()
         guilds = await session.guilds()
+        if not user:
+            return RedirectResponse("/login")
         # get guilds and parse them
         # Access the parsed data
         desired_id = int(os.getenv('guild_id')) #Excelsior server
@@ -86,14 +88,15 @@ async def upload(request: Request, file: UploadFile = File(...)):
     # Encode the contents as base64
     encoded_data = base64.b64encode(contents).decode("utf-8")
     # Store the image data in the database
-    user = request.session.get("discord_user")
+    #user = request.session.get("discord_user")
+    # get input box
     conn = sqlite3.connect('example.db')
     cursor = conn.cursor()
     form_data = await request.form()
-    cursor.execute("INSERT INTO images (name, data, submitted_by, price, cannon, deck_cannon, emp_missiles, flak_battery, he_missiles, large_cannon, mines, nukes, railgun, ammo_factory, emp_factory, he_factory, mine_factory, nuke_factory, disruptors, heavy_Laser, ion_Beam, ion_Prism, laser, mining_Laser, point_Defense, boost_thruster) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    cursor.execute("INSERT INTO images (name, data, submitted_by, price, cannon, deck_cannon, emp_missiles, flak_battery, he_missiles, large_cannon, mines, nukes, railgun, ammo_factory, emp_factory, he_factory, mine_factory, nuke_factory, disruptors, heavy_Laser, ion_Beam, ion_Prism, laser, mining_Laser, point_Defense, boost_thruster, description, ship_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                (file.filename, 
                 encoded_data, 
-                user, 
+                form_data["submitted_by"], 
                 int(form_data["price"]), 
                 1 if 'cannon' in form_data else 0,
                 1 if 'deck_cannon' in form_data else 0,
@@ -116,7 +119,9 @@ async def upload(request: Request, file: UploadFile = File(...)):
                 1 if 'laser' in form_data else 0,
                 1 if 'mining_Laser' in form_data else 0,
                 1 if 'point_Defense' in form_data else 0,
-                1 if 'boost_thruster' in form_data else 0))
+                1 if 'boost_thruster' in form_data else 0, 
+                form_data["description"],
+                form_data["ship_name"]))
     conn.commit()
     conn.close()
     # Redirect to the index page

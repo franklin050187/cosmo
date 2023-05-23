@@ -43,28 +43,8 @@
    </head>
    <body>
       <header>
-         <button id="menu-btn" class="menu-btn blue-btn" type="button" href="/"><span></span><span></span><span></span></button>
-         <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp">
-         <ul class="user-container">
-            <li>
-               <button id="login-btn" class="blue-btn login" type="button"><span>Log in</span></button>
-               <form id="login-form" class="login-container" method="post" autocomplete="off">
-                  <label>
-                  Username
-                  <input type="text">
-                  </label>
-                  <label>
-                  Password
-                  <input type="password">
-                  </label>
-                  <a title="Forgot your password?" href="#">Forgot your password?</a>
-                  <div class="btn-container">
-                     <button class="blue-btn" type="submit">Log in</button>
-                  </div>
-               </form>
-            </li>
-            <li><a title="Upload" class="blue-btn register" href="/upload"><span>Upload</span></a></li>
-         </ul>
+         <button id="menu-btn" class="menu-btn blue-btn" type="button" onclick="redirectToHomePage()"><span></span><span></span><span></span></button>
+         <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp"  href="/">
       </header>
       <main>
          <h1>Upload your ship !</h1>
@@ -161,8 +141,14 @@
                   </tr>
                   </table>
                   <input type="file" name="file" accept=".png" required>
-                  <label for="price">Price:</label>
-                  <input type="number" name="price" id="price" step="1" required>
+                  <label for="submitted_by">Submitted by:</label>
+                  <input type="text" name="submitted_by" id="submitted_by">
+                  <label for="price">Price (no comma or dot or space, only numbers):</label>
+                  <input type="text" name="price" id="price" pattern="[0-9]+" required>
+                  <label for="description">Description:</label>
+                  <input type="text" name="description" id="description">
+                  <label for="ship_name">Ship name:</label>
+                  <input type="text" name="ship_name" id="ship_name">
                   <button type="submit" class="blue-btn register" >Upload</button>
                   </form>  
                   </ul>
@@ -182,3 +168,8 @@
       </footer>
    </body>
 </html>
+<script>
+   function redirectToHomePage() {
+     window.location.href = "/";
+   }
+ </script>
