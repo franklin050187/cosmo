@@ -445,7 +445,7 @@ function downloadShip(imageData, imageName) {
     // Create a temporary link element and trigger the download
     var link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = imageName + '.png';
+    link.download = imageName ;
     link.click();
 }
 </script>
