@@ -72,6 +72,7 @@ async def finish_login(code: str, request: Request):
         for guild in guilds:
             if guild.id == desired_id:
                 path = 'templates/upload.html'
+                print(user)
                 return FileResponse(path)
     # redirect to join the server before uploading
     path = 'templates/auth.html'

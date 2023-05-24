@@ -39,17 +39,17 @@
     </header>
 
     <main>
-        <h1>Example title</h1>
+        <h1>Excelsior Ship Library</h1>
         <section id="competitive" class="content-container">
             <div class="section-description">
                 <h2>Competitive Ships</h2>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                <p>Browse our ship library, share yours with the community !</p>
             </div>
             <div class="tabs-container">
                 <button id="elim-competitive-btn" class="active blue-btn" type="button">Ships</button>
                 <button id="dom-competitive-btn" class="blue-btn" type="button">Search</button>
                 <div id="elim-competitive-tab" class="tab active">
-                    <p>Praesent ut orci ipsum. Donec efficitur tincidunt aliquet. Nullam quis iaculis mi, eu convallis lorem. Aenean posuere in dui sit amet pellentesque.</p>
+                    <p>User the "Search" tab to filter ships.</p>
                     <ul class="ships-list">
                         
                         {% for image in images %}
@@ -71,7 +71,7 @@
                                 <span class="data"><span>Description:</span> {{ image[4] }}</span>
                             </div>
                             <div class="actions-container">
-
+                                <a class="blue-btn" title="See the ship page" href="#"></a>
                                 <button type="button" class="blue-btn download-btn" title="Download this ship" onclick="downloadShip('{{ image[2] }}', '{{ image[1] }}')"></button>
                             </div>
                         </li>
@@ -80,7 +80,10 @@
                     </ul>
                 </div>
                 <div id="dom-competitive-tab" class="tab">
-                    <p>Sed mattis posuere felis eu imperdiet. Donec sollicitudin, turpis a feugiat egestas, magna metus laoreet mi, finibus imperdiet enim neque non lacus.</p>
+                    <p>Pick your options ! To reset the search result click again on the "Search" button at the bottom of the page.</p>
+                    <p>Must have : ship must have this tag otherwise is not shown.</p>
+                    <p>Can have : whether the ship has this tag or not it will be displayed.</p>
+                    <p>Must not have : ship must not have this tag otherwise is not shown.</p>
                     <ul class="ships-list">
                         <li class="ship-card">
                             <form action="/" method="post" enctype="multipart/form-data">

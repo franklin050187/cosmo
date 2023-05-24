@@ -1,12 +1,104 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>Error</title>
-</head>
-<body>
-    <h1>No access</h1>
-    <p>Please click the button below to join the Discord server: Excelsior</p>
-    <a href="#"><button>Join the server</button></a>
-</body>
-</html>
+<style>
+   .form-container {
+   display: flex;
+   justify-content: space-between;
+   }
+   .form-list {
+   list-style: none;
+   padding: 0;
+   margin: 0;
+   }
+   .form-table {
+   display: table;
+   width: 100%;
+   }
+   .form-table-row {
+   display: table-row;
+   }
+   .form-table-cell {
+   display: table-cell;
+   width: 100%; /* Adjust the width as needed */
+   padding-right: 20px; /* Adjust the spacing between cells as needed */
+   
+   }
+   td {
+      vertical-align: top;
+    }
 
+    input#price {
+        background-color: darkblue;
+        color: white;
+    }
+    input#description {
+      background-color: darkblue;
+      color: white;
+  }
+  input#submitted_by {
+   background-color: darkblue;
+   color: white;
+}
+input#ship_name {
+   background-color: darkblue;
+   color: white;
+}
+input#author {
+   background-color: darkblue;
+   color: white;
+}
+
+</style>
+<html lang="es">
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Demo Excelsior | Cosmoteer</title>
+      <meta name="robots" content="noindex,nofollow">
+      <link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico">
+      <link rel="stylesheet" type="text/css" href="css/interface.css">
+      <link rel="stylesheet" type="text/css" href="css/index.css">
+      <script src="js/jquery-3.6.0.min.js"></script>
+      <script src="js/common.js"></script>
+      <script src="js/index.js"></script>
+   </head>
+   <body>
+      <header>
+         <button id="menu-btn" class="menu-btn blue-btn" type="button" onclick="redirectToHomePage()"><span></span><span></span><span></span></button>
+         <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp"  href="/">
+      </header>
+      <main>
+         <h1>Unauthorized access</h1>
+         <section id="competitive" class="content-container">
+            <div class="section-description">
+               <h2>Join now the Excelsior server to be able to upload your ship !</h2>
+               <p>Please click the button below to join the Discord server: Excelsior</p>
+               
+            </div>
+            <div class="tabs-container">
+               <div id="elim-competitive-tab" class="tab active">
+                  
+                  <ul>
+                    <a title="Join" class="blue-btn register center" href="/"><span>Join</span></a>
+                      
+                  </ul>
+               </div>
+            </div>
+         </section>
+      </main>
+      <footer>
+         <div class="footer-content">
+            <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp">
+            <ul>
+               <li><a title="Cookies policy" href="#">Cookies policy</a></li>
+                  <li><a title="Another footer link" href="#">Another footer link</a></li>
+                     <li><a title="More footer links" href="#">More footer links</a></li>
+            </ul>
+         </div>
+      </footer>
+   </body>
+</html>
+<script>
+   function redirectToHomePage() {
+     window.location.href = "/";
+   }
+ </script>

@@ -71,13 +71,14 @@ input#author {
          <section id="competitive" class="content-container">
             <div class="section-description">
                <h2>Share your ships with the community</h2>
-               <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+               <p>Pick tags your ship has in order to help the community to find your creation !</p>
+               <p>To go back click on the hamburger menu on the top left.</p>
             </div>
             <div class="tabs-container">
                <div id="elim-competitive-tab" class="tab active">
-                  <p>Praesent ut orci ipsum. Donec efficitur tincidunt aliquet. Nullam quis iaculis mi, eu convallis lorem. Aenean posuere in dui sit amet pellentesque.</p>
+                  
                   <ul>
-                     <h1>Image Upload</h1>
+                     <h1>Ship Upload</h1>
                      <form action="/upload/" method="post" enctype="multipart/form-data">
                         <table style="width:100%">
                            <tr>
@@ -335,8 +336,7 @@ input#author {
                                                             <td>
                                                             <tr>
                                                             <ul>
-                                                               <label for="price">Price 
-                                                                  (no comma or dot or space, only numbers):</label>
+                                                               <label for="price">Price :</label>
                                                                <input type="text" name="price" id="price" pattern="[0-9]+" required>
                                                                <label for="description">Description:</label>
                                                                <input type="text" name="description" id="description">
@@ -344,6 +344,7 @@ input#author {
                                                          </tr>
                                                          </td>
                                                          </tr>
+                                                         <p>Price must be a number, without space, dot or comma. Absurd amount will fail the upload ;) </p>
                                                          </table>
                                                          </form>  
                   </ul>
