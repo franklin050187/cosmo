@@ -29,56 +29,11 @@
         <button id="menu-btn" class="menu-btn blue-btn" type="button"><span></span><span></span><span></span></button>
         <nav id="main-menu">
             <ul class="menu-links">
-                <form action="/" method="post" enctype="multipart/form-data">
-                       <table style="width:70%" class=".cssTable">
-                          <tr>
-                             <th scope="col">Item</th>
-                             <th scope="col">Must have</th>
-                             <th scope="col">Can have</th>
-                             <th scope="col">Must NOT have</th>
-                          </tr>
-                            <tr>
-                                <td><label for="cannon">Cannon:</label></td>
-                                <td><input type="radio" name="cannon" id="cannon_must_have" value="must_have"></td>
-                                <td><input type="radio" name="cannon" id="cannon_can_have" value="can_have" checked="yes"></td>
-                                <td><input type="radio" name="cannon" id="cannon_must_not_have" value="must_not_have"></td>
-                            </tr>
-                            <tr>
-                                <td><label for="deck_cannon">Deck Cannon:</label></td>
-                                <td><input type="radio" name="deck_cannon" id="deck_cannon_must_have" value="must_have"></td>
-                                <td><input type="radio" name="deck_cannon" id="deck_cannon_can_have" value="can_have" checked="yes"></td>
-                                <td><input type="radio" name="deck_cannon" id="deck_cannon_must_not_have" value="must_not_have"></td>
-                            </tr>
-                            <tr>
-                                <td><label for="emp_missiles">EMP Missiles:</label></td>
-                                <td><input type="radio" name="emp_missiles" id="emp_missiles_must_have" value="must_have"></td>
-                                <td><input type="radio" name="emp_missiles" id="emp_missiles_can_have" value="can_have" checked="yes"></td>
-                                <td><input type="radio" name="emp_missiles" id="emp_missiles_must_not_have" value="must_not_have"></td>
-                            </tr>
-                        </table>
-                        <button type="submit" class="blue-btn register" >Search</button>
-                    </form>                  
+                                 
             </ul>
         </nav>
         <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp">
         <ul class="user-container">
-            <li>
-                <button id="login-btn" class="blue-btn login" type="button"><span>Log in</span></button>
-                <form id="login-form" class="login-container" method="post" autocomplete="off">
-                    <label>
-                        Username
-                        <input type="text">
-                    </label>
-                    <label>
-                        Password
-                        <input type="password">
-                    </label>
-                    <a title="Forgot your password?" href="#">Forgot your password?</a>
-                    <div class="btn-container">
-                        <button class="blue-btn" type="submit">Log in</button>
-                    </div>
-                </form>
-            </li>
             <li><a title="Upload" class="blue-btn register" href="/upload"><span>Upload</span></a></li>
         </ul>
     </header>
@@ -91,35 +46,368 @@
                 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
             </div>
             <div class="tabs-container">
+                <button id="elim-competitive-btn" class="active blue-btn" type="button">Ships</button>
+                <button id="dom-competitive-btn" class="blue-btn" type="button">Search</button>
                 <div id="elim-competitive-tab" class="tab active">
                     <p>Praesent ut orci ipsum. Donec efficitur tincidunt aliquet. Nullam quis iaculis mi, eu convallis lorem. Aenean posuere in dui sit amet pellentesque.</p>
                     <ul class="ships-list">
                         
                         {% for image in images %}
                         <li class="ship-card">
-                            <button type="button" class="stars" title="Give it a star">0</button>
-                            <button type="button" class="likes" title="Like it">0</button>
                             <img loading="lazy" src="data:image/png;base64,{{ image[2] }}">
                             <div class="ship-data">
-                                <span class="data"><span>Ship name:</span> {{ image[28] }}</span>
+                                <span class="data"><span>Ship name:</span> {{ image[5] }}</span>
                                 <span class="data"><span>Ship tags:</span>     
-                                {% set column_names = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense', 'boost_thruster'] %}
-                                {% for index in range(5, image|length) %}
+                                {% set column_names = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'Corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer'] %}
+                                {% for index in range(8, image|length) %}
                                 {% set tag = image[index] %}
                                 {% if tag == 1 %}
-                                    {{ column_names[index - 5] }}
+                                    {{ column_names[index - 8] }}
                                 {% endif %}
                             {% endfor %}</span>
-                                <span class="data credits"><span>Cost:</span> {{ image[4] }}₡</span>
+                                <span class="data credits"><span>Cost:</span> {{ image[7] }}₡</span>
                                 <span class="data"><span>Submitted by:</span> {{ image[3] }}</span>
+                                <span class="data"><span>Author:</span> {{ image[6] }}</span>
+                                <span class="data"><span>Description:</span> {{ image[4] }}</span>
                             </div>
                             <div class="actions-container">
-                                <a class="blue-btn" title="See the ship page" href="#"></a>
+
                                 <button type="button" class="blue-btn download-btn" title="Download this ship" onclick="downloadShip('{{ image[2] }}', '{{ image[1] }}')"></button>
                             </div>
                         </li>
                         {% endfor %}
                         
+                    </ul>
+                </div>
+                <div id="dom-competitive-tab" class="tab">
+                    <p>Sed mattis posuere felis eu imperdiet. Donec sollicitudin, turpis a feugiat egestas, magna metus laoreet mi, finibus imperdiet enim neque non lacus.</p>
+                    <ul class="ships-list">
+                        <li class="ship-card">
+                            <form action="/" method="post" enctype="multipart/form-data">
+                                <table style="width:100%" class=".cssTable">
+                                   <tr>
+                                      <th scope="col">Item</th>
+                                      <th scope="col">Must have</th>
+                                      <th scope="col">Can have</th>
+                                      <th scope="col">Must NOT have</th>
+                                   </tr>
+                                   <tr>
+                                     <td><label for="cannon">Cannon:</label></td>
+                                     <td><input type="radio" name="cannon" id="cannon_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="cannon" id="cannon_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="cannon" id="cannon_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 
+                                 <tr>
+                                     <td><label for="deck_cannon">Deck Cannon:</label></td>
+                                     <td><input type="radio" name="deck_cannon" id="deck_cannon_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="deck_cannon" id="deck_cannon_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="deck_cannon" id="deck_cannon_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="emp_missiles">EMP Missiles:</label></td>
+                                     <td><input type="radio" name="emp_missiles" id="emp_missiles_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="emp_missiles" id="emp_missiles_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="emp_missiles" id="emp_missiles_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="flak_battery">Flak Battery:</label></td>
+                                     <td><input type="radio" name="flak_battery" id="flak_battery_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="flak_battery" id="flak_battery_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="flak_battery" id="flak_battery_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="he_missiles">HE Missiles:</label></td>
+                                     <td><input type="radio" name="he_missiles" id="he_missiles_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="he_missiles" id="he_missiles_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="he_missiles" id="he_missiles_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="large_cannon">Large Cannon:</label></td>
+                                     <td><input type="radio" name="large_cannon" id="large_cannon_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="large_cannon" id="large_cannon_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="large_cannon" id="large_cannon_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="mines">Mines:</label></td>
+                                     <td><input type="radio" name="mines" id="mines_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="mines" id="mines_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="mines" id="mines_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="nukes">Nukes:</label></td>
+                                     <td><input type="radio" name="nukes" id="nukes_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="nukes" id="nukes_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="nukes" id="nukes_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="railgun">Railgun:</label></td>
+                                     <td><input type="radio" name="railgun" id="railgun_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="railgun" id="railgun_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="railgun" id="railgun_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="ammo_factory">Ammo Factory:</label></td>
+                                     <td><input type="radio" name="ammo_factory" id="ammo_factory_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="ammo_factory" id="ammo_factory_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="ammo_factory" id="ammo_factory_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="emp_factory">EMP Factory:</label></td>
+                                     <td><input type="radio" name="emp_factory" id="emp_factory_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="emp_factory" id="emp_factory_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="emp_factory" id="emp_factory_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="he_factory">HE Factory:</label></td>
+                                     <td><input type="radio" name="he_factory" id="he_factory_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="he_factory" id="he_factory_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="he_factory" id="he_factory_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="mine_factory">Mine Factory:</label></td>
+                                     <td><input type="radio" name="mine_factory" id="mine_factory_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="mine_factory" id="mine_factory_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="mine_factory" id="mine_factory_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="nuke_factory">Nuke Factory:</label></td>
+                                     <td><input type="radio" name="nuke_factory" id="nuke_factory_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="nuke_factory" id="nuke_factory_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="nuke_factory" id="nuke_factory_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="disruptors">Disruptors:</label></td>
+                                     <td><input type="radio" name="disruptors" id="disruptors_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="disruptors" id="disruptors_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="disruptors" id="disruptors_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="heavy_Laser">Heavy Laser:</label></td>
+                                     <td><input type="radio" name="heavy_Laser" id="heavy_Laser_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="heavy_Laser" id="heavy_Laser_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="heavy_Laser" id="heavy_Laser_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="ion_Beam">Ion Beam:</label></td>
+                                     <td><input type="radio" name="ion_Beam" id="ion_Beam_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="ion_Beam" id="ion_Beam_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="ion_Beam" id="ion_Beam_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="ion_Prism">Ion Prism:</label></td>
+                                     <td><input type="radio" name="ion_Prism" id="ion_Prism_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="ion_Prism" id="ion_Prism_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="ion_Prism" id="ion_Prism_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="laser">Laser:</label></td>
+                                     <td><input type="radio" name="laser" id="laser_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="laser" id="laser_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="laser" id="laser_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="mining_Laser">Mining Laser:</label></td>
+                                     <td><input type="radio" name="mining_Laser" id="mining_Laser_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="mining_Laser" id="mining_Laser_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="mining_Laser" id="mining_Laser_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="point_Defense">Point Defense:</label></td>
+                                     <td><input type="radio" name="point_Defense" id="point_Defense_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="point_Defense" id="point_Defense_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="point_Defense" id="point_Defense_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="boost_thruster">Boost Thruster:</label></td>
+                                     <td><input type="radio" name="boost_thruster" id="boost_thruster_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="boost_thruster" id="boost_thruster_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="boost_thruster" id="boost_thruster_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="airlock">Airlock:</label></td>
+                                     <td><input type="radio" name="airlock" id="airlock_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="airlock" id="airlock_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="airlock" id="airlock_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="campaign_factories">Campaign Factories:</label></td>
+                                     <td><input type="radio" name="campaign_factories" id="campaign_factories_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="campaign_factories" id="campaign_factories_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="campaign_factories" id="campaign_factories_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="explosive_charges">Explosive Charges:</label></td>
+                                     <td><input type="radio" name="explosive_charges" id="explosive_charges_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="explosive_charges" id="explosive_charges_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="explosive_charges" id="explosive_charges_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="fire_extinguisher">Fire Extinguisher:</label></td>
+                                     <td><input type="radio" name="fire_extinguisher" id="fire_extinguisher_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="fire_extinguisher" id="fire_extinguisher_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="fire_extinguisher" id="fire_extinguisher_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="no_fire_extinguishers">No Fire Extinguishers:</label></td>
+                                     <td><input type="radio" name="no_fire_extinguishers" id="no_fire_extinguishers_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="no_fire_extinguishers" id="no_fire_extinguishers_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="no_fire_extinguishers" id="no_fire_extinguishers_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="large_reactor">Large Reactor:</label></td>
+                                     <td><input type="radio" name="large_reactor" id="large_reactor_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="large_reactor" id="large_reactor_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="large_reactor" id="large_reactor_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="large_shield">Large Shield:</label></td>
+                                     <td><input type="radio" name="large_shield" id="large_shield_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="large_shield" id="large_shield_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="large_shield" id="large_shield_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="medium_reactor">Medium Reactor:</label></td>
+                                     <td><input type="radio" name="medium_reactor" id="medium_reactor_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="medium_reactor" id="medium_reactor_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="medium_reactor" id="medium_reactor_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="sensor">Sensor:</label></td>
+                                     <td><input type="radio" name="sensor" id="sensor_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="sensor" id="sensor_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="sensor" id="sensor_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="small_hyperdrive">Small Hyperdrive:</label></td>
+                                     <td><input type="radio" name="small_hyperdrive" id="small_hyperdrive_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="small_hyperdrive" id="small_hyperdrive_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="small_hyperdrive" id="small_hyperdrive_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="small_reactor">Small Reactor:</label></td>
+                                     <td><input type="radio" name="small_reactor" id="small_reactor_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="small_reactor" id="small_reactor_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="small_reactor" id="small_reactor_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="small_shield">Small Shield:</label></td>
+                                     <td><input type="radio" name="small_shield" id="small_shield_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="small_shield" id="small_shield_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="small_shield" id="small_shield_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="tractor_beams">Tractor Beams:</label></td>
+                                     <td><input type="radio" name="tractor_beams" id="tractor_beams_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="tractor_beams" id="tractor_beams_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="tractor_beams" id="tractor_beams_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="hyperdrive_relay">Hyperdrive Relay:</label></td>
+                                     <td><input type="radio" name="hyperdrive_relay" id="hyperdrive_relay_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="hyperdrive_relay" id="hyperdrive_relay_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="hyperdrive_relay" id="hyperdrive_relay_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="bidirectional_thrust">Bidirectional Thrust:</label></td>
+                                     <td><input type="radio" name="bidirectional_thrust" id="bidirectional_thrust_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="bidirectional_thrust" id="bidirectional_thrust_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="bidirectional_thrust" id="bidirectional_thrust_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="mono_thrust">Mono Thrust:</label></td>
+                                     <td><input type="radio" name="mono_thrust" id="mono_thrust_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="mono_thrust" id="mono_thrust_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="mono_thrust" id="mono_thrust_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="multi_thrust">Multi Thrust:</label></td>
+                                     <td><input type="radio" name="multi_thrust" id="multi_thrust_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="multi_thrust" id="multi_thrust_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="multi_thrust" id="multi_thrust_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="omni_thrust">Omni Thrust:</label></td>
+                                     <td><input type="radio" name="omni_thrust" id="omni_thrust_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="omni_thrust" id="omni_thrust_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="omni_thrust" id="omni_thrust_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="armor_defenses">Armor Defenses:</label></td>
+                                     <td><input type="radio" name="armor_defenses" id="armor_defenses_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="armor_defenses" id="armor_defenses_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="armor_defenses" id="armor_defenses_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="mixed_defenses">Mixed Defenses:</label></td>
+                                     <td><input type="radio" name="mixed_defenses" id="mixed_defenses_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="mixed_defenses" id="mixed_defenses_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="mixed_defenses" id="mixed_defenses_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="shield_defenses">Shield Defenses:</label></td>
+                                     <td><input type="radio" name="shield_defenses" id="shield_defenses_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="shield_defenses" id="shield_defenses_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="shield_defenses" id="shield_defenses_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="Corvette">Corvette:</label></td>
+                                     <td><input type="radio" name="Corvette" id="Corvette_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="Corvette" id="Corvette_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="Corvette" id="Corvette_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="diagonal">Diagonal:</label></td>
+                                     <td><input type="radio" name="diagonal" id="diagonal_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="diagonal" id="diagonal_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="diagonal" id="diagonal_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="flanker">Flanker:</label></td>
+                                     <td><input type="radio" name="flanker" id="flanker_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="flanker" id="flanker_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="flanker" id="flanker_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="mixed_weapons">Mixed Weapons:</label></td>
+                                     <td><input type="radio" name="mixed_weapons" id="mixed_weapons_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="mixed_weapons" id="mixed_weapons_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="mixed_weapons" id="mixed_weapons_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="painted">Painted:</label></td>
+                                     <td><input type="radio" name="painted" id="painted_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="painted" id="painted_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="painted" id="painted_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="unpainted">Unpainted:</label></td>
+                                     <td><input type="radio" name="unpainted" id="unpainted_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="unpainted" id="unpainted_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="unpainted" id="unpainted_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="splitter">Splitter:</label></td>
+                                     <td><input type="radio" name="splitter" id="splitter_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="splitter" id="splitter_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="splitter" id="splitter_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="utility_weapons">Utility Weapons:</label></td>
+                                     <td><input type="radio" name="utility_weapons" id="utility_weapons_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="utility_weapons" id="utility_weapons_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="utility_weapons" id="utility_weapons_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 <tr>
+                                     <td><label for="transformer">Transformer:</label></td>
+                                     <td><input type="radio" name="transformer" id="transformer_must_have" value="must_have"></td>
+                                     <td><input type="radio" name="transformer" id="transformer_can_have" value="can_have" checked="yes"></td>
+                                     <td><input type="radio" name="transformer" id="transformer_must_not_have" value="must_not_have"></td>
+                                 </tr>
+                                 </table>
+                                 <button type="submit" class="blue-btn register" >Search</button>
+                             </form> 
+                        </li>
                     </ul>
                 </div>
             </div>
