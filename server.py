@@ -233,10 +233,15 @@ async def home(request: Request):
         # Build the SQL query based on the search criteria
         query = "SELECT * FROM images"
 
+        SQL_KEYWORDS = ['\\', ',', '\'', '"', '--', ';', '%', '&', '+', '*', '!', '?',
+                        '=', '>', '<', '(', ')', '[', ']', '{', '}', '|', 'like', 'and',
+                        'or', 'not', 'from', 'where', 'table', 'select']
+
         # check name, author, and description
         other_conditions = []
         for word in [word for word in words if word not in query_tags]:
-            if word == "":
+            # to lessen the risk of SQL injection
+            if word == "" or any(keyword in word for keyword in SQL_KEYWORDS):
                 continue
             if word[0] != '-':
                 other_conditions.append(
