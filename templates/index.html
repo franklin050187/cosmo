@@ -86,8 +86,8 @@
                     <p>Must not have : ship must not have this tag otherwise is not shown.</p>
                     <ul class="ships-list">
                         <form action="/" method="post" enctype="multipart/form-data">
-                            <input type="hidden" name="query" id="selected-tags-input">
-                            <button type="submit" class="blue-btn register">Search</button>
+                            <input type="hidden" name="query" id="final_search_query">
+                            <button type="submit" class="blue-btn register" onclick="appendSearchInput()">Search</button>
                         </form>
                         <table style="width:100%">
                             <tr>
@@ -100,10 +100,10 @@
                                 <input type="text" id="tag-input" oninput="searchTags()">
                                 </td>
                                 <td>
-                                <div id="selected-tags" onclick="removeSelectedTag(event)"></div>
+                                <div id="selected-tags" onclick="removeTag(event)"></div>
                                 </td>
                                 <td>
-                                
+                                    <div id="excluded-tags" onclick="removeTag(event)"></div>
                                 </td>
                             </tr>
                             <tr>
@@ -156,28 +156,37 @@ function downloadShip(imageData, imageName) {
 
     const tagList = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer']; // Predefined list of tags
     const selectedTags = [];
+    const excludedTags = [];
 
   function searchTags() {
-    const query = document.getElementById('tag-input').value;
+    let query = document.getElementById('tag-input').value;
 
     if (query === '') {
       clearTagSuggestions();
       return;
     }
-
-    const matchedTags = tagList.filter(function (tag) {
-      return tag.toLowerCase().includes(query.toLowerCase()) && !selectedTags.includes(tag);
+    const isNegativeQuery = query.startsWith('-');
+    if (isNegativeQuery) {
+      query = query.substring(1);
+    }
+    let matchedTags = tagList.filter(function (tag) {
+      return tag.toLowerCase().includes(query.toLowerCase()) && (!selectedTags.includes(tag) && !excludedTags.includes(tag));
     });
-
+    if (isNegativeQuery) {
+        matchedTags = matchedTags.map(function (tag) {
+          return '-' + tag;
+      })
+    }
+    console.log(matchedTags);
     displayTagSuggestions(matchedTags);
   }
 
-  function handleTagInput(event) {
+  /* function handleTagInput(event) {
     if (event.key === 'Enter') {
       event.preventDefault();
-      addSelectedTag(document.getElementById('tag-input').value.trim());
+      addTag(document.getElementById('tag-input').value.trim(), false);
     }
-  }
+  }*/
 
   function displayTagSuggestions(tags) {
     const tagSuggestionsDiv = document.getElementById('tag-suggestions');
@@ -194,7 +203,11 @@ function downloadShip(imageData, imageName) {
       liElement.className = 'tag';
       liElement.textContent = tag;
       liElement.addEventListener('click', function () {
-        addSelectedTag(tag);
+        if (tag[0] === '-') {
+            addTag(tag.substring(1), true);
+        } else {
+            addTag(tag, false);
+        }
       });
       ulElement.appendChild(liElement);
     });
@@ -209,34 +222,40 @@ function downloadShip(imageData, imageName) {
     tagSuggestionsDiv.innerHTML = '';
   }
 
-  function addSelectedTag(tag) {
-    if (tag !== '' && !selectedTags.includes(tag)) {
-      selectedTags.push(tag);
-      updateSelectedTagsInput();
-      updateSelectedTagsDisplay();
+  function addTag(tag, isExcluded) {
+    if (tag !== '') {
+      if (isExcluded) {
+        excludedTags.push(tag);
+      } else {
+        selectedTags.push(tag);
+      }
+      updateFinalSearchQuery();
+      updateTagsDisplay(isExcluded);
       document.getElementById('tag-input').value = '';
       clearTagSuggestions();
       searchTags(); // Refresh suggested tags after selection
     }
   }
 
-  function removeSelectedTag(event) {
-    if (event.target.classList.contains('selected-tag')) {
-      const tag = event.target.textContent;
-      const index = selectedTags.indexOf(tag);
-      if (index > -1) {
-        selectedTags.splice(index, 1);
-        updateSelectedTagsInput();
-        updateSelectedTagsDisplay();
+  function removeTag(event) {
+    const isExcluded = event.target.classList.contains('excluded-tag');
+
+    const tag = event.target.textContent;
+    const index = isExcluded ? excludedTags.indexOf(tag) : selectedTags.indexOf(tag);
+    if (index > -1) {
+        isExcluded ? excludedTags.splice(index, 1) : selectedTags.splice(index, 1);
+        updateFinalSearchQuery();
+        updateTagsDisplay(isExcluded);
         searchTags(); // Refresh suggested tags after removal
-      }
     }
   }
 
-  function updateSelectedTagsInput() {
-    const selectedTagsInput = document.getElementById('selected-tags-input');
-    selectedTagsInput.value = selectedTags.join(' ');
+  function updateFinalSearchQuery() {
+    const finalSearchQuery = document.getElementById('final_search_query');
+    finalSearchQuery.value = selectedTags.join(' ') + (excludedTags.length > 0 ? ' -' + excludedTags.join(' -') : '');
   }
+
+  // update display
 
   function updateSelectedTagsDisplay() {
     const selectedTagsDiv = document.getElementById('selected-tags');
@@ -251,5 +270,34 @@ function downloadShip(imageData, imageName) {
     });
 
     selectedTagsDiv.appendChild(ulElement);
+  }
+
+  function updateExcludedTagsDisplay() {
+    const excludedTagsDiv = document.getElementById('excluded-tags');
+    excludedTagsDiv.innerHTML = '';
+
+    const ulElement = document.createElement('ul');
+    excludedTags.forEach(function (tag) {
+      const liElement = document.createElement('li');
+      liElement.className = 'excluded-tag';
+      liElement.textContent = tag;
+      ulElement.appendChild(liElement);
+    });
+
+    excludedTagsDiv.appendChild(ulElement);
+  }
+
+  function updateTagsDisplay(isExcluded) {
+    if (isExcluded) {
+      updateExcludedTagsDisplay();
+    } else {
+      updateSelectedTagsDisplay();
+    }
+  }
+
+  function appendSearchInput() {
+    const input = document.getElementById('tag-input').value;
+    const selectedTagsInput = document.getElementById('final_search_query');
+    selectedTagsInput.value += " " + input;
   }
 </script>

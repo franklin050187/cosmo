@@ -204,7 +204,7 @@ async def home(request: Request):
                 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer']
 
         form_input = await request.form()
-        query: str = form_input.get("query")
+        query: str = form_input.get("query").strip()
         words = query.lower().split(" ")
         # all combinations of a word and the one after
         word_pairs = [words[i] + '_' + words[i+1]
@@ -235,9 +235,13 @@ async def home(request: Request):
 
         # check name, author, and description
         other_conditions = []
-        for word in words:
-            other_conditions.append(
-                f"(name LIKE '%{word}%' OR author LIKE '%{word}%' OR description LIKE '%{word}%')")
+        for word in [word for word in words if word not in query_tags]:
+            if word[0] != '-':
+                other_conditions.append(
+                    f"(name LIKE '%{word}%' OR author LIKE '%{word}%' OR description LIKE '%{word}%')")
+            else:
+                other_conditions.append(
+                    f"(name NOT LIKE '%{word[1:]}%' AND author NOT LIKE '%{word[1:]}%')")
 
         # check tags
         pos_tag_conditions = []
@@ -249,18 +253,24 @@ async def home(request: Request):
             if tag[0] == '-':
                 neg_tag_conditions.append(f"{tag[1:]} = 0")
 
-        # get ships that match positive tags and other conditions
-        if pos_tag_conditions:
-            query += " WHERE (" + " AND ".join(pos_tag_conditions) + ")"
+        # build query
+        if pos_tag_conditions or neg_tag_conditions or other_conditions:
+            query += " WHERE "
 
-        if pos_tag_conditions and other_conditions:
-            query += " OR (" + " OR ".join(other_conditions) + ")"
-        elif other_conditions:
-            query += " WHERE (" + " OR ".join(other_conditions) + ")"
+        if pos_tag_conditions or neg_tag_conditions:
+            query += "("
+            if pos_tag_conditions:
+                query += " AND ".join(pos_tag_conditions)
+            if pos_tag_conditions and neg_tag_conditions:
+                query += " AND "
+            if neg_tag_conditions:
+                query += " AND ".join(neg_tag_conditions)
+            query += ")"
 
-        # filter out ships that match negative tags
-        if neg_tag_conditions:
-            query += " AND (" + " AND ".join(neg_tag_conditions) + ")"
+        if other_conditions:
+            if pos_tag_conditions or neg_tag_conditions:
+                query += " AND "
+            query += "(" + " OR ".join(other_conditions) + ")"
 
         print(query)  # DEBUG
 
