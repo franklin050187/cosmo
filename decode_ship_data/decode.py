@@ -1,3 +1,4 @@
+import gzip
 from PIL import Image
 
 def retrieve_lsb_data_from_png(image_path):
@@ -28,4 +29,13 @@ def retrieve_lsb_data_from_png(image_path):
 # Usage example
 image_path = "ship.png"
 lsb_data = retrieve_lsb_data_from_png(image_path)
+
 print(lsb_data)
+
+# Decompress the LSB data using gzip
+decompressed_data = gzip.decompress(lsb_data)
+
+# Decode the decompressed data as UTF-8
+decoded_data = decompressed_data.decode("utf-8")
+
+print(decoded_data)
