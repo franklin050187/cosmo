@@ -8,7 +8,7 @@ def retrieve_lsb_data_from_png(image_path):
     pixels = image.load()
 
     # Retrieve LSB data from each pixel
-    data = []
+    data = bytearray()
     width, height = image.size
     for y in range(height):
         for x in range(width):
@@ -19,7 +19,7 @@ def retrieve_lsb_data_from_png(image_path):
             g_lsb = g & 1
             b_lsb = b & 1
 
-            # Combine LSBs into a byte and add it to the data list
+            # Combine LSBs into a byte and append it to the data bytearray
             byte = (r_lsb << 2) | (g_lsb << 1) | b_lsb
             data.append(byte)
 
