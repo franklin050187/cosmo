@@ -1,4 +1,5 @@
 # trying to read the data using 2 bits per channel and without alpha
+# added gzip header but still error no block length, should I add the byte lenght to the header ?
 
 import gzip
 from PIL import Image
@@ -27,7 +28,12 @@ def retrieve_low_order_bits_from_png(image_path, num_bits):
             byte = (r_low << (2 * num_bits)) | (g_low << num_bits) | b_low # | a_low
             data.append(byte)
 
-    return data
+    # Add gzip header to the beginning of the data bytearray
+    print(bytes(data))
+    gzip_header = b'\x1f\x8b\x08\x00'
+    data_with_header = gzip_header + bytes(data)
+
+    return data_with_header
 
 # Usage example
 image_path = "decode_ship_data/ship.png"
@@ -36,39 +42,10 @@ low_order_bits_data = retrieve_low_order_bits_from_png(image_path, num_bits)
 
 print(low_order_bits_data)
 
+# Decompress the low-order bits data using gzip
 decompressed_data = gzip.decompress(low_order_bits_data)
-print(decompressed_data)
 
-## trying bruteforce header ?
-import gzip
+# Decode the decompressed data as UTF-8
+decoded_data = decompressed_data.decode("utf-8")
 
-def decompress_data_with_headers(compressed_data, headers):
-    for header in headers:
-        try:
-            compressed_data_with_header = header + compressed_data
-            decompressed_data = gzip.decompress(compressed_data_with_header)
-
-            return decompressed_data
-
-        except OSError:
-            continue
-
-    # If none of the headers succeed in decompression
-    raise ValueError("Unable to decompress data with the given headers.")
-
-
-# Usage example
-compressed_data = low_order_bits_data
-
-headers = [
-    #b'\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\x03',
-    #b'\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\x02',
-    b'\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\x01'
-]
-
-try:
-    decompressed_data = decompress_data_with_headers(compressed_data, headers)
-    print(decompressed_data.decode('utf-8'))
-
-except ValueError as e:
-    print(str(e))
+print(decoded_data)
