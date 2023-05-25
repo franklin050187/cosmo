@@ -236,6 +236,8 @@ async def home(request: Request):
         # check name, author, and description
         other_conditions = []
         for word in [word for word in words if word not in query_tags]:
+            if word == "":
+                continue
             if word[0] != '-':
                 other_conditions.append(
                     f"(name LIKE '%{word}%' OR author LIKE '%{word}%' OR description LIKE '%{word}%')")
