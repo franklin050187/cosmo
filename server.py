@@ -232,33 +232,39 @@ async def home(request: Request):
 
         # Build the SQL query based on the search criteria
         query = "SELECT * FROM images"
-
-        SQL_KEYWORDS = ['\\', ',', '\'', '"', '--', ';', '%', '&', '+', '*', '!', '?',
-                        '=', '>', '<', '(', ')', '[', ']', '{', '}', '|', 'like', 'and',
-                        'or', 'not', 'from', 'where', 'table', 'select']
+        args = []  # a list to store the parameters
+        SQL_KEYWORDS = ['\\', ',', '\'', '"', '--', ';', '%', '&', '+', '*', '!', '?', '=', '>', '<',
+                        '(', ')', '[', ']', '{', '}', '|', 'like', 'and', 'or', 'not', 'from', 'where', 'table', 'select']
 
         # check name, author, and description
         other_conditions = []
         for word in [word for word in words if word not in query_tags]:
-            # to lessen the risk of SQL injection
+            # to further lessen the risk of SQL injection
             if word == "" or any(keyword in word for keyword in SQL_KEYWORDS):
                 continue
             if word[0] != '-':
                 other_conditions.append(
-                    f"(name LIKE '%{word}%' OR author LIKE '%{word}%' OR description LIKE '%{word}%')")
+                    "(name LIKE ? OR author LIKE ? OR description LIKE ?)")
+                # add the parameters to the list
+                args.extend([f"%{word}%", f"%{word}%", f"%{word}%"])
             else:
                 other_conditions.append(
-                    f"(name NOT LIKE '%{word[1:]}%' AND author NOT LIKE '%{word[1:]}%')")
+                    "(name NOT LIKE ? AND author NOT LIKE ?)")
+                # add the parameters to the list
+                args.extend([f"%{word[1:]}%", f"%{word[1:]}%"])
 
         # check tags
         pos_tag_conditions = []
         for tag in query_tags:
             if tag[0] != '-':
-                pos_tag_conditions.append(f"{tag} = 1")
+                pos_tag_conditions.append(f"{tag} = ?")
+                args.append(1)  # add the parameter to the list
+
         neg_tag_conditions = []
         for tag in query_tags:
             if tag[0] == '-':
-                neg_tag_conditions.append(f"{tag[1:]} = 0")
+                neg_tag_conditions.append(f"{tag[1:]} = ?")
+                args.append(0)  # add the parameter to the list
 
         # build query
         if pos_tag_conditions or neg_tag_conditions or other_conditions:
@@ -279,9 +285,12 @@ async def home(request: Request):
                 query += " AND "
             query += "(" + " OR ".join(other_conditions) + ")"
 
-        print(query)  # DEBUG
+        # print(query)  # DEBUG
+        # print(args)  # DEBUG
 
-        cursor.execute(query)
+        # execute the query with the parameters
+        cursor.execute(query, args)
+
         images = cursor.fetchall()
         conn.close()
 
