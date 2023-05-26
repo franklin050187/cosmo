@@ -154,12 +154,18 @@
 }
 
 @media(max-width:639px){
-    .ships-list li + li + li + li {
+    .ships-list li {
         display: none;
     }
+    .ships-list li:nth-child(-n+4) {
+        display: block;
+    }
 }
-@media(max-width:1023px){
-    .ships-list li + li + li + li + li {
+@media(min-width:640px) and (max-width:1023px){
+    .ships-list li {
         display: none;
+    }
+    .ships-list li:nth-child(-n+6) {
+        display: block;
     }
 }
