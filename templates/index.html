@@ -88,7 +88,7 @@ input#tag-input {
                 <div class="search-container">
                     <p>Search by ship name, author, description or tags.<span class="info-icon" title="Tags"></span></p>
                     <p>Add a - before a tag to add it to the exclusion list.</p>
-                    <p>Click again on search to reset the view and show all ships.</p>
+                    <p>Click again on search to reset the view and show all ships</p>
                     <form action="/" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="query" id="final_search_query">
                         <button type="submit" class="blue-btn register" onclick="appendSearchInput()">Search</button>
@@ -126,7 +126,7 @@ input#tag-input {
                     <ul class="ships-list">
                         
                         {% for image in images %}
-                        <li class="ships-list">
+                        <li class="ship-card">
                             <img loading="lazy" src="data:image/png;base64,{{ image[2] }}">
                             <div class="ship-data">
                                 <span class="data"><span>Ship name:</span> {{ image[5] }}</span>
