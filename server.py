@@ -107,71 +107,53 @@ async def upload(request: Request, file: UploadFile = File(...)):
     # Store the image data in the database
     # user = request.session.get("discord_user")
     # get input box
+
     conn = sqlite3.connect('example.db')
     cursor = conn.cursor()
+
+    # Prepare the data
     form_data = await request.form()
-    cursor.execute("INSERT INTO images (name, data, submitted_by, description, ship_name, author, price, cannon, deck_cannon, emp_missiles, flak_battery, he_missiles, large_cannon, mines, nukes, railgun, ammo_factory, emp_factory, he_factory, mine_factory, nuke_factory, disruptors, heavy_Laser, ion_Beam, ion_Prism, laser, mining_Laser, point_Defense, boost_thruster, airlock, campaign_factories, explosive_charges, fire_extinguisher, no_fire_extinguishers, large_reactor, large_shield, medium_reactor, sensor, small_hyperdrive, small_reactor, small_shield, tractor_beams, hyperdrive_relay, bidirectional_thrust, mono_thrust, multi_thrust, omni_thrust, armor_defenses, mixed_defenses, shield_defenses, Corvette, diagonal, flanker, mixed_weapons, painted, unpainted, splitter, utility_weapons, transformer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                   (file.filename,
-                    encoded_data,
-                    form_data["submitted_by"],
-                    form_data["description"],
-                    form_data["ship_name"],
-                    form_data["author"],
-                    int(form_data["price"]),
-                    1 if 'cannon' in form_data else 0,
-                    1 if 'deck_cannon' in form_data else 0,
-                    1 if 'emp_missiles' in form_data else 0,
-                    1 if 'flak_battery' in form_data else 0,
-                    1 if 'he_missiles' in form_data else 0,
-                    1 if 'large_cannon' in form_data else 0,
-                    1 if 'mines' in form_data else 0,
-                    1 if 'nukes' in form_data else 0,
-                    1 if 'railgun' in form_data else 0,
-                    1 if 'ammo_factory' in form_data else 0,
-                    1 if 'emp_factory' in form_data else 0,
-                    1 if 'he_factory' in form_data else 0,
-                    1 if 'mine_factory' in form_data else 0,
-                    1 if 'nuke_factory' in form_data else 0,
-                    1 if 'disruptors' in form_data else 0,
-                    1 if 'heavy_Laser' in form_data else 0,
-                    1 if 'ion_Beam' in form_data else 0,
-                    1 if 'ion_Prism' in form_data else 0,
-                    1 if 'laser' in form_data else 0,
-                    1 if 'mining_Laser' in form_data else 0,
-                    1 if 'point_Defense' in form_data else 0,
-                    1 if 'boost_thruster' in form_data else 0,
-                    1 if 'airlock' in form_data else 0,
-                    1 if 'campaign_factories' in form_data else 0,
-                    1 if 'explosive_charges' in form_data else 0,
-                    1 if 'fire_extinguisher' in form_data else 0,
-                    1 if 'no_fire_extinguishers' in form_data else 0,
-                    1 if 'large_reactor' in form_data else 0,
-                    1 if 'large_shield' in form_data else 0,
-                    1 if 'medium_reactor' in form_data else 0,
-                    1 if 'sensor' in form_data else 0,
-                    1 if 'small_hyperdrive' in form_data else 0,
-                    1 if 'small_reactor' in form_data else 0,
-                    1 if 'small_shield' in form_data else 0,
-                    1 if 'tractor_beams' in form_data else 0,
-                    1 if 'hyperdrive_relay' in form_data else 0,
-                    1 if 'bidirectional_thrust' in form_data else 0,
-                    1 if 'mono_thrust' in form_data else 0,
-                    1 if 'multi_thrust' in form_data else 0,
-                    1 if 'omni_thrust' in form_data else 0,
-                    1 if 'armor_defenses' in form_data else 0,
-                    1 if 'mixed_defenses' in form_data else 0,
-                    1 if 'shield_defenses' in form_data else 0,
-                    1 if 'Corvette' in form_data else 0,
-                    1 if 'diagonal' in form_data else 0,
-                    1 if 'flanker' in form_data else 0,
-                    1 if 'mixed_weapons' in form_data else 0,
-                    1 if 'painted' in form_data else 0,
-                    1 if 'unpainted' in form_data else 0,
-                    1 if 'splitter' in form_data else 0,
-                    1 if 'utility_weapons' in form_data else 0,
-                    1 if 'transformer' in form_data else 0))
+    image_data = {
+        'name': file.filename,
+        'data': encoded_data,
+        'submitted_by': form_data.get('submitted_by', ''),
+        'description': form_data.get('description', ''),
+        'ship_name': form_data.get('ship_name', ''),
+        'author': form_data.get('author', ''),
+        'price': int(form_data.get('price', 0))
+    }
+
+    # Define the column names
+    columns = ['name', 'data', 'submitted_by', 'description', 'ship_name', 'author', 'price']
+
+    # Prepare the values
+    values = [image_data[column] for column in columns]
+
+    # Prepare the boolean columns
+    boolean_columns = [
+        'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes',
+        'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors',
+        'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense', 'boost_thruster',
+        'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
+        'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor',
+        'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust',
+        'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'Corvette', 'diagonal', 'flanker',
+        'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer'
+    ]
+
+    # Prepare the boolean values
+    boolean_values = [1 if column in form_data else 0 for column in boolean_columns]
+
+    # Construct the SQL query
+    query = f"INSERT INTO images ({', '.join(columns + boolean_columns)}) VALUES ({', '.join(['?'] * (len(columns) + len(boolean_columns)))})"
+
+    # Execute the query
+    cursor.execute(query, tuple(values + boolean_values))
+
+    # Commit and close the connection
     conn.commit()
     conn.close()
+
     # Redirect to the index page
     return RedirectResponse(url="/", status_code=303)
 
