@@ -19,6 +19,7 @@ import sqlite3
 import base64
 import os
 from dotenv import load_dotenv
+from fastapi.staticfiles import StaticFiles
 
 import json
 
@@ -51,7 +52,7 @@ def create_table():
 
 
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key=os.getenv('secret_session'))
+app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
@@ -73,16 +74,15 @@ async def finish_login(code: str, request: Request):
         if not user:
             return RedirectResponse("/login")
         # get guilds and parse them
+        request.session["discord_user"] = str(user)
         # Access the parsed data
         desired_id = int(os.getenv('guild_id'))  # Excelsior server
         for guild in guilds:
             if guild.id == desired_id:
-                path = 'templates/upload.html'
                 print(user)
-                return FileResponse(path)
+                return templates.TemplateResponse("upload.html", {"request": request, "user": user})
     # redirect to join the server before uploading
-    path = 'templates/auth.html'
-    return FileResponse(path)
+    return templates.TemplateResponse("auth.html", {"request": request, "user": user})    
 
 
 # Endpoint for displaying the file upload page
@@ -91,12 +91,9 @@ async def upload_page(request: Request):
     user = request.session.get("discord_user")
     if not user:
         print("DEBUG not a user upload")
-        path = 'templates/upload.html'
-        # return FileResponse(path)
         return RedirectResponse("/login")
     print(user)
-    path = 'templates/upload.html'
-    return FileResponse(path)
+    return templates.TemplateResponse("upload.html", {"request": request, "user": user})
 
 # Endpoint for uploading files
 
@@ -178,26 +175,13 @@ async def upload(request: Request, file: UploadFile = File(...)):
     # Redirect to the index page
     return RedirectResponse(url="/", status_code=303)
 
-
-# def levenshteinDistance(s1, s2):
-#     if len(s1) > len(s2):
-#         s1, s2 = s2, s1
-
-#     distances = range(len(s1) + 1)
-#     for i2, c2 in enumerate(s2):
-#         distances_ = [i2+1]
-#         for i1, c1 in enumerate(s1):
-#             if c1 == c2:
-#                 distances_.append(distances[i1])
-#             else:
-#                 distances_.append(
-#                     1 + min((distances[i1], distances[i1 + 1], distances_[-1])))
-#         distances = distances_
-#     return distances[-1]
-
-
 @app.route("/", methods=["GET", "POST"])
 async def home(request: Request):
+    user = request.session.get("discord_user")
+    print(user)
+    if not user:
+        print("DEBUG not a user home")
+        user = "Guest"
     if request.method == "POST":
         # searching ships
         TAGS = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
@@ -294,7 +278,7 @@ async def home(request: Request):
         images = cursor.fetchall()
         conn.close()
 
-        return templates.TemplateResponse("index.html", {"request": request, "images": images})
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
     else:
         conn = sqlite3.connect('example.db')
@@ -303,7 +287,7 @@ async def home(request: Request):
         images = cursor.fetchall()
         conn.close()
 
-        return templates.TemplateResponse("index.html", {"request": request, "images": images})
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 # Catch-all endpoint for serving static files or the index page
 
@@ -319,6 +303,7 @@ def serve_files(request: Request):
     index = 'templates/index.html'
     return FileResponse(index)
 
+app.add_middleware(SessionMiddleware, secret_key=os.getenv('secret_session'))
 
 if __name__ == '__main__':
     uvicorn.run(app)
