@@ -59,7 +59,7 @@ client = DiscordOAuthClient(
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/tmp", StaticFiles(directory="tmp"), name="tmp")
+#app.mount("/tmp", StaticFiles(directory="tmp"), name="tmp")
 templates = Jinja2Templates(directory="templates")
 
 
