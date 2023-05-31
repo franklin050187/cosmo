@@ -392,9 +392,23 @@ async def home(request: Request):
 
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
+### test section ###
+import psycopg2
+conn = psycopg2.connect(database=os.getenv('POSTGRES_DATABASE'),
+                        host=os.getenv('POSTGRES_HOST'),
+                        user=os.getenv('POSTGRES_USER'),
+                        password=os.getenv('POSTGRES_PASSWORD'),
+                        port=5432)
+
+@app.get("/testget", response_class=FileResponse)
+async def test(request: Request):
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM images")
+    images = cursor.fetchall()
+    conn.close()
+    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": "testget"})
+
 # Catch-all endpoint for serving static files or the index page
-
-
 @app.get("/{catchall:path}", response_class=FileResponse)
 def serve_files(request: Request):
     # Check if the requested file exists
