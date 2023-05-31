@@ -3,6 +3,7 @@ import sqlite3
 import base64
 from dotenv import load_dotenv
 
+import psycopg2
 import uvicorn
 from fastapi import FastAPI, Request, File, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
@@ -12,34 +13,31 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
 
-
-
 load_dotenv()
 
 # Discord OAuth2 settings
 client_id = os.getenv('discord_id')
 client_secret = os.getenv('discord_secret')
 redirect_uri = os.getenv('discord_redirect')
-print(redirect_uri)
 
 client = DiscordOAuthClient(
     client_id, client_secret, redirect_uri, ("identify", "guilds"))
 
 
 # Create a table in the database if it doesn't exist
-def create_table():
-    file_path = "example.db"
-    if not os.path.exists(file_path):
-        # Create an empty file
-        open(file_path, 'w').close()
-        print("File created successfully.")
-    else:
-        print("File already exists.")
-    conn = sqlite3.connect('example.db')
-    cursor = conn.cursor()
-    cursor.execute('CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, data TEXT, submitted_by TEXT, description TEXT, ship_name TEXT, author TEXT, price INT, cannon INT, deck_cannon INT, emp_missiles INT, flak_battery INT, he_missiles INT, large_cannon INT, mines INT, nukes INT, railgun INT, ammo_factory INT, emp_factory INT, he_factory INT, mine_factory INT, nuke_factory INT, disruptors INT, heavy_Laser INT, ion_Beam INT, ion_Prism INT, laser INT, mining_Laser INT, point_Defense INT, boost_thruster INT, airlock INT, campaign_factories INT, explosive_charges INT, fire_extinguisher INT, no_fire_extinguishers INT, large_reactor INT, large_shield INT, medium_reactor INT, sensor INT, small_hyperdrive INT, small_reactor INT, small_shield INT, tractor_beams INT, hyperdrive_relay INT, bidirectional_thrust INT, mono_thrust INT, multi_thrust INT, omni_thrust INT, armor_defenses INT, mixed_defenses INT, shield_defenses INT, Corvette INT, diagonal INT, flanker INT, mixed_weapons INT, painted INT, unpainted INT, splitter INT, utility_weapons INT, transformer INT)')
-    conn.commit()
-    conn.close()
+# def create_table():
+#     file_path = "example.db"
+#     if not os.path.exists(file_path):
+#         # Create an empty file
+#         open(file_path, 'w').close()
+#         print("File created successfully.")
+#     else:
+#         print("File already exists.")
+#     conn = sqlite3.connect('example.db')
+#     cursor = conn.cursor()
+#     cursor.execute('CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, data TEXT, submitted_by TEXT, description TEXT, ship_name TEXT, author TEXT, price INT, cannon INT, deck_cannon INT, emp_missiles INT, flak_battery INT, he_missiles INT, large_cannon INT, mines INT, nukes INT, railgun INT, ammo_factory INT, emp_factory INT, he_factory INT, mine_factory INT, nuke_factory INT, disruptors INT, heavy_Laser INT, ion_Beam INT, ion_Prism INT, laser INT, mining_Laser INT, point_Defense INT, boost_thruster INT, airlock INT, campaign_factories INT, explosive_charges INT, fire_extinguisher INT, no_fire_extinguishers INT, large_reactor INT, large_shield INT, medium_reactor INT, sensor INT, small_hyperdrive INT, small_reactor INT, small_shield INT, tractor_beams INT, hyperdrive_relay INT, bidirectional_thrust INT, mono_thrust INT, multi_thrust INT, omni_thrust INT, armor_defenses INT, mixed_defenses INT, shield_defenses INT, Corvette INT, diagonal INT, flanker INT, mixed_weapons INT, painted INT, unpainted INT, splitter INT, utility_weapons INT, transformer INT)')
+#     conn.commit()
+#     conn.close()
 
 
 app = FastAPI()
@@ -47,9 +45,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
-@app.on_event("startup")
-async def startup_event():
-    create_table()
+# @app.on_event("startup")
+# async def startup_event():
+#     create_table()
 
 
 @app.get('/login')
@@ -68,7 +66,7 @@ def get_image(id: int, request: Request):
     conn.close()
     # Pass the image data to the template and render it
     print(user)
-    print(image_data)
+    #print(image_data)
     return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user})
 
 @app.get("/delete/{id}", response_class=HTMLResponse)
@@ -175,9 +173,6 @@ async def edit_image(id: int, request: Request):
     # Redirect to the home page
     return RedirectResponse(url="/", status_code=303)
 
-
-
-
 @app.get('/callback')
 async def finish_login(code: str, request: Request):
     async with client.session(code) as session:
@@ -196,7 +191,6 @@ async def finish_login(code: str, request: Request):
     # redirect to join the server before uploading
     return templates.TemplateResponse("auth.html", {"request": request, "user": user})    
 
-
 # Endpoint for displaying the file upload page
 @app.get("/upload", response_class=FileResponse)
 async def upload_page(request: Request):
@@ -208,8 +202,6 @@ async def upload_page(request: Request):
     return templates.TemplateResponse("upload.html", {"request": request, "user": user})
 
 # Endpoint for uploading files
-
-
 @app.post("/upload/")
 async def upload(request: Request, file: UploadFile = File(...)):
     # Read the image file
@@ -384,20 +376,23 @@ async def home(request: Request):
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 ### test section ###
-import psycopg2
-conn = psycopg2.connect(database=os.getenv('POSTGRES_DATABASE'),
+
+
+
+@app.get("/testget", response_class=FileResponse)
+async def test(request: Request):
+    conn = psycopg2.connect(database=os.getenv('POSTGRES_DATABASE'),
                         host=os.getenv('POSTGRES_HOST'),
                         user=os.getenv('POSTGRES_USER'),
                         password=os.getenv('POSTGRES_PASSWORD'),
                         port=5432)
-
-@app.get("/testget", response_class=FileResponse)
-async def test(request: Request):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM images")
     images = cursor.fetchall()
     conn.close()
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": "testget"})
+### END ###
+
 
 # Catch-all endpoint for serving static files or the index page
 @app.get("/{catchall:path}", response_class=FileResponse)
