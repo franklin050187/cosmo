@@ -90,44 +90,36 @@ def get_image(id: int, request: Request):
     conn.commit()
     conn.close()
     
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # ### dirty edit ###
+    # script_dir = os.path.dirname(os.path.abspath(__file__))
+ 
+    # # Create folder if it doesn't exist
+    # folder_path = os.path.join(script_dir, f"tmp/{id}")
+    # os.makedirs(folder_path, exist_ok=True)
+
+    # # Decode base64 image data
+    # image_bytes = base64.b64decode(image_data[2])
+
+    # # Generate filename using image_data[1]
+    # filename = image_data[1]
+
+    # # Save the image file in the created folder
+    # file_path = os.path.join(folder_path, filename)
     
-    # # Create the directory if it doesn't exist in the root directory
-    # directory = os.path.join(script_dir, f"tmp/{id}")
-    # os.makedirs(directory, exist_ok=True)
-
-    # # Determine the file path
-    # file_path = os.path.join(directory, image_data[1])
-    # print(file_path)
-
-    # # Write the image file if it doesn't exist
+    # # Replace backslash with forward slash in the file path
     # if not os.path.exists(file_path):
-    #     with open(file_path, "wb") as file:
-    #         file.write(base64.b64decode(image_data[2]))
-    
-    # Create folder if it doesn't exist
-    folder_path = os.path.join(script_dir, f"tmp/{id}")
-    os.makedirs(folder_path, exist_ok=True)
-
-    # Decode base64 image data
-    image_bytes = base64.b64decode(image_data[2])
-
-    # Generate filename using image_data[1]
-    filename = image_data[1]
-
-    # Save the image file in the created folder
-    file_path = os.path.join(folder_path, filename)
-    
-    # Replace backslash with forward slash in the file path
-    if not os.path.exists(file_path):
-        with open(file_path, "wb") as f:
-            f.write(image_bytes)
-    else:
-        print("File already exists. Skipping creation.")
+    #     with open(file_path, "wb") as f:
+    #         f.write(image_bytes)
+    # else:
+    #     print("File already exists. Skipping creation.")
         
-    print(file_path)
+    # print(file_path)
+    
     # Pass the image data and file path to the template
-    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "file_path": file_path})
+    # return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "file_path": file_path})
+    # ### dirty edit ###
+    
+    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user})
 
 @app.get("/delete/{id}", response_class=HTMLResponse)
 def delete_image(id: int, request: Request):

@@ -60,7 +60,8 @@
                             </ul>
                         </span>
                         <li>
-                            <img loading="lazy" src="/tmp/{{ image[0] }}/{{ image[1] }}" width="512" height="512">
+                            {% comment %} <img loading="lazy" src="/tmp/{{ image[0] }}/{{ image[1] }}" width="512" height="512"> {% endcomment %}
+                            <img loading="lazy" src="data:image/png;base64,{{ image[2] }}" width="512" height="512">
                         </li>
                         {% if user == image[3] %}
                             <ul><a title="Edit" class="blue-btn register" href="/edit/{{ image[0] }}"><span>Edit</span></a></ul>
