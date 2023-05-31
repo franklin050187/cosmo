@@ -23,7 +23,7 @@
                                  
             </ul>
         </nav>
-        <img loading="lazy"alt="Excelsior logo" src="/static/img/excelsior-logo.webp">
+        <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
         <ul class="user-container">
             <p>Welcome {{ user }} </p>
             <li><a title="Upload" class="blue-btn register" href="/upload"><span>Upload</span></a></li>
@@ -94,7 +94,7 @@
                                 <span class="data"><span>Description:</span> {{ image[4] }}</span>
                             </div>
                             <div class="actions-container">
-                                <a class="blue-btn" title="See the ship page" href="#"></a>
+                                <a class="blue-btn" title="See the ship page" href="/ship/{{ image[0] }}"></a>
                                 <button type="button" class="blue-btn download-btn" title="Download this ship" onclick="downloadShip('{{ image[2] }}', '{{ image[1] }}')"></button>
                             </div>
                         </li>

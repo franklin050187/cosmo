@@ -70,6 +70,20 @@ body .blue-btn {
     transition: background-color 150ms, color 150ms;
 }
 
+body .red-btn {
+    display: block;
+    float: left;
+    position: relative;
+    border: 1px solid #1C598C;
+    border-radius: 5px;
+    background: linear-gradient(180deg, rgba(255, 0, 0, 0.25) 2%, rgba(255, 0, 0, 0.25) 98%);
+    color: #00d3ff;
+    text-decoration: none;
+    padding: 10px;
+    box-shadow: inset 0px 0px 8px rgba(0, 126, 255, 0.35), 0px 0px 5px rgba(0, 126, 255, 0.35);
+    transition: background-color 150ms, color 150ms;
+}
+
 body .blue-btn:hover {
     background-color: rgba(0, 126, 255, 0.2);
     color: #fff;

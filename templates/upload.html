@@ -17,7 +17,7 @@
    <body>
       <header>
          <button id="menu-btn" class="menu-btn blue-btn" type="button" onclick="redirectToHomePage()"><span></span><span></span><span></span></button>
-         <img loading="lazy"alt="Excelsior logo" src="/static/img/excelsior-logo.webp" href="/">
+         <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
          <ul class="user-container">
             <p>Welcome {{user}} </p>
         </ul>
@@ -280,8 +280,6 @@
                                                             <td>
                                                                <tr>
                                                             <ul>
-                                                               <label for="submitted_by">Submitted by:</label>
-                                                               <input type="text" name="submitted_by" id="submitted_by">
                                                                <label for="author">Author:</label>
                                                                <input type="text" name="author" id="author">
                                                                <label for="ship_name">Ship name:</label>

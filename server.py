@@ -65,6 +65,127 @@ async def startup_event():
 async def start_login():
     return client.redirect()
 
+@app.get("/ship/{id}", response_class=HTMLResponse)
+def get_image(id: int, request: Request):
+    user = request.session.get("discord_user")
+    # Retrieve image information from the database based on the provided ID
+    conn = sqlite3.connect('example.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM images WHERE id=?", (id,))
+    image_data = cursor.fetchone()
+    conn.commit()
+    conn.close()
+    # Pass the image data to the template and render it
+    print(user)
+    print(image_data)
+    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user})
+
+@app.get("/delete/{id}", response_class=HTMLResponse)
+def delete_image(id: int, request: Request):
+    # Delete image information from the database based on the provided ID
+    user = request.session.get("discord_user")
+    print(user)
+    conn = sqlite3.connect('example.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT submitted_by FROM images WHERE id=?", (id,))
+    image_data = cursor.fetchone()
+    print(image_data[0])
+    if user != image_data[0]:
+        print("not allowed")
+        conn.commit()
+        conn.close()
+        return RedirectResponse("/")
+    cursor.execute("DELETE FROM images WHERE id=?", (id,))
+    conn.commit()
+    conn.close()
+
+    # Redirect to the home page after deleting the image
+    return RedirectResponse("/")
+
+@app.get("/edit/{id}", response_class=HTMLResponse)
+def edit_image(id: int, request: Request):
+    # Delete image information from the database based on the provided ID
+    user = request.session.get("discord_user")
+    print(user)
+    conn = sqlite3.connect('example.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT submitted_by FROM images WHERE id=?", (id,))
+    image_data = cursor.fetchone()
+    #print(image_data[0])
+    if user != image_data[0]:
+        print("not allowed")
+        conn.commit()
+        conn.close()
+        return RedirectResponse("/")
+    cursor.execute("SELECT * FROM images WHERE id=?", (id,))
+    image_data = cursor.fetchone()
+    conn.commit()
+    conn.close()
+
+    # Redirect to the home page after deleting the image
+    return templates.TemplateResponse("edit.html", {"request": request, "image": image_data, "user": user})
+
+@app.post("/edit/{id}")
+async def edit_image(id: int, request: Request):
+
+    # Get the user from the session
+    user = request.session.get("discord_user")
+    conn = sqlite3.connect('example.db')
+    cursor = conn.cursor()
+
+    # Retrieve the existing image data from the database
+    cursor.execute("SELECT * FROM images WHERE id=?", (id,))
+    image_data = list(cursor.fetchone())
+    #print(image_data)
+    if user != image_data[3]:
+        print("not allowed")
+        conn.commit()
+        conn.close()
+        return RedirectResponse("/")
+    # Prepare the data
+    form_data = await request.form()
+    print("allowed")
+    # Keep the existing values for 'name' and 'data'
+    image_data[2] = image_data[2]
+    image_data[3] = user
+    image_data[4] = form_data.get('description', '')
+    image_data[5] = form_data.get('ship_name', '')
+    image_data[6] = form_data.get('author', '')
+    image_data[7] = int(form_data.get('price', 0))
+
+    # Update the boolean columns
+    boolean_columns = [
+        'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes',
+        'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors',
+        'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense', 'boost_thruster',
+        'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
+        'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor',
+        'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust',
+        'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'Corvette', 'diagonal', 'flanker',
+        'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer'
+    ]
+    for i, column in enumerate(boolean_columns, start=8):
+        if column in form_data:
+            image_data[i] = 1
+        else:
+            image_data[i] = 0
+
+    # Update the image data in the database
+    columns = ['name', 'data', 'submitted_by', 'description', 'ship_name', 'author', 'price'] + boolean_columns
+    values = [image_data[1]] + [image_data[2]] + [image_data[3]] + image_data[4:8] + image_data[8:]
+    query = f"UPDATE images SET {', '.join([f'{column}=?' for column in columns])} WHERE id=?"
+    #print(query)
+    cursor.execute(query, tuple(values + [id]))
+
+    # Commit and close the connection
+    conn.commit()
+    conn.close()
+
+    # Redirect to the home page
+    return RedirectResponse(url="/", status_code=303)
+
+
+
 
 @app.get('/callback')
 async def finish_login(code: str, request: Request):
@@ -107,7 +228,7 @@ async def upload(request: Request, file: UploadFile = File(...)):
     # Store the image data in the database
     # user = request.session.get("discord_user")
     # get input box
-
+    user = request.session.get("discord_user")
     conn = sqlite3.connect('example.db')
     cursor = conn.cursor()
 
@@ -116,7 +237,7 @@ async def upload(request: Request, file: UploadFile = File(...)):
     image_data = {
         'name': file.filename,
         'data': encoded_data,
-        'submitted_by': form_data.get('submitted_by', ''),
+        'submitted_by': user,
         'description': form_data.get('description', ''),
         'ship_name': form_data.get('ship_name', ''),
         'author': form_data.get('author', ''),
