@@ -36,37 +36,22 @@ load_dotenv()
 client_id = os.getenv('discord_id')
 client_secret = os.getenv('discord_secret')
 redirect_uri = os.getenv('discord_redirect')
-
 client = DiscordOAuthClient(
     client_id, client_secret, redirect_uri, ("identify", "guilds"))
 
-
-# Create a table in the database if it doesn't exist
-# def create_table():
-#     file_path = "example.db"
-#     if not os.path.exists(file_path):
-#         # Create an empty file
-#         open(file_path, 'w').close()
-#         print("File created successfully.")
-#     else:
-#         print("File already exists.")
-#     # conn = sqlite3.connect('example.db')
-#     cursor = conn.cursor()
-#     cursor.execute('CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, data TEXT, submitted_by TEXT, description TEXT, ship_name TEXT, author TEXT, price INT, cannon INT, deck_cannon INT, emp_missiles INT, flak_battery INT, he_missiles INT, large_cannon INT, mines INT, nukes INT, railgun INT, ammo_factory INT, emp_factory INT, he_factory INT, mine_factory INT, nuke_factory INT, disruptors INT, heavy_Laser INT, ion_Beam INT, ion_Prism INT, laser INT, mining_Laser INT, point_Defense INT, boost_thruster INT, airlock INT, campaign_factories INT, explosive_charges INT, fire_extinguisher INT, no_fire_extinguishers INT, large_reactor INT, large_shield INT, medium_reactor INT, sensor INT, small_hyperdrive INT, small_reactor INT, small_shield INT, tractor_beams INT, hyperdrive_relay INT, bidirectional_thrust INT, mono_thrust INT, multi_thrust INT, omni_thrust INT, armor_defenses INT, mixed_defenses INT, shield_defenses INT, Corvette INT, diagonal INT, flanker INT, mixed_weapons INT, painted INT, unpainted INT, splitter INT, utility_weapons INT, transformer INT)')
-#     conn.commit()
-#     conn.close()
-
-
+# app configuration
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 #app.mount("/tmp", StaticFiles(directory="tmp"), name="tmp")
 templates = Jinja2Templates(directory="templates")
 
+# tmp test
+tmp_directory = "tmp"
+if not os.path.exists(tmp_directory):
+    os.makedirs(tmp_directory)
+app.mount("/tmp", StaticFiles(directory=tmp_directory), name="tmp")
 
-# @app.on_event("startup")
-# async def startup_event():
-#     create_table()
-
+# postgresql configuration (db and table must be setup before use)
 def connect_to_server():
     conn = psycopg2.connect(database=os.getenv('POSTGRES_DATABASE'),
                     host=os.getenv('POSTGRES_HOST'),
@@ -75,10 +60,12 @@ def connect_to_server():
                     port=5432)
     return conn
 
+# init login
 @app.get('/login')
 async def start_login():
     return client.redirect()
 
+# ship specific page
 @app.get("/ship/{id}", response_class=HTMLResponse)
 def get_image(id: int, request: Request):
     user = request.session.get("discord_user")
@@ -121,6 +108,7 @@ def get_image(id: int, request: Request):
     
     return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user})
 
+# delete user ship
 @app.get("/delete/{id}", response_class=HTMLResponse)
 def delete_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
@@ -144,6 +132,7 @@ def delete_image(id: int, request: Request):
     # Redirect to the home page after deleting the image
     return RedirectResponse("/")
 
+# edit page get
 @app.get("/edit/{id}", response_class=HTMLResponse)
 def edit_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
@@ -168,6 +157,7 @@ def edit_image(id: int, request: Request):
     # Redirect to the home page after deleting the image
     return templates.TemplateResponse("edit.html", {"request": request, "image": image_data, "user": user})
 
+# edit post
 @app.post("/edit/{id}")
 async def edit_image(id: int, request: Request):
 
@@ -228,6 +218,7 @@ async def edit_image(id: int, request: Request):
     # Redirect to the home page
     return RedirectResponse(url="/", status_code=303)
 
+# login finish
 @app.get('/callback')
 async def finish_login(code: str, request: Request):
     async with client.session(code) as session:
@@ -322,6 +313,7 @@ async def upload(request: Request, file: UploadFile = File(...)):
     # Redirect to the index page
     return RedirectResponse(url="/", status_code=303)
 
+# main page + search results
 @app.route("/", methods=["GET", "POST"])
 async def home(request: Request):
     user = request.session.get("discord_user")
@@ -438,22 +430,6 @@ async def home(request: Request):
 
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
-# ### test section ###
-# @app.get("/testget", response_class=FileResponse)
-# async def test(request: Request):
-#     conn = psycopg2.connect(database=os.getenv('POSTGRES_DATABASE'),
-#                         host=os.getenv('POSTGRES_HOST'),
-#                         user=os.getenv('POSTGRES_USER'),
-#                         password=os.getenv('POSTGRES_PASSWORD'),
-#                         port=5432)
-#     cursor = conn.cursor()
-#     cursor.execute("SELECT * FROM images")
-#     images = cursor.fetchall()
-#     conn.close()
-#     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": "testget"})
-# ### END ###
-
-
 # Catch-all endpoint for serving static files or the index page
 @app.get("/{catchall:path}", response_class=FileResponse)
 def serve_files(request: Request):
@@ -466,7 +442,9 @@ def serve_files(request: Request):
     index = 'templates/index.html'
     return FileResponse(index)
 
+# session settings
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('secret_session'))
 
+# start server
 if __name__ == '__main__':
     uvicorn.run(app)
