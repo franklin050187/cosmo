@@ -19,7 +19,6 @@ from dotenv import load_dotenv
 
 import psycopg2
 import uvicorn
-import urllib
 import re
 from fastapi import FastAPI, Request, File, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
@@ -28,7 +27,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
-from urllib.parse import unquote, quote
+from png_upload import upload_image_to_imgbb
 
 load_dotenv()
 
@@ -71,36 +70,10 @@ def get_image(id: int, request: Request):
     conn.commit()
     conn.close()
     
-    # ### dirty edit ### lets assume the TMP is mounted by default nope still crashed
-    # script_dir = os.path.dirname(os.path.abspath(__file__))
- 
-    # # Create folder if it doesn't exist
-    # folder_path = os.path.join(script_dir, f"tmp/{id}")
-    # os.makedirs(folder_path, exist_ok=True)
-
-    # # Decode base64 image data
-    # image_bytes = base64.b64decode(image_data[2])
-
-    # # Generate filename using image_data[1]
-    # filename = image_data[1]
-
-    # # Save the image file in the created folder
-    # file_path = os.path.join(folder_path, filename)
-    
-    # # Replace backslash with forward slash in the file path
-    # if not os.path.exists(file_path):
-    #     with open(file_path, "wb") as f:
-    #         f.write(image_bytes)
-    # else:
-    #     print("File already exists. Skipping creation.")
+    # upload to imagebb and get url
+    url_png = upload_image_to_imgbb(image_data[2])
         
-    # print(file_path)
-    
-    # # Pass the image data and file path to the template
-    # return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "file_path": file_path})
-    # ### dirty edit ###
-    
-    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user})
+    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png})
 
 # delete user ship
 @app.get("/delete/{id}", response_class=HTMLResponse)
