@@ -71,34 +71,34 @@ def get_image(id: int, request: Request):
     conn.commit()
     conn.close()
     
-    # ### dirty edit ### lets assume the TMP is mounted by default nope still crashed
-    # script_dir = os.path.dirname(os.path.abspath(__file__))
+    ### dirty edit ### lets assume the TMP is mounted by default nope still crashed
+    script_dir = os.path.dirname(os.path.abspath(__file__))
  
-    # # Create folder if it doesn't exist
-    # folder_path = os.path.join(script_dir, f"tmp/{id}")
-    # os.makedirs(folder_path, exist_ok=True)
+    # Create folder if it doesn't exist
+    folder_path = os.path.join(script_dir, f"tmp/{id}")
+    os.makedirs(folder_path, exist_ok=True)
 
-    # # Decode base64 image data
-    # image_bytes = base64.b64decode(image_data[2])
+    # Decode base64 image data
+    image_bytes = base64.b64decode(image_data[2])
 
-    # # Generate filename using image_data[1]
-    # filename = image_data[1]
+    # Generate filename using image_data[1]
+    filename = image_data[1]
 
-    # # Save the image file in the created folder
-    # file_path = os.path.join(folder_path, filename)
+    # Save the image file in the created folder
+    file_path = os.path.join(folder_path, filename)
     
-    # # Replace backslash with forward slash in the file path
-    # if not os.path.exists(file_path):
-    #     with open(file_path, "wb") as f:
-    #         f.write(image_bytes)
-    # else:
-    #     print("File already exists. Skipping creation.")
+    # Replace backslash with forward slash in the file path
+    if not os.path.exists(file_path):
+        with open(file_path, "wb") as f:
+            f.write(image_bytes)
+    else:
+        print("File already exists. Skipping creation.")
         
-    # print(file_path)
+    print(file_path)
     
-    # # Pass the image data and file path to the template
-    # return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "file_path": file_path})
-    # ### dirty edit ###
+    # Pass the image data and file path to the template
+    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "file_path": file_path})
+    ### dirty edit ###
     
     return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user})
 
