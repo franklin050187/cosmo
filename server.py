@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 
 import psycopg2
 import uvicorn
+import urllib
+import re
 from fastapi import FastAPI, Request, File, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -12,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
+from urllib.parse import unquote, quote
 
 load_dotenv()
 
@@ -33,7 +36,7 @@ client = DiscordOAuthClient(
 #         print("File created successfully.")
 #     else:
 #         print("File already exists.")
-#     conn = sqlite3.connect('example.db')
+#     # conn = sqlite3.connect('example.db')
 #     cursor = conn.cursor()
 #     cursor.execute('CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, data TEXT, submitted_by TEXT, description TEXT, ship_name TEXT, author TEXT, price INT, cannon INT, deck_cannon INT, emp_missiles INT, flak_battery INT, he_missiles INT, large_cannon INT, mines INT, nukes INT, railgun INT, ammo_factory INT, emp_factory INT, he_factory INT, mine_factory INT, nuke_factory INT, disruptors INT, heavy_Laser INT, ion_Beam INT, ion_Prism INT, laser INT, mining_Laser INT, point_Defense INT, boost_thruster INT, airlock INT, campaign_factories INT, explosive_charges INT, fire_extinguisher INT, no_fire_extinguishers INT, large_reactor INT, large_shield INT, medium_reactor INT, sensor INT, small_hyperdrive INT, small_reactor INT, small_shield INT, tractor_beams INT, hyperdrive_relay INT, bidirectional_thrust INT, mono_thrust INT, multi_thrust INT, omni_thrust INT, armor_defenses INT, mixed_defenses INT, shield_defenses INT, Corvette INT, diagonal INT, flanker INT, mixed_weapons INT, painted INT, unpainted INT, splitter INT, utility_weapons INT, transformer INT)')
 #     conn.commit()
@@ -42,6 +45,7 @@ client = DiscordOAuthClient(
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/tmp", StaticFiles(directory="tmp"), name="tmp")
 templates = Jinja2Templates(directory="templates")
 
 
@@ -49,6 +53,13 @@ templates = Jinja2Templates(directory="templates")
 # async def startup_event():
 #     create_table()
 
+def connect_to_server():
+    conn = psycopg2.connect(database=os.getenv('POSTGRES_DATABASE'),
+                    host=os.getenv('POSTGRES_HOST'),
+                    user=os.getenv('POSTGRES_USER'),
+                    password=os.getenv('POSTGRES_PASSWORD'),
+                    port=5432)
+    return conn
 
 @app.get('/login')
 async def start_login():
@@ -58,25 +69,61 @@ async def start_login():
 def get_image(id: int, request: Request):
     user = request.session.get("discord_user")
     # Retrieve image information from the database based on the provided ID
-    conn = sqlite3.connect('example.db')
+    conn = connect_to_server()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM images WHERE id=?", (id,))
+    cursor.execute("SELECT * FROM images WHERE id=%s", (id,))
     image_data = cursor.fetchone()
     conn.commit()
     conn.close()
-    # Pass the image data to the template and render it
-    print(user)
-    #print(image_data)
-    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user})
+    
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # # Create the directory if it doesn't exist in the root directory
+    # directory = os.path.join(script_dir, f"tmp/{id}")
+    # os.makedirs(directory, exist_ok=True)
+
+    # # Determine the file path
+    # file_path = os.path.join(directory, image_data[1])
+    # print(file_path)
+
+    # # Write the image file if it doesn't exist
+    # if not os.path.exists(file_path):
+    #     with open(file_path, "wb") as file:
+    #         file.write(base64.b64decode(image_data[2]))
+    
+    # Create folder if it doesn't exist
+    folder_path = os.path.join(script_dir, f"tmp/{id}")
+    os.makedirs(folder_path, exist_ok=True)
+
+    # Decode base64 image data
+    image_bytes = base64.b64decode(image_data[2])
+
+    # Generate filename using image_data[1]
+    filename = image_data[1]
+
+    # Save the image file in the created folder
+    file_path = os.path.join(folder_path, filename)
+    
+    # Replace backslash with forward slash in the file path
+    if not os.path.exists(file_path):
+        with open(file_path, "wb") as f:
+            f.write(image_bytes)
+    else:
+        print("File already exists. Skipping creation.")
+        
+    print(file_path)
+    # Pass the image data and file path to the template
+    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "file_path": file_path})
 
 @app.get("/delete/{id}", response_class=HTMLResponse)
 def delete_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
     print(user)
-    conn = sqlite3.connect('example.db')
+    # conn = sqlite3.connect('example.db')
+    conn = connect_to_server()
     cursor = conn.cursor()
-    cursor.execute("SELECT submitted_by FROM images WHERE id=?", (id,))
+    cursor.execute("SELECT submitted_by FROM images WHERE id=%s", (id,))
     image_data = cursor.fetchone()
     print(image_data[0])
     if user != image_data[0]:
@@ -84,7 +131,7 @@ def delete_image(id: int, request: Request):
         conn.commit()
         conn.close()
         return RedirectResponse("/")
-    cursor.execute("DELETE FROM images WHERE id=?", (id,))
+    cursor.execute("DELETE FROM images WHERE id=%s", (id,))
     conn.commit()
     conn.close()
 
@@ -96,9 +143,10 @@ def edit_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
     print(user)
-    conn = sqlite3.connect('example.db')
+    # conn = sqlite3.connect('example.db')
+    conn = connect_to_server()
     cursor = conn.cursor()
-    cursor.execute("SELECT submitted_by FROM images WHERE id=?", (id,))
+    cursor.execute("SELECT submitted_by FROM images WHERE id=%s", (id,))
     image_data = cursor.fetchone()
     #print(image_data[0])
     if user != image_data[0]:
@@ -106,7 +154,7 @@ def edit_image(id: int, request: Request):
         conn.commit()
         conn.close()
         return RedirectResponse("/")
-    cursor.execute("SELECT * FROM images WHERE id=?", (id,))
+    cursor.execute("SELECT * FROM images WHERE id=%s", (id,))
     image_data = cursor.fetchone()
     conn.commit()
     conn.close()
@@ -119,11 +167,12 @@ async def edit_image(id: int, request: Request):
 
     # Get the user from the session
     user = request.session.get("discord_user")
-    conn = sqlite3.connect('example.db')
+    # conn = sqlite3.connect('example.db')
+    conn = connect_to_server()
     cursor = conn.cursor()
 
     # Retrieve the existing image data from the database
-    cursor.execute("SELECT * FROM images WHERE id=?", (id,))
+    cursor.execute("SELECT * FROM images WHERE id=%s", (id,))
     image_data = list(cursor.fetchone())
     #print(image_data)
     if user != image_data[3]:
@@ -162,7 +211,7 @@ async def edit_image(id: int, request: Request):
     # Update the image data in the database
     columns = ['name', 'data', 'submitted_by', 'description', 'ship_name', 'author', 'price'] + boolean_columns
     values = [image_data[1]] + [image_data[2]] + [image_data[3]] + image_data[4:8] + image_data[8:]
-    query = f"UPDATE images SET {', '.join([f'{column}=?' for column in columns])} WHERE id=?"
+    query = f"UPDATE images SET {', '.join([f'{column}=%s' for column in columns])} WHERE id=%s"
     #print(query)
     cursor.execute(query, tuple(values + [id]))
 
@@ -212,13 +261,19 @@ async def upload(request: Request, file: UploadFile = File(...)):
     # user = request.session.get("discord_user")
     # get input box
     user = request.session.get("discord_user")
-    conn = sqlite3.connect('example.db')
+    # conn = sqlite3.connect('example.db')
+    conn = connect_to_server()
     cursor = conn.cursor()
 
     # Prepare the data
     form_data = await request.form()
+    
+    # Modify the file name to use authorized characters for HTML
+    file_name = file.filename
+    authorized_chars = re.sub(r'[^\w\-_.]', '_', file_name)
+    
     image_data = {
-        'name': file.filename,
+        'name': authorized_chars,
         'data': encoded_data,
         'submitted_by': user,
         'description': form_data.get('description', ''),
@@ -249,7 +304,7 @@ async def upload(request: Request, file: UploadFile = File(...)):
     boolean_values = [1 if column in form_data else 0 for column in boolean_columns]
 
     # Construct the SQL query
-    query = f"INSERT INTO images ({', '.join(columns + boolean_columns)}) VALUES ({', '.join(['?'] * (len(columns) + len(boolean_columns)))})"
+    query = f"INSERT INTO images ({', '.join(columns + boolean_columns)}) VALUES ({', '.join(['%s'] * (len(columns) + len(boolean_columns)))})"
 
     # Execute the query
     cursor.execute(query, tuple(values + boolean_values))
@@ -297,13 +352,14 @@ async def home(request: Request):
 
         print(query_tags)  # DEBUG
 
-        conn = sqlite3.connect('example.db')
+        # conn = sqlite3.connect('example.db')
+        conn = connect_to_server()
         cursor = conn.cursor()
 
         # Build the SQL query based on the search criteria
         query = "SELECT * FROM images"
         args = []  # a list to store the parameters
-        SQL_KEYWORDS = ['\\', ',', '\'', '"', '--', ';', '%', '&', '+', '*', '!', '?', '=', '>', '<',
+        SQL_KEYWORDS = ['\\', ',', '\'', '"', '--', ';', '%', '&', '+', '*', '!', '%s', '=', '>', '<',
                         '(', ')', '[', ']', '{', '}', '|', 'like', 'and', 'or', 'not', 'from', 'where', 'table', 'select']
 
         # check name, author, and description
@@ -314,12 +370,12 @@ async def home(request: Request):
                 continue
             if word[0] != '-':
                 other_conditions.append(
-                    "(name LIKE ? OR author LIKE ? OR description LIKE ?)")
+                    "(name LIKE %s OR author LIKE %s OR description LIKE %s)")
                 # add the parameters to the list
                 args.extend([f"%{word}%", f"%{word}%", f"%{word}%"])
             else:
                 other_conditions.append(
-                    "(name NOT LIKE ? AND author NOT LIKE ?)")
+                    "(name NOT LIKE %s AND author NOT LIKE %s)")
                 # add the parameters to the list
                 args.extend([f"%{word[1:]}%", f"%{word[1:]}%"])
 
@@ -327,13 +383,13 @@ async def home(request: Request):
         pos_tag_conditions = []
         for tag in query_tags:
             if tag[0] != '-':
-                pos_tag_conditions.append(f"{tag} = ?")
+                pos_tag_conditions.append(f"{tag} = %s")
                 args.append(1)  # add the parameter to the list
 
         neg_tag_conditions = []
         for tag in query_tags:
             if tag[0] == '-':
-                neg_tag_conditions.append(f"{tag[1:]} = ?")
+                neg_tag_conditions.append(f"{tag[1:]} = %s")
                 args.append(0)  # add the parameter to the list
 
         # build query
@@ -367,7 +423,8 @@ async def home(request: Request):
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
     else:
-        conn = sqlite3.connect('example.db')
+        # conn = sqlite3.connect('example.db')
+        conn = connect_to_server()
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM images')
         images = cursor.fetchall()
@@ -375,23 +432,20 @@ async def home(request: Request):
 
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
-### test section ###
-
-
-
-@app.get("/testget", response_class=FileResponse)
-async def test(request: Request):
-    conn = psycopg2.connect(database=os.getenv('POSTGRES_DATABASE'),
-                        host=os.getenv('POSTGRES_HOST'),
-                        user=os.getenv('POSTGRES_USER'),
-                        password=os.getenv('POSTGRES_PASSWORD'),
-                        port=5432)
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM images")
-    images = cursor.fetchall()
-    conn.close()
-    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": "testget"})
-### END ###
+# ### test section ###
+# @app.get("/testget", response_class=FileResponse)
+# async def test(request: Request):
+#     conn = psycopg2.connect(database=os.getenv('POSTGRES_DATABASE'),
+#                         host=os.getenv('POSTGRES_HOST'),
+#                         user=os.getenv('POSTGRES_USER'),
+#                         password=os.getenv('POSTGRES_PASSWORD'),
+#                         port=5432)
+#     cursor = conn.cursor()
+#     cursor.execute("SELECT * FROM images")
+#     images = cursor.fetchall()
+#     conn.close()
+#     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": "testget"})
+# ### END ###
 
 
 # Catch-all endpoint for serving static files or the index page
