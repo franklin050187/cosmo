@@ -1,27 +1,18 @@
-import uvicorn
-from fastapi import (
-    FastAPI,
-    Request,
-    File,
-    UploadFile,
-)
-from fastapi.responses import (
-    FileResponse,
-    RedirectResponse,
-    HTMLResponse,
-)
-from fastapi.templating import Jinja2Templates
-from starlette.middleware.sessions import SessionMiddleware
-from starlette.requests import Request
-from starlette.responses import RedirectResponse, JSONResponse
-from starlette_discord.client import DiscordOAuthClient
+import os
 import sqlite3
 import base64
-import os
 from dotenv import load_dotenv
-from fastapi.staticfiles import StaticFiles
 
-import json
+import uvicorn
+from fastapi import FastAPI, Request, File, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.requests import Request
+from starlette_discord.client import DiscordOAuthClient
+
+
 
 load_dotenv()
 
