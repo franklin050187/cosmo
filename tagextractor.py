@@ -67,8 +67,12 @@ class PNGTagExtractor:
         
         missile_types = []
         for item in toggle:
-            if '__bytes__' in item['Key'][1] and item['Key'][1]['__bytes__'] == '\x0cmissile_type':
-                missile_types.append(item['Value'])
+            try:
+                if '__bytes__' in item['Key'][1] and item['Key'][1]['__bytes__'] == '\x0cmissile_type':
+                    missile_types.append(item['Value'])
+            except:
+                continue
+
         
         ids = [item['ID'] for item in parts]
         
