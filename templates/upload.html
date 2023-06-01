@@ -37,7 +37,7 @@
                      <h1>Ship Upload</h1>
                      <p>{{ data.name }}</p>
                      <form action="/upload" method="post" enctype="multipart/form-data">
-                        <img loading="lazy" src="data:image/png;base64,{{ data.data }}" width="512" height="512">
+                        <img loading="lazy" src="{{ data.url_png }}" width="512" height="512">
                         <table style="width:100%">
                            <tr>
                               <th scope="col">ammunition weapons</th>
@@ -283,7 +283,7 @@
                                                                <label for="description">Description:</label>
                                                                <input type="text" name="description" id="description">
                                                                <input type="hidden" name="filename" id="filename" value="{{ data.name }}">
-                                                               <input type="hidden" name="base64image" id="base64image" value="{{ data.data }}">
+                                                               <input type="hidden" name="url_png" id="url_png" value="{{ data.url_png }}">
                                                             </ul>
                                                          </tr>
                                                          </td>

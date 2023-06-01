@@ -29,6 +29,7 @@ from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
 from png_upload import upload_image_to_imgbb
 from tagextractor import PNGTagExtractor
+import requests
 
 load_dotenv()
 
@@ -167,7 +168,7 @@ async def edit_image(id: int, request: Request):
         'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor',
         'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust',
         'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'Corvette', 'diagonal', 'flanker',
-        'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer'
+        'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer', 'campaign_ship', 'factories'
     ]
     for i, column in enumerate(boolean_columns, start=8):
         if column in form_data:
@@ -208,17 +209,6 @@ async def finish_login(code: str, request: Request):
     # redirect to join the server before uploading
     return templates.TemplateResponse("auth.html", {"request": request, "user": user})    
 
-# # Endpoint for displaying the file upload page
-# @app.get("/upload", response_class=FileResponse)
-# async def upload_page(request: Request):
-#     user = request.session.get("discord_user")
-#     if not user:
-#         print("DEBUG not a user upload")
-#         return RedirectResponse("/login")
-#     print(user)
-    
-#     return templates.TemplateResponse("upload.html", {"request": request, "user": user})
-
 # Endpoint for uploading files
 @app.post("/upload")
 async def upload(request: Request):
@@ -229,9 +219,19 @@ async def upload(request: Request):
     # Prepare the data
     form_data = await request.form()
     
+    url_png = form_data.get('url_png')
+
+    response = requests.get(url_png)
+    image_data = response.content
+
+    # Encode image data as base64
+    base64_image = base64.b64encode(image_data).decode('utf-8')
+    
+    # print(base64_image)
+
     image_data = {
         'name': form_data.get('filename', ''),
-        'data': form_data.get('base64image', ''),
+        'data': base64_image,
         'submitted_by': user,
         'description': form_data.get('description', ''),
         'ship_name': form_data.get('ship_name', ''),
@@ -254,7 +254,7 @@ async def upload(request: Request):
         'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor',
         'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust',
         'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'Corvette', 'diagonal', 'flanker',
-        'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer'
+        'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer', 'campaign_ship', 'factories'
     ]
 
     # Prepare the boolean values
@@ -307,13 +307,13 @@ async def upload(request: Request, file: UploadFile = File(...)):
 
     shipname = authorized_chars
     if ".png" in shipname:
-        shipname = authorized_chars.replace(".ship", "")
-    if ".png" in shipname:
+        shipname = authorized_chars.replace(".png", "")
+    if ".ship" in shipname:
         shipname = shipname.replace(".ship", "")
     
     data = {
         'name': authorized_chars,
-        'data': encoded_data,
+        # 'data': encoded_data,
         'url_png': url_png,
         'author' : author,
         'shipname': shipname,
