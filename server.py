@@ -31,6 +31,7 @@ from png_upload import upload_image_to_imgbb
 from tagextractor import PNGTagExtractor
 import requests
 from db import upload_image, get_image_data, get_image_url
+from fastapi.middleware.gzip import GZipMiddleware
 
 load_dotenv()
 
@@ -391,6 +392,7 @@ def serve_files(request: Request):
 
 # session settings
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('secret_session'))
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # start server
 if __name__ == '__main__':
