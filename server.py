@@ -435,6 +435,7 @@ async def home(request: Request):
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM images')
         images = cursor.fetchall()
+        conn.commit()
         conn.close()
 
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
