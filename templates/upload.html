@@ -35,6 +35,7 @@
                   
                   <ul>
                      <h1>Ship Upload</h1>
+                     <p>{{ data.name }}</p>
                      <form action="/upload" method="post" enctype="multipart/form-data">
                         <img loading="lazy" src="data:image/png;base64,{{ data.data }}" width="512" height="512">
                         <table style="width:100%">
@@ -270,7 +271,7 @@
                                                                <label for="author">Author:</label>
                                                                <input type="text" name="author" id="author" value="{{ data.author }}">
                                                                <label for="ship_name">Ship name:</label>
-                                                               <input type="text" name="ship_name" id="ship_name">
+                                                               <input type="text" name="ship_name" id="ship_name" value="{{ data.shipname }}">
                                                             </ul>
                                                          </tr>
                                                          </td>

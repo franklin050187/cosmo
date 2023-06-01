@@ -304,12 +304,19 @@ async def upload(request: Request, file: UploadFile = File(...)):
     # Modify the file name to use authorized characters for HTML
     file_name = file.filename
     authorized_chars = re.sub(r'[^\w\-_.]', '_', file_name)
+
+    shipname = authorized_chars
+    if ".png" in shipname:
+        shipname = authorized_chars.replace(".ship", "")
+    if ".png" in shipname:
+        shipname = shipname.replace(".ship", "")
     
     data = {
         'name': authorized_chars,
         'data': encoded_data,
         'url_png': url_png,
-        'author' : author
+        'author' : author,
+        'shipname': shipname,
     }
     request.session["upload_data"] = data
     # Redirect to the index page
