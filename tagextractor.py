@@ -1,9 +1,9 @@
-# tag extractor : takes a png and returns tags as a list
+# tag extractor : takes a base64 png and returns tags as a list
 
 # usage :
 # from tagextractor import PNGTagExtractor
 # extractor = PNGTagExtractor()
-# tags = extractor.extract_tags("all.png")
+# tags = extractor.extract_tags(base64png)
 # print(tags) # ['emp_missiles', 'nukes', 'large_reactor', 'large_shield', 'fire_extinguisher', 'railgun']
 
 from cosmoteer_save_tools import decode_ship_data
@@ -85,3 +85,10 @@ class PNGTagExtractor:
         mapped_output = list(mapped_output)
         
         return mapped_output
+    
+    def extract_author(self, png_file):
+        json_data = decode_ship_data(png_file)
+        data = json.loads(json_data)
+        
+        author = data["Author"]
+        return author

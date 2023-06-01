@@ -26,7 +26,7 @@
         <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
         <ul class="user-container">
             <p>Welcome {{ user }} </p>
-            <li><a title="Upload" class="blue-btn register" href="/upload"><span>Upload</span></a></li>
+            <li><a title="Upload" class="blue-btn register" href="/initupload"><span>Upload</span></a></li>
         </ul>
     </header>
 
@@ -91,7 +91,6 @@
                                 <span class="data credits"><span>Cost:</span> {{ image[7] }}₡</span>
                                 <span class="data"><span>Submitted by:</span> {{ image[3] }}</span>
                                 <span class="data"><span>Author:</span> {{ image[6] }}</span>
-                                <span class="data"><span>Description:</span> {{ image[4] }}</span>
                             </div>
                             <div class="actions-container">
                                 <a class="blue-btn" title="See the ship page" href="/ship/{{ image[0] }}"></a>

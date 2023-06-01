@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 import psycopg2
 import uvicorn
 import re
-from fastapi import FastAPI, Request, File, UploadFile
+from fastapi import FastAPI, Request, File, UploadFile, Depends
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -28,6 +28,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
 from png_upload import upload_image_to_imgbb
+from tagextractor import PNGTagExtractor
 
 load_dotenv()
 
@@ -52,6 +53,9 @@ def connect_to_server():
                     password=os.getenv('POSTGRES_PASSWORD'),
                     port=5432)
     return conn
+
+def get_upload_data(request: Request):
+    return request.session.get("upload_data")
 
 # init login
 @app.get('/login')
@@ -200,45 +204,34 @@ async def finish_login(code: str, request: Request):
         for guild in guilds:
             if guild.id == desired_id:
                 print(user)
-                return templates.TemplateResponse("upload.html", {"request": request, "user": user})
+                return templates.TemplateResponse("initupload.html", {"request": request, "user": user})
     # redirect to join the server before uploading
     return templates.TemplateResponse("auth.html", {"request": request, "user": user})    
 
-# Endpoint for displaying the file upload page
-@app.get("/upload", response_class=FileResponse)
-async def upload_page(request: Request):
-    user = request.session.get("discord_user")
-    if not user:
-        print("DEBUG not a user upload")
-        return RedirectResponse("/login")
-    print(user)
-    return templates.TemplateResponse("upload.html", {"request": request, "user": user})
+# # Endpoint for displaying the file upload page
+# @app.get("/upload", response_class=FileResponse)
+# async def upload_page(request: Request):
+#     user = request.session.get("discord_user")
+#     if not user:
+#         print("DEBUG not a user upload")
+#         return RedirectResponse("/login")
+#     print(user)
+    
+#     return templates.TemplateResponse("upload.html", {"request": request, "user": user})
 
 # Endpoint for uploading files
-@app.post("/upload/")
-async def upload(request: Request, file: UploadFile = File(...)):
-    # Read the image file
-    contents = await file.read()
-    # Encode the contents as base64
-    encoded_data = base64.b64encode(contents).decode("utf-8")
-    # Store the image data in the database
-    # user = request.session.get("discord_user")
-    # get input box
+@app.post("/upload")
+async def upload(request: Request):
     user = request.session.get("discord_user")
-    # conn = sqlite3.connect('example.db')
     conn = connect_to_server()
     cursor = conn.cursor()
 
     # Prepare the data
     form_data = await request.form()
     
-    # Modify the file name to use authorized characters for HTML
-    file_name = file.filename
-    authorized_chars = re.sub(r'[^\w\-_.]', '_', file_name)
-    
     image_data = {
-        'name': authorized_chars,
-        'data': encoded_data,
+        'name': form_data.get('filename', ''),
+        'data': form_data.get('base64image', ''),
         'submitted_by': user,
         'description': form_data.get('description', ''),
         'ship_name': form_data.get('ship_name', ''),
@@ -279,6 +272,48 @@ async def upload(request: Request, file: UploadFile = File(...)):
 
     # Redirect to the index page
     return RedirectResponse(url="/", status_code=303)
+
+# Endpoint for displaying the file initupload page
+@app.get("/initupload", response_class=FileResponse)
+async def upload_page(request: Request):
+    user = request.session.get("discord_user")
+    if not user:
+        print("DEBUG not a user upload")
+        return RedirectResponse("/login")
+    print(user)
+    return templates.TemplateResponse("initupload.html", {"request": request, "user": user})
+
+# Endpoint for checking file and getting tags
+@app.post("/initupload")
+async def upload(request: Request, file: UploadFile = File(...)):
+    # Read the image file
+    contents = await file.read()
+    # Encode the contents as base64
+    encoded_data = base64.b64encode(contents).decode("utf-8")
+    # push to imagebb to be able to read it
+    url_png = upload_image_to_imgbb(encoded_data)
+    # get the tags
+    try:
+        extractor = PNGTagExtractor()
+        tags = extractor.extract_tags(url_png)
+        author = extractor.extract_author(url_png)
+    except Exception as e:
+    # Redirect the user to the "badfile.html" page
+        return templates.TemplateResponse("badfile.html", {"request": request})
+        
+    # Modify the file name to use authorized characters for HTML
+    file_name = file.filename
+    authorized_chars = re.sub(r'[^\w\-_.]', '_', file_name)
+    
+    data = {
+        'name': authorized_chars,
+        'data': encoded_data,
+        'url_png': url_png,
+        'author' : author
+    }
+    request.session["upload_data"] = data
+    # Redirect to the index page
+    return templates.TemplateResponse("upload.html", {"request": request, "data": data, "tags": tags})
 
 # main page + search results
 @app.route("/", methods=["GET", "POST"])

@@ -20,6 +20,8 @@ import gzip
 import struct
 import enum
 import io
+import requests
+from io import BytesIO
 
 class OBNodeType(enum.Enum):
     Unset = 0
@@ -31,8 +33,10 @@ class OBNodeType(enum.Enum):
 
 class Ship():
     def __init__(self, image_path) -> None:
+        response = requests.get(image_path)
+        img = Image.open(BytesIO(response.content))
         self.image_path = image_path
-        self.image = Image.open(image_path)
+        self.image = img
         self.image_data = np.array(self.image.getdata())
 
         self.compressed_image_data = self.read_bytes()
