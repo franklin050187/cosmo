@@ -2,4 +2,5 @@
 .venv
 example.db
 tmp
+__pycache__
 
