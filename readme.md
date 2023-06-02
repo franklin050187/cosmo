@@ -12,6 +12,13 @@
 * Exclude tags using -tagname
 * Drag and drop from the ship page to the game for easy access
 
+# Roadmap
+* In progress : performance overhaul
+* To do : UI fix for mobile view and above 1080p (UI)
+* To do : add download count (backend)
+* To do : add submit date (backend)
+* To do : sort filter by downloads, most recent (UI)
+
 # Hosting 
 * Vercel (backend and DB)
 
