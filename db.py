@@ -39,11 +39,11 @@ def upload_image(form_data, user):
     response = requests.get(url_png)
     image_data = response.content
 
-    base64_image = base64.b64encode(image_data).decode('utf-8')
+    # base64_image = base64.b64encode(image_data).decode('utf-8')
 
     image_data = {
         'name': form_data.get('filename', ''),
-        'data': base64_image,
+        'data': url_png, # change to store url of the image instead of the base64 image
         'submitted_by': user,
         'description': form_data.get('description', ''),
         'ship_name': form_data.get('ship_name', ''),

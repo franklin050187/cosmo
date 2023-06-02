@@ -12,7 +12,7 @@
     <script src="/static/js/jquery-3.6.0.min.js"></script>
     <script src="/static/js/common.js"></script>
     <script src="/static/js/index.js"></script>
-    
+
 </head>
 
 <body>
@@ -20,7 +20,7 @@
         <button id="menu-btn" class="menu-btn blue-btn" type="button"><span></span><span></span><span></span></button>
         <nav id="main-menu">
             <ul class="menu-links">
-                                 
+
             </ul>
         </nav>
         <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
@@ -51,46 +51,39 @@
                         </tr>
                         <tr>
                             <td>
-                            <div id="selected-tags" onclick="removeTag(event)"></div>
+                                <div id="selected-tags" onclick="removeTag(event)"></div>
                             </td>
                             <td>
                                 <div id="excluded-tags" onclick="removeTag(event)"></div>
                             </td>
                         </tr>
                         <tr>
-                        <td>
-                            <div id="tag-input-container">
-                                <p>Suggested tags :</p>
-                                <div id="tag-suggestions"></div>
+                            <td>
+                                <div id="tag-input-container">
+                                    <p>Suggested tags :</p>
+                                    <div id="tag-suggestions"></div>
                                 </div>
                             </td>
                         </tr>
-                    </table >
+                    </table>
                 </div>
             </div>
             <div class="tabs-container">
                 <button id="elim-competitive-btn" class="active blue-btn" type="button">Ships</button>
 
                 <div id="elim-competitive-tab" class="tab active">
-                    
+
                     <ul class="ships-list">
-                        
+
                         {% for image in images %}
                         <li class="ship-card">
-                            <img loading="lazy" src="data:image/png;base64,{{ image[2] }}">
+                            <img loading="lazy" src="{{ image[2] }}">
                             <div class="ship-data">
                                 <span class="data"><span>Ship name:</span> {{ image[5] }}</span>
-                                <span class="data"><span>Ship tags:</span>     
-                                {% set column_names = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'Corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer', 'campaign_ship', 'factories'] %}
-                                {% for index in range(8, image|length) %}
-                                {% set tag = image[index] %}
-                                {% if tag == 1 %}
-                                    {{ column_names[index - 8] }}
-                                {% endif %}
-                            {% endfor %}</span>
+                                <span class="data"><span>Ship weapons:</span> {% set column_names = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense'] %} {% for index in range(8, image|length) %} {% set tag = image[index] %} {% if tag == 1 %} {{ column_names[index - 8] }} {% endif %} {% endfor %}</span>
                                 <span class="data credits"><span>Cost:</span> {{ image[7] }}₡</span>
-                                <span class="data"><span>Submitted by:</span> {{ image[3] }}</span>
                                 <span class="data"><span>Author:</span> {{ image[6] }}</span>
+                                <span class="data" style="font-size: 12px;"><span>Submitted by:</span> {{ image[3] }}</span>
                             </div>
                             <div class="actions-container">
                                 <a class="blue-btn" title="See the ship page" href="/ship/{{ image[0] }}"></a>
@@ -98,7 +91,7 @@
                             </div>
                         </li>
                         {% endfor %}
-                        
+
                     </ul>
                 </div>
             </div>
@@ -107,7 +100,7 @@
 
     <footer>
         <div class="footer-content">
-            <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp">
+            <img loading="lazy" alt="Excelsior logo" src="img/excelsior-logo.webp">
             <ul>
                 <li><a title="Cookies policy" href="#">Cookies policy</a></li>
                 <li><a title="Another footer link" href="#">Another footer link</a></li>

@@ -13,7 +13,6 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import os
-import sqlite3
 import base64
 from dotenv import load_dotenv
 
@@ -29,7 +28,6 @@ from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
 from png_upload import upload_image_to_imgbb
 from tagextractor import PNGTagExtractor
-import requests
 from db import upload_image, get_image_data, get_image_url
 from fastapi.middleware.gzip import GZipMiddleware
 
@@ -71,7 +69,7 @@ def get_image(id: int, request: Request):
     user = request.session.get("discord_user")
     
     image_data = get_image_data(id)
-    url_png = get_image_url(image_data)
+    url_png = image_data[2] # change to send the url instead of the image
     
     return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png})
 

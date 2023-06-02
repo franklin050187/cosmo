@@ -37,7 +37,7 @@
                      <h1>Ship Edit</h1>
                      <form action="/edit/{{ image[0] }}" method="post" enctype="multipart/form-data">
                         <div style= "display: block; margin-left: auto; margin-right: auto; width: 50%;">
-                           <img loading="lazy" src="data:image/png;base64,{{ image[2] }}" width="512" height="512">
+                           <img loading="lazy" src="{{ image[2] }}" width="512" height="512">
                         </div>
                         <table style="width:100%">
                            <tr>
@@ -128,7 +128,7 @@
                              </ul>
                              <ul>
                               <label for="factories">Combat factories:</label>
-                              <input type="checkbox" name="factories" id="factories" {% if image[60] == 1 %}checked{% endif %}>
+                              <input type="checkbox" name="factories" id="factories" {% if image[61] == 1 %}checked{% endif %}>
                               </ul>
                              <ul>
                                  <label for="airlock">Airlock:</label>
@@ -223,7 +223,7 @@
                                                                         </ul>
                                                                         <ul>
                                                                            <label for="campaign_ship">Campaign ship</label>
-                                                                           <input type="checkbox" name="campaign_ship" id="campaign_ship" {% if image[61] == 1 %}checked{% endif %}>
+                                                                           <input type="checkbox" name="campaign_ship" id="campaign_ship" {% if image[60] == 1 %}checked{% endif %}>
                                                                         </ul>
                                                                         <ul>
                                                                            <label for="diagonal">Diagonal</label>
