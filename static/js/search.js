@@ -1,16 +1,15 @@
 function downloadShip(imageUrl, imageName) {
-  // Create a temporary anchor element
   var link = document.createElement('a');
   link.href = imageUrl;
   link.download = imageName; // Set the desired file name for download
 
-  // Append the anchor element to the body
   document.body.appendChild(link);
 
-  // Trigger the click event
   link.click();
 
-  // Clean up the temporary anchor element
+  // Set the download attribute to an empty string to force download
+  link.download = '';
+
   document.body.removeChild(link);
 }
 
