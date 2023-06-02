@@ -6,7 +6,33 @@
        }
 </style>
 
+<style>
+    .hidden-checkbox {
+         display: none;
+       }
+</style>
+
 <html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Demo Excelsior | Cosmoteer</title>
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/index.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/upload.css">
+    <script src="/static/js/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/index.js"></script>
+</head>
+
+<body>
+    <header>
+        <button id="menu-btn" class="menu-btn blue-btn" type="button" onclick="redirectToHomePage()"><span></span><span></span><span></span></button>
+        <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
+        <ul class="user-container">
 
 <head>
     <meta charset="utf-8">
@@ -33,7 +59,14 @@
     <main>
         <h1>Upload your ship !</h1>
         <section id="competitive" class="content-container">
+    </header>
+    <main>
+        <h1>Upload your ship !</h1>
+        <section id="competitive" class="content-container">
             <div class="section-description">
+                <h2>Share your ships with the community</h2>
+                <p>Pick tags your ship has in order to help the community to find your creation !</p>
+                <p>To go back click on the hamburger menu on the top left.</p>
                 <h2>Share your ships with the community</h2>
                 <p>Pick tags your ship has in order to help the community to find your creation !</p>
                 <p>To go back click on the hamburger menu on the top left.</p>
@@ -148,7 +181,7 @@
                                 <tr>
                                     <ul>
                                         <label for="price">Price :</label>
-                                        <input type="text" name="price" id="price" pattern="[0-9]+" required value="{{ data.price }}">
+                                        <input type="text" name="price" id="price" pattern="[0-9]+" required>
                                         <label for="description">Description:</label>
                                         <input type="text" name="description" id="description">
                                         <input type="hidden" name="filename" id="filename" value="{{ data.name }}">
@@ -200,7 +233,15 @@
     <footer>
         <div class="footer-content">
             <img loading="lazy" alt="Excelsior logo" src="img/excelsior-logo.webp">
+        </section>
+    </main>
+    <footer>
+        <div class="footer-content">
+            <img loading="lazy" alt="Excelsior logo" src="img/excelsior-logo.webp">
             <ul>
+                <li><a title="Cookies policy" href="#">Cookies policy</a></li>
+                <li><a title="Another footer link" href="#">Another footer link</a></li>
+                <li><a title="More footer links" href="#">More footer links</a></li>
                 <li><a title="Cookies policy" href="#">Cookies policy</a></li>
                 <li><a title="Another footer link" href="#">Another footer link</a></li>
                 <li><a title="More footer links" href="#">More footer links</a></li>
@@ -209,8 +250,16 @@
     </footer>
 </body>
 
+        </div>
+    </footer>
+</body>
+
 </html>
 <script>
+    function redirectToHomePage() {
+         window.location.href = "/";
+       }
+</script>
     function redirectToHomePage() {
          window.location.href = "/";
        }
