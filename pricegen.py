@@ -99,7 +99,11 @@ def calculate_price(png_url):
     
     parts = data["Parts"]
     doors = data["Doors"]
-    storage = data["NewFlexResourceGridTypes"]
+    try:
+        storage = data["NewFlexResourceGridTypes"]
+    except KeyError:
+        storage = None
+    # storage = data["NewFlexResourceGridTypes"]
     
     # calculate price for parts
     total_price = 0
@@ -186,3 +190,6 @@ def calculate_price(png_url):
 
     # print(f"Total price: {total_price}")
     return round_to_k(total_price)
+
+png_url = 'https://i.ibb.co/pzfrHM6/c6b73811b1f8.png'
+print(calculate_price(png_url))
