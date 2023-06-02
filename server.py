@@ -30,6 +30,7 @@ from png_upload import upload_image_to_imgbb
 from tagextractor import PNGTagExtractor
 from db import upload_image, get_image_data, get_image_url
 from fastapi.middleware.gzip import GZipMiddleware
+from pricegen import calculate_price
 
 load_dotenv()
 
@@ -248,12 +249,15 @@ async def upload(request: Request, file: UploadFile = File(...)):
     if ".ship" in shipname:
         shipname = shipname.replace(".ship", "")
     
+    price = calculate_price(url_png)
+    
     data = {
         'name': authorized_chars,
         # 'data': encoded_data,
         'url_png': url_png,
         'author' : author,
         'shipname': shipname,
+        'price': price,
     }
     request.session["upload_data"] = data
     # Redirect to the index page
