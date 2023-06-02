@@ -1,18 +1,16 @@
-function downloadShip(imageData, imageName) {
-    // Convert the base64 image data to a Blob object
-    var byteString = atob(imageData);
-    var arrayBuffer = new ArrayBuffer(byteString.length);
-    var uint8Array = new Uint8Array(arrayBuffer);
-    for (var i = 0; i < byteString.length; i++) {
-        uint8Array[i] = byteString.charCodeAt(i);
-    }
-    var blob = new Blob([arrayBuffer], { type: 'image/png' });
+function downloadShip(imageUrl, imageName) {
+  var link = document.createElement('a');
+  link.href = imageUrl;
+  link.download = imageName; // Set the desired file name for download
 
-    // Create a temporary link element and trigger the download
-    var link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = imageName ;
-    link.click();
+  document.body.appendChild(link);
+
+  link.click();
+
+  // Set the download attribute to an empty string to force download
+  link.download = '';
+
+  document.body.removeChild(link);
 }
 
 const tagList = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer']; // Predefined list of tags
@@ -60,13 +58,6 @@ const tagList = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_mi
         }
       }
       
-  
-    /* function handleTagInput(event) {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        addTag(document.getElementById('tag-input').value.trim(), false);
-      }
-    }*/
   
     function displayTagSuggestions(tags) {
       const tagSuggestionsDiv = document.getElementById('tag-suggestions');
