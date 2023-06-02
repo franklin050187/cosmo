@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html lang="es">
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Demo Excelsior | Cosmoteer</title>
+      <meta name="robots" content="noindex,nofollow">
+      <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
+      <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
+      <link rel="stylesheet" type="text/css" href="/static/css/index.css">
+      <link rel="stylesheet" type="text/css" href="/static/css/upload.css">
+      <script src="/static/js/jquery-3.6.0.min.js"></script>
+      <script src="/static/js/common.js"></script>
+      <script src="/static/js/index.js"></script>
+  </head>
+   <body>
+      <header>
+         <button id="menu-btn" class="menu-btn blue-btn" type="button" onclick="redirectToHomePage()"><span></span><span></span><span></span></button>
+         <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
+         <ul class="user-container">
+            <p>Welcome {{user}} </p>
+        </ul>
+      </header>
+      <main>
+         <h1>Upload your ship !</h1>
+         <section id="competitive" class="content-container">
+            <div class="section-description">
+               <h2>Share your ships with the community</h2>
+               <p>Pick tags your ship has in order to help the community to find your creation !</p>
+               <p>To go back click on the hamburger menu on the top left.</p>
+            </div>
+            <div class="tabs-container">
+               <div id="elim-competitive-tab" class="tab active">
+                  
+                  <ul>
+                     <h1>Ship Edit</h1>
+                     <form action="/edit/{{ image[0] }}" method="post" enctype="multipart/form-data">
+                        <div style= "display: block; margin-left: auto; margin-right: auto; width: 50%;">
+                           <img loading="lazy" src="data:image/png;base64,{{ image[2] }}" width="512" height="512">
+                        </div>
+                        <table style="width:100%">
+                           <tr>
+                              <th scope="col">ammunition weapons</th>
+                              <th scope="col">energy weapons</th>
+                              <th scope="col">Misc part</th>
+                              <th scope="col">Thrust arrangements</th>
+                              <th scope="col">Defenses</th>
+                              <th scope="col">Ship type</th>
+                           </tr>
+                           <tr>
+                              <td>
+                              </ul>
+                              <ul>
+                                 <label for="cannon">Cannon:</label>
+                                 <input type="checkbox" name="cannon" id="cannon" {% if image[8] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="deck_cannon">Deck Cannon:</label>
+                                 <input type="checkbox" name="deck_cannon" id="deck_cannon" {% if image[9] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="emp_missiles">EMP Missiles:</label>
+                                 <input type="checkbox" name="emp_missiles" id="emp_missiles" {% if image[10] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="flak_battery">Flak Battery:</label>
+                                 <input type="checkbox" name="flak_battery" id="flak_battery" {% if image[11] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="he_missiles">HE Missiles:</label>
+                                 <input type="checkbox" name="he_missiles" id="he_missiles" {% if image[12] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="large_cannon">Large Cannon:</label>
+                                 <input type="checkbox" name="large_cannon" id="large_cannon" {% if image[13] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="mines">Mines:</label>
+                                 <input type="checkbox" name="mines" id="mines" {% if image[14] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="nukes">Nukes:</label>
+                                 <input type="checkbox" name="nukes" id="nukes" {% if image[15] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="railgun">Railgun:</label>
+                                 <input type="checkbox" name="railgun" id="railgun" {% if image[16] == 1 %}checked{% endif %}>
+                             </ul>
+                           </td>
+
+                              <td>
+
+                             <ul>
+                                 <label for="disruptors">Disruptors:</label>
+                                 <input type="checkbox" name="disruptors" id="disruptors" {% if image[22] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="heavy_Laser">Heavy Laser:</label>
+                                 <input type="checkbox" name="heavy_Laser" id="heavy_Laser" {% if image[23] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="ion_Beam">Ion Beam:</label>
+                                 <input type="checkbox" name="ion_Beam" id="ion_Beam" {% if image[24] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="ion_Prism">Ion Prism:</label>
+                                 <input type="checkbox" name="ion_Prism" id="ion_Prism" {% if image[25] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="laser">Laser:</label>
+                                 <input type="checkbox" name="laser" id="laser" {% if image[26] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="mining_Laser">Mining Laser:</label>
+                                 <input type="checkbox" name="mining_Laser" id="mining_Laser" {% if image[27] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="point_Defense">Point Defense:</label>
+                                 <input type="checkbox" name="point_Defense" id="point_Defense" {% if image[28] == 1 %}checked{% endif %}>
+                             </ul>
+                           </td>
+
+                              <td>
+                             <ul>
+                                 <label for="boost_thruster">Boost Thruster:</label>
+                                 <input type="checkbox" name="boost_thruster" id="boost_thruster" {% if image[29] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                              <label for="factories">Combat factories:</label>
+                              <input type="checkbox" name="factories" id="factories" {% if image[60] == 1 %}checked{% endif %}>
+                              </ul>
+                             <ul>
+                                 <label for="airlock">Airlock:</label>
+                                 <input type="checkbox" name="airlock" id="airlock" {% if image[30] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="campaign_factories">Campaign Factories:</label>
+                                 <input type="checkbox" name="campaign_factories" id="campaign_factories" {% if image[31] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="explosive_charges">Explosive Charges:</label>
+                                 <input type="checkbox" name="explosive_charges" id="explosive_charges" {% if image[32] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="fire_extinguisher">Fire Extinguisher:</label>
+                                 <input type="checkbox" name="fire_extinguisher" id="fire_extinguisher" {% if image[33] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="large_reactor">Large Reactor:</label>
+                                 <input type="checkbox" name="large_reactor" id="large_reactor" {% if image[35] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="large_shield">Large Shield:</label>
+                                 <input type="checkbox" name="large_shield" id="large_shield" {% if image[36] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="medium_reactor">Medium Reactor:</label>
+                                 <input type="checkbox" name="medium_reactor" id="medium_reactor" {% if image[37] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="sensor">Sensor:</label>
+                                 <input type="checkbox" name="sensor" id="sensor" {% if image[38] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="small_hyperdrive">Small Hyperdrive:</label>
+                                 <input type="checkbox" name="small_hyperdrive" id="small_hyperdrive" {% if image[39] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="small_reactor">Small Reactor:</label>
+                                 <input type="checkbox" name="small_reactor" id="small_reactor" {% if image[40] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="small_shield">Small Shield:</label>
+                                 <input type="checkbox" name="small_shield" id="small_shield" {% if image[41] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="tractor_beams">Tractor Beams:</label>
+                                 <input type="checkbox" name="tractor_beams" id="tractor_beams" {% if image[42] == 1 %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="hyperdrive_relay">Hyperdrive Relay:</label>
+                                 <input type="checkbox" name="hyperdrive_relay" id="hyperdrive_relay" {% if image[43] == 1 %}checked{% endif %}>
+                             </ul>
+                           </td>
+                                                                     <td>
+                                                                        <ul>
+                                                                           <label for="bidirectional_thrust">Bidirectional Thrust</label>
+                                                                           <input type="checkbox" name="bidirectional_thrust" id="bidirectional_thrust" {% if image[44] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="mono_thrust">Mono-Thrust</label>
+                                                                           <input type="checkbox" name="mono_thrust" id="mono_thrust" {% if image[45] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="multi_thrust">Multi-Thrust</label>
+                                                                           <input type="checkbox" name="multi_thrust" id="multi_thrust" {% if image[46] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="omni_thrust">Omni-Thrust</label>
+                                                                           <input type="checkbox" name="omni_thrust" id="omni_thrust" {% if image[47] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        
+                                                                     </td>
+                                                                     <td>
+                                                                        <ul>
+                                                                           <label for="armor_defenses">Armor Defenses</label>
+                                                                           <input type="checkbox" name="armor_defenses" id="armor_defenses" {% if image[48] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="mixed_defenses">Mixed Defenses</label>
+                                                                           <input type="checkbox" name="mixed_defenses" id="mixed_defenses" {% if image[49] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="shield_defenses">Shield Defenses</label>
+                                                                           <input type="checkbox" name="shield_defenses" id="shield_defenses" {% if image[50] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                     </td>
+                                                                     <td>
+                                                                        <ul>
+                                                                           <label for="Corvette">Corvette</label>
+                                                                           <input type="checkbox" name="Corvette" id="Corvette" {% if image[51] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="campaign_ship">Campaign ship</label>
+                                                                           <input type="checkbox" name="campaign_ship" id="campaign_ship" {% if image[61] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="diagonal">Diagonal</label>
+                                                                           <input type="checkbox" name="diagonal" id="diagonal" {% if image[52] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="flanker">Flanker</label>
+                                                                           <input type="checkbox" name="flanker" id="flanker" {% if image[53] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="mixed_weapons">Mixed Weapons</label>
+                                                                           <input type="checkbox" name="mixed_weapons" id="mixed_weapons" {% if image[54] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="painted">Painted</label>
+                                                                           <input type="checkbox" name="painted" id="painted" {% if image[55] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="splitter">Splitter</label>
+                                                                           <input type="checkbox" name="splitter" id="splitter" {% if image[57] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="utility_weapons">Utility Weapons</label>
+                                                                           <input type="checkbox" name="utility_weapons" id="utility_weapons" {% if image[58] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="transformer">Transformer</label>
+                                                                           <input type="checkbox" name="transformer" id="transformer" {% if image[59] == 1 %}checked{% endif %}>
+                                                                        </ul>
+                                                                     </ul>
+                                                                  </td>
+                                                                  
+                                                               </tr>
+                                                            </table>
+                                                            <table style="width:100%">
+                                                         <tr>
+                                                            <td>
+                                                            <ul>
+                                                               <button type="submit" class="blue-btn register" >Update ship</button>
+                                                            </ul>
+                                                         </td>
+                                                            <td>
+                                                               <tr>
+                                                            <ul>
+                                                               <label for="author">Author:</label>
+                                                               <input type="text" name="author" id="author" value="{{ image[6] }}">
+                                                               <label for="ship_name">Ship name:</label>
+                                                               <input type="text" name="ship_name" id="ship_name" value="{{ image[5] }}">
+                                                            </ul>
+                                                         </tr>
+                                                         </td>
+                                                            <td>
+                                                            <tr>
+                                                            <ul>
+                                                               <label for="price">Price :</label>
+                                                               <input type="text" name="price" id="price" pattern="[0-9]+" required value="{{ image[7] }}">
+                                                               <label for="description">Description:</label>
+                                                               <input type="text" name="description" id="description" value="{{ image[4] }}">
+                                                            </ul>
+                                                         </tr>
+                                                         </td>
+                                                         </tr>
+                                                         <p>Price must be a number, without space, dot or comma. Absurd amount will fail the upload ;) </p>
+                                                         </table>
+                                                         </form>  
+                  </ul>
+               </div>
+            </div>
+         </section>
+      </main>
+      <footer>
+         <div class="footer-content">
+            <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp">
+            <ul>
+               <li><a title="Cookies policy" href="#">Cookies policy</a></li>
+                  <li><a title="Another footer link" href="#">Another footer link</a></li>
+                     <li><a title="More footer links" href="#">More footer links</a></li>
+            </ul>
+         </div>
+      </footer>
+   </body>
+</html>
+<script>
+   function redirectToHomePage() {
+     window.location.href = "/";
+   }
+ </script>

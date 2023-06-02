@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Demo Excelsior | Cosmoteer</title>
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/index.css">
+    <script src="/static/js/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/common.js"></script>
+    
+</head>
+
+<body>
+    <header>
+        <button id="menu-btn" class="menu-btn blue-btn" type="button" onclick="redirectToHomePage()"><span></span><span></span><span></span></button>
+        <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
+        <ul class="user-container">
+            <p>Welcome {{ user }} </p>
+            <li><a title="Upload" class="blue-btn register" href="/initupload"><span>Upload</span></a></li>
+        </ul>
+    </header>
+
+    <main>
+        <h1>Excelsior Ship Library</h1>
+        <section id="competitive" class="content-container">
+            <div class="section-description">
+                <h2>Ship name : {{ image[5] }}</h2>
+                <div class="search-container">
+                    <p>Author : {{ image[6] }}</p>
+                    <p>Ship description : {{ image[4] }}</p>
+                    <p></p>
+                    <p class="data">Submitted by : {{ image[3] }}</p>
+                    <p class="data credits"><span>Cost:</span> {{ image[7] }}₡</p>
+
+                </div>
+            </div>
+            <div class="tabs-container">
+                <button id="elim-competitive-btn" class="active blue-btn" type="button">Ships</button>
+
+                <div id="elim-competitive-tab" class="tab active">
+                    
+                    <ul class="ships-list">
+                        
+
+                       
+                        <span class="data">
+                            <span>Ship tags:</span>
+                            <ul>
+                                {% set column_names = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'Corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer'] %}
+                                {% for index in range(8, image|length) %}
+                                    {% set tag = image[index] %}
+                                    {% if tag == 1 %}
+                                        <li>{{ column_names[index - 8] }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </span>
+                        <li>
+                            <img loading="lazy" src="{{ url_png }}" width="512" height="512">
+                        </li>
+                        {% if user == image[3] %}
+                            <ul><a title="Edit" class="blue-btn register" href="/edit/{{ image[0] }}"><span>Edit</span></a></ul>
+                            <ul><a title="Delete" class="red-btn register" href="/delete/{{ image[0] }}"><span>Delete</span></a></ul>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp">
+            <ul>
+                <li><a title="Cookies policy" href="#">Cookies policy</a></li>
+                <li><a title="Another footer link" href="#">Another footer link</a></li>
+                <li><a title="More footer links" href="#">More footer links</a></li>
+            </ul>
+        </div>
+    </footer>
+</body>
+
+</html>
+
+<script src="/static/js/search.js"></script>
+<script>
+    function redirectToHomePage() {
+      window.location.href = "/";
+    }
+</script>

@@ -1,0 +1,218 @@
+
+
+.content-container .section-description {
+    display: block;
+    float: left;
+    padding: 15px;
+    width: 100%;
+}
+
+.section-description h2 {
+    display: block;
+    float: left;
+    color: #fff;
+    font-size: 34px;
+    text-align: center;
+    text-transform: uppercase;
+    width: 100%;
+}
+
+@media(min-width:768px) {
+    .section-description h2 {
+        text-align: left;
+    }
+}
+
+.section-description p {
+    display: block;
+    float: left;
+    margin-top: 14px;
+    text-align: justify;
+    letter-spacing: 1px;
+    width: 100%;
+}
+
+@media(min-width:1024px) {
+    .section-description p {
+        font-size: 18px;
+    }
+}
+
+@media(min-width:1360px) {
+    .section-description p {
+        font-size: 20px;
+    }
+}
+
+.content-container .tabs-container {
+    display: block;
+    float: left;
+    margin-top: 15px;
+    padding: 0px 15px;
+    width: 100%;
+}
+
+.tabs-container > button {
+    border-radius: 8px 0px 0px 0px;
+    font-size: 18px;
+    line-height: 24px;
+    width: 50%;
+}
+
+.tabs-container > button+button {
+    border-radius: 0px 8px 0px 0px;
+}
+
+.tabs-container > button.active {
+    background-color: rgba(0, 126, 255, 0.2);
+    color: #fff;
+}
+
+@media(min-width:768px) {
+    .tabs-container > button {
+        width: 33%;
+    }
+}
+
+@media(min-width:1240px) {
+    .tabs-container > button {
+        width: 25%;
+    }
+}
+
+.tabs-container .tab {
+    display: none;
+    float: left;
+    position: relative;
+    border-radius: 0px 0px 8px 8px;
+    border: 1px solid #1C598C;
+    background-color: rgba(0, 126, 255, 0.2);
+    padding: 20px 15px 30px;
+    width: 100%;
+    box-shadow: inset 0px 0px 8px rgba(0, 126, 255, 0.35), 0px 0px 5px rgba(0, 126, 255, 0.35);
+}
+
+.tabs-container .tab.active {
+    display: block;
+}
+
+@media(min-width:768px) {
+    .tabs-container .tab {
+        border-radius: 0px 8px 8px 8px;
+    }
+}
+
+.tabs-container .tab:before {
+    display: block;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border: 2px solid rgba(0, 52, 102, 0.25);
+    border-radius: inherit;
+    content: '';
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.content-container .ships-list {
+    display: grid;
+    float: left;
+    margin-top: 25px;
+    grid-template-columns: 1fr;
+    justify-content: space-around;
+    gap: 20px;
+    padding: 0px 15px;
+    width: 100%;
+}
+
+.content-container .tab .ships-list {
+    padding: 0px;
+}
+
+@media(min-width:640px) {
+    .content-container .ships-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(min-width:1024px) {
+    .content-container .ships-list {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media(min-width:1360px) {
+    .content-container .ships-list {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.ships-list li {
+    display: block;
+}
+
+@media(max-width:639px){
+    .ships-list li {
+        display: none;
+    }
+    .ships-list li:nth-child(-n+4) {
+        display: block;
+    }
+}
+@media(min-width:640px) and (max-width:1023px){
+    .ships-list li {
+        display: none;
+    }
+    .ships-list li:nth-child(-n+6) {
+        display: block;
+    }
+}
+
+.cssTable td 
+{
+    text-align: center; 
+    vertical-align: middle;
+}
+input#tag-input {
+    background-color: darkblue;
+    color: white;
+    width: 100%; /* Set the input width to 100% of its parent container */
+    box-sizing: border-box; /* Include padding and border in the total width */
+    height: 50px;
+ }
+.search-container {
+    position: relative;
+    display: inline-block; /* Change to inline-block */
+  }
+.info-icon {
+    position: absolute;
+    top: 0;
+    right: 30;
+    width: 30px;
+    height: 30px;
+    background-image: url(../img/info.png); /* Replace with your icon image path */
+    background-repeat: no-repeat;
+    background-size: contain;
+    cursor: pointer;
+    filter: invert(100%);
+    z-index: 1;
+  }
+
+  .info-icon:hover::after {
+    content: attr(data-tags);
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: pre-line;
+    z-index: 2;
+    columns: 6; /* Adjust the number of columns as needed */
+    column-gap: 10px; /* Adjust the gap between columns as needed */
+  }

@@ -1,70 +1,26 @@
 <!DOCTYPE html>
-<style>
-   .form-container {
-   display: flex;
-   justify-content: space-between;
-   }
-   .form-list {
-   list-style: none;
-   padding: 0;
-   margin: 0;
-   }
-   .form-table {
-   display: table;
-   width: 100%;
-   }
-   .form-table-row {
-   display: table-row;
-   }
-   .form-table-cell {
-   display: table-cell;
-   width: 100%; /* Adjust the width as needed */
-   padding-right: 20px; /* Adjust the spacing between cells as needed */
-   
-   }
-   td {
-      vertical-align: top;
-    }
 
-    input#price {
-        background-color: darkblue;
-        color: white;
-    }
-    input#description {
-      background-color: darkblue;
-      color: white;
-  }
-  input#submitted_by {
-   background-color: darkblue;
-   color: white;
-}
-input#ship_name {
-   background-color: darkblue;
-   color: white;
-}
-input#author {
-   background-color: darkblue;
-   color: white;
-}
-
-</style>
 <html lang="es">
    <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Demo Excelsior | Cosmoteer</title>
       <meta name="robots" content="noindex,nofollow">
-      <link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico">
-      <link rel="stylesheet" type="text/css" href="css/interface.css">
-      <link rel="stylesheet" type="text/css" href="css/index.css">
-      <script src="js/jquery-3.6.0.min.js"></script>
-      <script src="js/common.js"></script>
-      <script src="js/index.js"></script>
-   </head>
+      <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
+      <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
+      <link rel="stylesheet" type="text/css" href="/static/css/index.css">
+      <link rel="stylesheet" type="text/css" href="/static/css/upload.css">
+      <script src="/static/js/jquery-3.6.0.min.js"></script>
+      <script src="/static/js/common.js"></script>
+      <script src="/static/js/index.js"></script>
+  </head>
    <body>
       <header>
          <button id="menu-btn" class="menu-btn blue-btn" type="button" onclick="redirectToHomePage()"><span></span><span></span><span></span></button>
-         <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp"  href="/">
+         <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
+         <ul class="user-container">
+            <p>Welcome {{user}} </p>
+        </ul>
       </header>
       <main>
          <h1>Upload your ship !</h1>
@@ -79,165 +35,155 @@ input#author {
                   
                   <ul>
                      <h1>Ship Upload</h1>
-                     <form action="/upload/" method="post" enctype="multipart/form-data">
+                     <p>{{ data.name }}</p>
+                     <form action="/upload" method="post" enctype="multipart/form-data">
+                        <img loading="lazy" src="{{ data.url_png }}" width="512" height="512">
                         <table style="width:100%">
                            <tr>
                               <th scope="col">ammunition weapons</th>
-                              <th scope="col">combat factories</th>
                               <th scope="col">energy weapons</th>
                               <th scope="col">Misc part</th>
                               <th scope="col">Thrust arrangements</th>
                               <th scope="col">Defenses</th>
-                              <th scope="col">Misc</th>
+                              <th scope="col">Ship type</th>
                            </tr>
                            <tr>
                               <td>
                               </ul>
-                              <ul><label for="cannon">Cannon:</label>
-                                 <input type="checkbox" name="cannon" id="cannon"></ul>
-                                 <ul>
-                                    <label for="deck_cannon">Deck Cannon:</label>
-                                    <input type="checkbox" name="deck_cannon" id="deck_cannon"></ul>
-                                    <ul>
-                                       <label for="emp_missiles">EMP Missiles:</label>
-                                       <input type="checkbox" name="emp_missiles" id="emp_missiles"></ul>
-                                       <ul>
-                                          <label for="flak_battery">Flak Battery:</label>
-                                          <input type="checkbox" name="flak_battery" id="flak_battery"></ul>
-                                          <ul>
-                                             <label for="he_missiles">HE Missiles:</label>
-                                             <input type="checkbox" name="he_missiles" id="he_missiles"></ul>
-                                             <ul>
-                                                <label for="large_cannon">Large Cannon:</label>
-                                                <input type="checkbox" name="large_cannon" id="large_cannon"></ul>
-                                                <ul>
-                                                   <label for="mines">Mines:</label>
-                                                   <input type="checkbox" name="mines" id="mines"></ul>
-                                                   <ul>
-                                                      <label for="nukes">Nukes:</label>
-                                                      <input type="checkbox" name="nukes" id="nukes"></ul>
-                                                      <ul>
-                                                         <label for="railgun">Railgun:</label>
-                                                         <input type="checkbox" name="railgun" id="railgun"></ul>
-                                                      </td>
-                                                      <td>
-                                                         <ul>
-                                                            <label for="ammo_factory">Ammo Factory:</label>
-                                                            <input type="checkbox" name="ammo_factory" id="ammo_factory">
-                                                         </ul>
-                                                            <ul>
-                                                               <label for="emp_factory">EMP Factory:</label>
-                                                               <input type="checkbox" name="emp_factory" id="emp_factory">
-                                                            </ul>
-                                                               <ul>
-                                                                  <label for="he_factory">HE Factory:</label>
-                                                                  <input type="checkbox" name="he_factory" id="he_factory">
-                                                               </ul>
-                                                                  <ul>
-                                                                     <label for="mine_factory">Mine Factory:</label>
-                                                                     <input type="checkbox" name="mine_factory" id="mine_factory">
-                                                                  </ul>
-                                                                     <ul>
-                                                                        <label for="nuke_factory">Nuke Factory:</label>
-                                                                        <input type="checkbox" name="nuke_factory" id="nuke_factory">
-                                                                     </ul>
-                                                      </td>
-                                                                     <td>
-                                                                        <ul>
-                                                                           <label for="disruptors">Disruptors:</label>
-                                                                           <input type="checkbox" name="disruptors" id="disruptors">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="heavy_laser">Heavy Laser:</label>
-                                                                           <input type="checkbox" name="heavy_laser" id="heavy_laser">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="ion_beam">Ion Beam:</label>
-                                                                           <input type="checkbox" name="ion_beam" id="ion_beam">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="ion_Prism">Ion Prism:</label>
-                                                                           <input type="checkbox" name="ion_prism" id="ion_prism">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="laser">Laser:</label>
-                                                                           <input type="checkbox" name="laser" id="laser">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="mining_laser">Mining Laser:</label>
-                                                                           <input type="checkbox" name="mining_laser" id="mining_laser">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="point_Defense">Point Defense:</label>
-                                                                           <input type="checkbox" name="point_defense" id="point_defense">
-                                                                        </ul>
-                                                                     </td>
-                                                                     <td>
-                                                                        <ul>
-                                                                           <label for="boost_thruster">Boost Thruster:</label>
-                                                                           <input type="checkbox" name="boost_thruster" id="boost_thruster">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="airlock">Airlock:</label>
-                                                                           <input type="checkbox" name="airlock" id="airlock">
-                                                                        </ul>
-                                                                        
-                                                                        <ul>
-                                                                           <label for="campaign_factories">Campaign Factories</label>
-                                                                           <input type="checkbox" name="campaign_factories" id="campaign_factories">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="explosive_charges">Explosive Charges</label>
-                                                                           <input type="checkbox" name="explosive_charges" id="explosive_charges">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="fire_extinguisher">Fire Extinguisher</label>
-                                                                           <input type="checkbox" name="fire_extinguisher" id="fire_extinguisher">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="no_fire_extinguishers">No Fire Extinguishers</label>
-                                                                           <input type="checkbox" name="no_fire_extinguishers" id="no_fire_extinguishers">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="large_reactor">Large Reactor</label>
-                                                                           <input type="checkbox" name="large_reactor" id="large_reactor">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="large_shield">Large Shield</label>
-                                                                           <input type="checkbox" name="large_shield" id="large_shield">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="medium_reactor">Medium Reactor</label>
-                                                                           <input type="checkbox" name="medium_reactor" id="medium_reactor">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="sensor">Sensor</label>
-                                                                           <input type="checkbox" name="sensor" id="sensor">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="small_hyperdrive">Small Hyperdrive</label>
-                                                                           <input type="checkbox" name="small_hyperdrive" id="small_hyperdrive">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="small_reactor">Small Reactor</label>
-                                                                           <input type="checkbox" name="small_reactor" id="small_reactor">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="small_shield">Small Shield</label>
-                                                                           <input type="checkbox" name="small_shield" id="small_shield">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="tractor_beams">Tractor Beams</label>
-                                                                           <input type="checkbox" name="tractor_beams" id="tractor_beams">
-                                                                        </ul>
-                                                                        <ul>
-                                                                           <label for="hyperdrive_relay">Hyperdrive Relay</label>
-                                                                           <input type="checkbox" name="hyperdrive_relay" id="hyperdrive_relay">
-                                                                        </ul>
-                                                                        
-                                                                        
-                                                                        
-                                                                     </td>
+                              <ul>
+                                 <label for="cannon">Cannon:</label>
+                                 <input type="checkbox" name="cannon" id="cannon" {% if 'cannon' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="deck_cannon">Deck Cannon:</label>
+                                 <input type="checkbox" name="deck_cannon" id="deck_cannon" {% if 'deck_cannon' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="emp_missiles">EMP Missiles:</label>
+                                 <input type="checkbox" name="emp_missiles" id="emp_missiles" {% if 'emp_missiles' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="flak_battery">Flak Battery:</label>
+                                 <input type="checkbox" name="flak_battery" id="flak_battery" {% if 'flak_battery' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="he_missiles">HE Missiles:</label>
+                                 <input type="checkbox" name="he_missiles" id="he_missiles" {% if 'he_missiles' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="large_cannon">Large Cannon:</label>
+                                 <input type="checkbox" name="large_cannon" id="large_cannon" {% if 'large_cannon' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="mines">Mines:</label>
+                                 <input type="checkbox" name="mines" id="mines" {% if 'mines' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="nukes">Nukes:</label>
+                                 <input type="checkbox" name="nukes" id="nukes" {% if 'nukes' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="railgun">Railgun:</label>
+                                 <input type="checkbox" name="railgun" id="railgun" {% if 'railgun' in tags %}checked{% endif %}>
+                             </ul>
+                           </td>
+
+                              <td>
+
+                             <ul>
+                                 <label for="disruptors">Disruptors:</label>
+                                 <input type="checkbox" name="disruptors" id="disruptors" {% if 'disruptors' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="heavy_Laser">Heavy Laser:</label>
+                                 <input type="checkbox" name="heavy_Laser" id="heavy_Laser" {% if 'heavy_Laser' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="ion_Beam">Ion Beam:</label>
+                                 <input type="checkbox" name="ion_Beam" id="ion_Beam" {% if 'ion_Beam' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="ion_Prism">Ion Prism:</label>
+                                 <input type="checkbox" name="ion_Prism" id="ion_Prism" {% if 'ion_Prism' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="laser">Laser:</label>
+                                 <input type="checkbox" name="laser" id="laser" {% if 'laser' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="mining_Laser">Mining Laser:</label>
+                                 <input type="checkbox" name="mining_Laser" id="mining_Laser" {% if 'mining_Laser' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="point_Defense">Point Defense:</label>
+                                 <input type="checkbox" name="point_Defense" id="point_Defense" {% if 'point_Defense' in tags %}checked{% endif %}>
+                             </ul>
+                           </td>
+
+                              <td>
+                             <ul>
+                                 <label for="boost_thruster">Boost Thruster:</label>
+                                 <input type="checkbox" name="boost_thruster" id="boost_thruster" {% if 'boost_thruster' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                              <label for="factories">Combat factories:</label>
+                              <input type="checkbox" name="factories" id="factories" {% if 'factories' in tags %}checked{% endif %}>
+                              </ul>
+                             <ul>
+                                 <label for="airlock">Airlock:</label>
+                                 <input type="checkbox" name="airlock" id="airlock" {% if 'airlock' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="campaign_factories">Campaign Factories:</label>
+                                 <input type="checkbox" name="campaign_factories" id="campaign_factories" {% if 'campaign_factories' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="explosive_charges">Explosive Charges:</label>
+                                 <input type="checkbox" name="explosive_charges" id="explosive_charges" {% if 'explosive_charges' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="fire_extinguisher">Fire Extinguisher:</label>
+                                 <input type="checkbox" name="fire_extinguisher" id="fire_extinguisher" {% if 'fire_extinguisher' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="large_reactor">Large Reactor:</label>
+                                 <input type="checkbox" name="large_reactor" id="large_reactor" {% if 'large_reactor' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="large_shield">Large Shield:</label>
+                                 <input type="checkbox" name="large_shield" id="large_shield" {% if 'large_shield' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="medium_reactor">Medium Reactor:</label>
+                                 <input type="checkbox" name="medium_reactor" id="medium_reactor" {% if 'medium_reactor' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="sensor">Sensor:</label>
+                                 <input type="checkbox" name="sensor" id="sensor" {% if 'sensor' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="small_hyperdrive">Small Hyperdrive:</label>
+                                 <input type="checkbox" name="small_hyperdrive" id="small_hyperdrive" {% if 'small_hyperdrive' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="small_reactor">Small Reactor:</label>
+                                 <input type="checkbox" name="small_reactor" id="small_reactor" {% if 'small_reactor' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="small_shield">Small Shield:</label>
+                                 <input type="checkbox" name="small_shield" id="small_shield" {% if 'small_shield' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="tractor_beams">Tractor Beams:</label>
+                                 <input type="checkbox" name="tractor_beams" id="tractor_beams" {% if 'tractor_beams' in tags %}checked{% endif %}>
+                             </ul>
+                             <ul>
+                                 <label for="hyperdrive_relay">Hyperdrive Relay:</label>
+                                 <input type="checkbox" name="hyperdrive_relay" id="hyperdrive_relay" {% if 'hyperdrive_relay' in tags %}checked{% endif %}>
+                             </ul>
+                           </td>
+
+
                                                                      <td>
                                                                         <ul>
                                                                            <label for="bidirectional_thrust">Bidirectional Thrust</label>
@@ -273,8 +219,12 @@ input#author {
                                                                      </td>
                                                                      <td>
                                                                         <ul>
-                                                                           <label for="corvette">Corvette</label>
-                                                                           <input type="checkbox" name="corvette" id="corvette">
+                                                                           <label for="Corvette">Corvette</label>
+                                                                           <input type="checkbox" name="Corvette" id="Corvette">
+                                                                        </ul>
+                                                                        <ul>
+                                                                           <label for="campaign_ship">Campaign ship</label>
+                                                                           <input type="checkbox" name="campaign_ship" id="campaign_ship">
                                                                         </ul>
                                                                         <ul>
                                                                            <label for="diagonal">Diagonal</label>
@@ -293,10 +243,6 @@ input#author {
                                                                            <input type="checkbox" name="painted" id="painted">
                                                                         </ul>
                                                                         <ul>
-                                                                           <label for="unpainted">Unpainted</label>
-                                                                           <input type="checkbox" name="unpainted" id="unpainted">
-                                                                        </ul>
-                                                                        <ul>
                                                                            <label for="splitter">Splitter</label>
                                                                            <input type="checkbox" name="splitter" id="splitter">
                                                                         </ul>
@@ -310,26 +256,22 @@ input#author {
                                                                         </ul>
                                                                      </ul>
                                                                   </td>
-                                                                  
                                                                </tr>
                                                             </table>
                                                             <table style="width:100%">
                                                          <tr>
                                                             <td>
                                                             <ul>
-                                                               <input type="file" name="file" accept=".png" required>
                                                                <button type="submit" class="blue-btn register" >Upload</button>
                                                             </ul>
                                                          </td>
                                                             <td>
                                                                <tr>
                                                             <ul>
-                                                               <label for="submitted_by">Submitted by:</label>
-                                                               <input type="text" name="submitted_by" id="submitted_by">
                                                                <label for="author">Author:</label>
-                                                               <input type="text" name="author" id="author">
+                                                               <input type="text" name="author" id="author" value="{{ data.author }}">
                                                                <label for="ship_name">Ship name:</label>
-                                                               <input type="text" name="ship_name" id="ship_name">
+                                                               <input type="text" name="ship_name" id="ship_name" value="{{ data.shipname }}">
                                                             </ul>
                                                          </tr>
                                                          </td>
@@ -340,6 +282,8 @@ input#author {
                                                                <input type="text" name="price" id="price" pattern="[0-9]+" required>
                                                                <label for="description">Description:</label>
                                                                <input type="text" name="description" id="description">
+                                                               <input type="hidden" name="filename" id="filename" value="{{ data.name }}">
+                                                               <input type="hidden" name="url_png" id="url_png" value="{{ data.url_png }}">
                                                             </ul>
                                                          </tr>
                                                          </td>
