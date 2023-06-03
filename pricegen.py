@@ -100,6 +100,7 @@ def calculate_price(png_url):
     parts = data["Parts"]
     doors = data["Doors"]
 
+
     try:
         storage = data["NewFlexResourceGridTypes"]
     except KeyError:
