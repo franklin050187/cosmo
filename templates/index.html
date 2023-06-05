@@ -42,30 +42,15 @@
                     <form action="/" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="query" id="final_search_query">
                         <button type="submit" class="blue-btn register" onclick="appendSearchInput()">Search</button>
-                    </form>
-                    <input type="text" id="tag-input" oninput="searchTags()" placeholder="Type your tags here">
-                    <table style="width:50%" id="tag-table" hidden>
-                        <tr>
-                            <th scope="col">Selected tags</th>
-                            <th scope="col">Excluded tags</th>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div id="selected-tags" onclick="removeTag(event)"></div>
-                            </td>
-                            <td>
-                                <div id="excluded-tags" onclick="removeTag(event)"></div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div id="tag-input-container">
-                                    <p>Suggested tags :</p>
-                                    <div id="tag-suggestions"></div>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+                    </form>                   
+                    <input type="text" id="tag-input" oninput="filterTags()" placeholder="Type your tags here">
+                    <div id="tag-suggestions" class="tag-suggestions"></div>
+                    
+                    <div class="tag-container">
+                        <div id="selected-tags" class="tag-box"></div>
+                        <div id="excluded-tags" class="tag-box"></div>
+                      </div>
+
                 </div>
             </div>
             <div class="tabs-container">
