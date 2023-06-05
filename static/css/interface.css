@@ -178,6 +178,27 @@ header .user-container {
     display: none;
 }
 
+.user-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .username {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px; /* Adjust the value as needed */
+    margin-left: 10px; /* Add some spacing between the upload button and the username */
+  }
+  
+  .user-container p {
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 10px; /* Add some spacing between the username and the upload button */
+  }
+  
+
 @media(min-width:1024px) {
     header .user-container {
         display: grid;
@@ -523,6 +544,21 @@ main .content-container {
     width: 30px;
     height: 30px;
 }
+
+html, body {
+    height: 100%;
+  }
+  
+  .site-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  footer {
+    margin-top: auto;
+  }
+  
 
 /* ######################### */
 /* #        FOOTER         # */
