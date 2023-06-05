@@ -81,15 +81,15 @@ def get_image(id: int, request: Request):
 def delete_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
-    print(user)
+    # print(user)
     # conn = sqlite3.connect('example.db')
     conn = connect_to_server()
     cursor = conn.cursor()
     cursor.execute("SELECT submitted_by FROM images WHERE id=%s", (id,))
     image_data = cursor.fetchone()
-    print(image_data[0])
+    # print(image_data[0])
     if user != image_data[0]:
-        print("not allowed")
+        # print("not allowed")
         conn.commit()
         conn.close()
         return RedirectResponse("/")
@@ -105,7 +105,7 @@ def delete_image(id: int, request: Request):
 def edit_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
-    print(user)
+    # print(user)
     # conn = sqlite3.connect('example.db')
     conn = connect_to_server()
     cursor = conn.cursor()
@@ -113,7 +113,7 @@ def edit_image(id: int, request: Request):
     image_data = cursor.fetchone()
     #print(image_data[0])
     if user != image_data[0]:
-        print("not allowed")
+        # print("not allowed")
         conn.commit()
         conn.close()
         return RedirectResponse("/")
@@ -140,13 +140,13 @@ async def edit_image(id: int, request: Request):
     image_data = list(cursor.fetchone())
     #print(image_data)
     if user != image_data[3]:
-        print("not allowed")
+        # print("not allowed")
         conn.commit()
         conn.close()
         return RedirectResponse("/")
     # Prepare the data
     form_data = await request.form()
-    print("allowed")
+    # print("allowed")
     # Keep the existing values for 'name' and 'data'
     image_data[2] = image_data[2]
     image_data[3] = user
@@ -200,7 +200,7 @@ async def finish_login(code: str, request: Request):
         desired_id = int(os.getenv('guild_id'))  # Excelsior server
         for guild in guilds:
             if guild.id == desired_id:
-                print(user)
+                # print(user)
                 return templates.TemplateResponse("initupload.html", {"request": request, "user": user})
     # redirect to join the server before uploading
     return templates.TemplateResponse("auth.html", {"request": request, "user": user})    
@@ -218,9 +218,9 @@ async def upload(request: Request):
 async def upload_page(request: Request):
     user = request.session.get("discord_user")
     if not user:
-        print("DEBUG not a user upload")
+        # print("DEBUG not a user upload")
         return RedirectResponse("/login")
-    print(user)
+    # print(user)
     return templates.TemplateResponse("initupload.html", {"request": request, "user": user})
 
 # Endpoint for checking file and getting tags
@@ -268,9 +268,9 @@ async def upload(request: Request, file: UploadFile = File(...)):
 @app.get("/")
 async def index(request: Request):
     user = request.session.get("discord_user")
-    print(user)
+    # print(user)
     if not user:
-        print("DEBUG not a user home")
+        # print("DEBUG not a user home")
         user = "Guest"
     # conn = sqlite3.connect('example.db')
     conn = connect_to_server()
@@ -408,8 +408,8 @@ def search(request: Request):
     # Get the query parameters from the request URL
     query_params = request.query_params
 
-    print("qp",query_params)
-    print("qp items",query_params.items())
+    # print("qp",query_params)
+    # print("qp items",query_params.items())
     
     # Build the SQL query based on the search criteria
     query = "SELECT * FROM images"
@@ -434,8 +434,8 @@ def search(request: Request):
         query += " WHERE " + " AND ".join(conditions)
 
     # print(query_tags)
-    print("args",args)
-    print("query", query)
+    # print("args",args)
+    # print("query", query)
 
     conn = connect_to_server()
     cursor = conn.cursor()
