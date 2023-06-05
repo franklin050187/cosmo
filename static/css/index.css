@@ -153,22 +153,17 @@
     display: block;
 }
 
-@media(max-width:639px){
+@media (max-width: 639px) {
     .ships-list li {
-        display: none;
+      display: block;
     }
-    .ships-list li:nth-child(-n+4) {
-        display: block;
-    }
-}
-@media(min-width:640px) and (max-width:1023px){
+  }
+  
+  @media (min-width: 640px) and (max-width: 1023px) {
     .ships-list li {
-        display: none;
+      display: block;
     }
-    .ships-list li:nth-child(-n+6) {
-        display: block;
-    }
-}
+  }
 
 .cssTable td 
 {
