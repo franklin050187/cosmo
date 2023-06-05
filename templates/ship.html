@@ -62,6 +62,7 @@
                         <li>
                             <img loading="lazy" src="{{ url_png }}" width="512" height="512">
                         </li>
+                        <ul><a title="Edit" class="blue-btn register" onclick="downloadShip('{{ image[0] }}')"><span>Download</span></a></ul>
                         {% if user == image[3] %}
                             <ul><a title="Edit" class="blue-btn register" href="/edit/{{ image[0] }}"><span>Edit</span></a></ul>
                             <ul><a title="Delete" class="red-btn register" href="/delete/{{ image[0] }}"><span>Delete</span></a></ul>
