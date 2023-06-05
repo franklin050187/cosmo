@@ -69,10 +69,12 @@
                                 <span class="data credits"><span>Cost:</span> {{ image[7] }}₡</span>
                                 <span class="data"><span>Author:</span> {{ image[6] }}</span>
                                 <span class="data" style="font-size: 12px;"><span>Submitted by:</span> {{ image[3] }}</span>
+                                <span class="data" ><span>Downloads :</span> {{ image[62] }}</span>
+                                <span class="data" ><span>Date of submission :</span> {{ image[63] }}</span>
                             </div>
                             <div class="actions-container">
                                 <a class="blue-btn" title="See the ship page" href="/ship/{{ image[0] }}"></a>
-                                <button type="button" class="blue-btn download-btn" title="Download this ship" onclick="downloadShip('{{ image[2] }}', '{{ image[1] }}')"></button>
+                                <button type="button" class="blue-btn download-btn" title="Download this ship" onclick="downloadShip('{{ image[0] }}')"></button>
                             </div>
                         </li>
                         {% endfor %}

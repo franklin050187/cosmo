@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 import psycopg2
 import uvicorn
 import re
-from fastapi import FastAPI, Request, File, UploadFile, Depends
+from fastapi import FastAPI, Request, File, UploadFile, Depends, Query, Response
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -28,11 +28,12 @@ from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
 from png_upload import upload_image_to_imgbb
 from tagextractor import PNGTagExtractor
-from db import upload_image, get_image_data, get_image_url
+from db import upload_image, get_image_data, get_image_url, update_downloads
 from fastapi.middleware.gzip import GZipMiddleware
 from pricegen import calculate_price
 from urllib.parse import urlencode
 from collections import OrderedDict
+import requests
 
 load_dotenv()
 
@@ -173,10 +174,11 @@ async def edit_image(id: int, request: Request):
             image_data[i] = 0
 
     # Update the image data in the database
-    columns = ['name', 'data', 'submitted_by', 'description', 'ship_name', 'author', 'price'] + boolean_columns
+    columns = ['name', 'data', 'submitted_by', 'description', 'ship_name', 'author', 'price'] + boolean_columns + ['downloads'] + ['date']
+    
     values = [image_data[1]] + [image_data[2]] + [image_data[3]] + image_data[4:8] + image_data[8:]
     query = f"UPDATE images SET {', '.join([f'{column}=%s' for column in columns])} WHERE id=%s"
-    #print(query)
+    print(query)
     cursor.execute(query, tuple(values + [id]))
 
     # Commit and close the connection
@@ -264,6 +266,39 @@ async def upload(request: Request, file: UploadFile = File(...)):
     request.session["upload_data"] = data
     # Redirect to the index page
     return templates.TemplateResponse("upload.html", {"request": request, "data": data, "tags": tags})
+
+@app.get("/download/{image_id}")
+async def download_ship(image_id: str):
+    # Call the update_downloads function with the ship_id
+    
+
+    # Logic to retrieve the file path and filename based on the image_id
+    conn = connect_to_server()
+    cursor = conn.cursor()
+    cursor.execute("SELECT data, name FROM images WHERE id = %s", (image_id,))
+    result = cursor.fetchone()  # Retrieve the first row of the query result
+    # print(result)
+    if result:
+        image_url, filename = result
+        cursor.close()
+        conn.close()
+        update_downloads(image_id)
+
+        # Fetch the image content from the URL
+        response = requests.get(image_url)
+        if response.status_code == 200:
+            # Set the appropriate content type based on the response headers
+            content_type = response.headers.get("content-type", "application/octet-stream")
+            
+            # Return the image content as bytes
+            return Response(content=response.content, media_type=content_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+        else:
+            return "Failed to fetch the image from the URL"
+    else:
+        # Handle the case when the image_id is not found
+        cursor.close()
+        conn.close()
+        return "Image not found"
 
 @app.get("/")
 async def index(request: Request):

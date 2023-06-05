@@ -1,17 +1,19 @@
-function downloadShip(imageUrl, imageName) {
-  var link = document.createElement('a');
-  link.href = imageUrl;
-  link.download = imageName; // Set the desired file name for download
-
-  document.body.appendChild(link);
-
-  link.click();
-
-  // Set the download attribute to an empty string to force download
-  link.download = '';
-
-  document.body.removeChild(link);
+function downloadShip(imageUrl) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "/download/" + imageUrl, true);
+  xhr.responseType = "blob"; // Set the response type to 'blob' to handle binary data
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      // Create a temporary link element to download the file
+      var link = document.createElement("a");
+      link.href = window.URL.createObjectURL(xhr.response);
+      link.download = xhr.getResponseHeader("Content-Disposition").split("filename=")[1];
+      link.click();
+    }
+  };
+  xhr.send();
 }
+
 
 const tagList = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer']; // Predefined list of tags
 const infoIcon = document.querySelector('.info-icon');

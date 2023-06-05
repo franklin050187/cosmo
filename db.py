@@ -16,6 +16,16 @@ def connect_to_server():
                     port=5432)
     return conn
 
+def update_downloads(ship_id):
+    conn = connect_to_server()
+    cursor = conn.cursor()
+
+    # Execute an UPDATE query to increment the downloads column by 1 for the given ship_id
+    cursor.execute("UPDATE images SET downloads = downloads + 1 WHERE id = %s", (ship_id,))
+
+    conn.commit()
+    conn.close()
+
 def get_image_data(id: int):
     conn = connect_to_server()
     cursor = conn.cursor()
