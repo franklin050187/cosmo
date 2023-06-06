@@ -19,7 +19,35 @@
          <button id="menu-btn" class="menu-btn blue-btn" type="button" onclick="redirectToHomePage()"><span></span><span></span><span></span></button>
          <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
          <ul class="user-container">
-            <p>Welcome {{user}} </p>
+            <p class="username">Welcome {{ user }}</p>
+                <li>
+                    {% if user == "Guest" %}
+                    <a title="Login" class="blue-btn register" href="/login?button=login">
+                        <span>Login</span>
+                    </a>
+                    {% else %}
+                    <a title="Logout" class="blue-btn register" href="/logoff">
+                        <span>Log out</span>
+                    </a>
+                    {% endif %}
+                </li>
+                <li>
+                    <a title="Upload" class="blue-btn register" href="/login?button=upload">
+                        <span>Upload</span>
+                    </a>
+                </li>
+                <li>
+                </li>
+                <li>
+                    <a title="Myships" class="blue-btn register" href="/login?button=myships">
+                        <span>My Ships</span>
+                    </a>
+                </li>
+                <li>
+                    <a title="Home" class="blue-btn register" href="/">
+                        <span>Home</span>
+                    </a>
+                </li>
         </ul>
       </header>
       <main>

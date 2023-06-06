@@ -28,13 +28,16 @@ from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
 from png_upload import upload_image_to_imgbb
 from tagextractor import PNGTagExtractor
-from db import upload_image, get_image_data, delete_ship, edit_ship, post_edit_ship, download_ship_png, get_index, get_my_ships, get_search
+# from db import upload_image, get_image_data, delete_ship, edit_ship, post_edit_ship, download_ship_png, get_index, get_my_ships, get_search
+from db import ShipImageDatabase
 from fastapi.middleware.gzip import GZipMiddleware
 from pricegen import calculate_price
 from urllib.parse import urlencode
 import requests
 
 load_dotenv()
+
+db_manager = ShipImageDatabase()
 
 # Discord OAuth2 settings
 client_id = os.getenv('discord_id')
@@ -53,8 +56,12 @@ templates = Jinja2Templates(directory="templates")
 @app.get("/ship/{id}")
 def get_image(id: int, request: Request):
     user = request.session.get("discord_user")
-    image_data = get_image_data(id)
-    url_png = image_data[2] # change to send the url instead of the image
+    if not user:
+        # print("DEBUG not a user home")
+        user = "Guest"
+    db_manager.download_ship_png(id)
+    image_data = db_manager.get_image_data(id)
+    url_png = image_data[0][2] # change to send the url instead of the image
     return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png})
 
 # delete user ship
@@ -64,7 +71,7 @@ def delete_image(id: int, request: Request):
     user = request.session.get("discord_user")
     # print(user)
     # conn = sqlite3.connect('example.db')
-    check = delete_ship(id, user)
+    check = db_manager.delete_ship(id, user)
     if check is not None:
         return RedirectResponse("/")
     # Redirect to the home page after deleting the image
@@ -75,7 +82,7 @@ def delete_image(id: int, request: Request):
 def edit_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
-    check = edit_ship(id, user)
+    check = db_manager.edit_ship(id, user)
     if check == "ko":
         return RedirectResponse("/")
     # Redirect to the home page after deleting the image
@@ -87,7 +94,7 @@ async def edit_image(id: int, request: Request):
     # Get the user from the session
     user = request.session.get("discord_user")
     form_data = await request.form()
-    check = post_edit_ship(id, form_data, user)
+    check = db_manager.post_edit_ship(id, form_data, user)
     if check == "ko":
         return RedirectResponse("/")
     return RedirectResponse(url="/", status_code=303)
@@ -151,13 +158,12 @@ async def logoff(request: Request):
     request.session.pop("discord_user", None)
     return RedirectResponse("/")
 
-
 # Endpoint for uploading files
 @app.post("/upload")
 async def upload(request: Request):
     user = request.session.get("discord_user")
     form_data = await request.form()
-    upload_image(form_data, user)
+    db_manager.upload_image(form_data, user)
     return RedirectResponse(url="/", status_code=303)
 
 # Endpoint for displaying the file initupload page
@@ -215,7 +221,7 @@ async def upload(request: Request, file: UploadFile = File(...)):
 @app.get("/download/{image_id}")
 async def download_ship(image_id: str):
     # Logic to retrieve the file path and filename based on the image_id
-    result = download_ship_png(image_id)
+    result = db_manager.download_ship_png(image_id)
     if result:
         image_url, filename = result
         # Fetch the image content from the URL
@@ -238,7 +244,7 @@ async def index(request: Request):
     if not user:
         # print("DEBUG not a user home")
         user = "Guest"
-    images = get_index()
+    images = db_manager.get_index()
 
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
@@ -250,7 +256,7 @@ async def index(request: Request):
         # print("DEBUG not a user home")
         return RedirectResponse("/login?button=myships")
         
-    images = get_my_ships(user)
+    images = db_manager.get_my_ships(user)
 
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
@@ -324,7 +330,6 @@ async def home(request: Request):
     # Redirect the user to the search route
     return RedirectResponse(redirect_url, status_code=307)
 
-
 @app.get("/search")
 def search(request: Request):
     user = request.session.get("discord_user")
@@ -332,7 +337,8 @@ def search(request: Request):
         user = "Guest"
     # Get the query parameters from the request URL
     query_params = request.query_params
-    images = get_search(query_params)
+    images = db_manager.get_search(query_params)
+    # print("query_param_get = ",query_params)
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 @app.post("/search")
@@ -342,7 +348,8 @@ def search(request: Request):
         user = "Guest"
     # Get the query parameters from the request URL
     query_params = request.query_params
-    images = get_search(query_params)
+    images = db_manager.get_search(query_params)
+    # print("query_param_post = ",query_params)
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 # Catch-all endpoint for serving static files or the index page
