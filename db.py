@@ -1,5 +1,4 @@
 import requests
-import base64
 import psycopg2
 import os
 from dotenv import load_dotenv
@@ -145,6 +144,7 @@ def get_my_ships(user):
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM images WHERE submitted_by=%s', (user,))
     images = cursor.fetchall()
+    cursor.close()
     conn.close()
 
     return images
@@ -176,6 +176,7 @@ def get_search(query_params):
     # Execute the query with the parameters
     cursor.execute(query, args)
     images = cursor.fetchall()
+    cursor.close()
     conn.close()
 
     return images
@@ -211,8 +212,6 @@ def upload_image(form_data, user):
 
     response = requests.get(url_png)
     image_data = response.content
-
-    # base64_image = base64.b64encode(image_data).decode('utf-8')
 
     image_data = {
         'name': form_data.get('filename', ''),
