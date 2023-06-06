@@ -28,7 +28,7 @@ from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
 from png_upload import upload_image_to_imgbb
 from tagextractor import PNGTagExtractor
-from db import upload_image, get_image_data, get_image_url, update_downloads
+from db import upload_image, get_image_data, get_image_url, update_downloads, delete_ship, edit_ship
 from fastapi.middleware.gzip import GZipMiddleware
 from pricegen import calculate_price
 from urllib.parse import urlencode
@@ -59,13 +59,9 @@ def connect_to_server():
                     port=5432)
     return conn
 
-def get_upload_data(request: Request):
-    return request.session.get("upload_data")
-
-
 
 # ship specific page
-@app.get("/ship/{id}", response_class=HTMLResponse)
+@app.get("/ship/{id}")
 def get_image(id: int, request: Request):
     user = request.session.get("discord_user")
     
@@ -75,53 +71,28 @@ def get_image(id: int, request: Request):
     return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png})
 
 # delete user ship
-@app.get("/delete/{id}", response_class=HTMLResponse)
+@app.get("/delete/{id}")
 def delete_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
     # print(user)
     # conn = sqlite3.connect('example.db')
-    conn = connect_to_server()
-    cursor = conn.cursor()
-    cursor.execute("SELECT submitted_by FROM images WHERE id=%s", (id,))
-    image_data = cursor.fetchone()
-    # print(image_data[0])
-    if user != image_data[0]:
-        # print("not allowed")
-        conn.commit()
-        conn.close()
+    check = delete_ship(id, user)
+    if check is not None:
         return RedirectResponse("/")
-    cursor.execute("DELETE FROM images WHERE id=%s", (id,))
-    conn.commit()
-    conn.close()
-
     # Redirect to the home page after deleting the image
     return RedirectResponse("/")
 
 # edit page get
-@app.get("/edit/{id}", response_class=HTMLResponse)
+@app.get("/edit/{id}")
 def edit_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
-    # print(user)
-    # conn = sqlite3.connect('example.db')
-    conn = connect_to_server()
-    cursor = conn.cursor()
-    cursor.execute("SELECT submitted_by FROM images WHERE id=%s", (id,))
-    image_data = cursor.fetchone()
-    #print(image_data[0])
-    if user != image_data[0]:
-        # print("not allowed")
-        conn.commit()
-        conn.close()
+    check = edit_ship(id, user)
+    if check == "ko":
         return RedirectResponse("/")
-    cursor.execute("SELECT * FROM images WHERE id=%s", (id,))
-    image_data = cursor.fetchone()
-    conn.commit()
-    conn.close()
-
     # Redirect to the home page after deleting the image
-    return templates.TemplateResponse("edit.html", {"request": request, "image": image_data, "user": user})
+    return templates.TemplateResponse("edit.html", {"request": request, "image": check, "user": user})
 
 # edit post
 @app.post("/edit/{id}")
@@ -175,7 +146,7 @@ async def edit_image(id: int, request: Request):
     
     values = [image_data[1]] + [image_data[2]] + [image_data[3]] + image_data[4:8] + image_data[8:]
     query = f"UPDATE images SET {', '.join([f'{column}=%s' for column in columns])} WHERE id=%s"
-    print(query)
+
     cursor.execute(query, tuple(values + [id]))
 
     # Commit and close the connection

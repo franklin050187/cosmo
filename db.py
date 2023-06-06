@@ -16,6 +16,40 @@ def connect_to_server():
                     port=5432)
     return conn
 
+def delete_ship(ship_id, user):
+    conn = connect_to_server()
+    cursor = conn.cursor()
+    cursor.execute("SELECT submitted_by FROM images WHERE id=%s", (ship_id,))
+    image_data = cursor.fetchone()
+    # print(image_data[0])
+    if user != image_data[0]:
+        # print("not allowed")
+        conn.commit()
+        conn.close()
+        return "ko"
+    cursor.execute("DELETE FROM images WHERE id=%s", (ship_id,))
+    conn.commit()
+    conn.close()
+    return
+
+def edit_ship(ship_id, user):
+    # Delete image information from the database based on the provided ID
+    conn = connect_to_server()
+    cursor = conn.cursor()
+    cursor.execute("SELECT submitted_by FROM images WHERE id=%s", (ship_id,))
+    image_data = cursor.fetchone()
+    if user != image_data[0]:
+        conn.commit()
+        conn.close()
+        return "ko"
+    cursor.execute("SELECT * FROM images WHERE id=%s", (ship_id,))
+    image_data = cursor.fetchone()
+    conn.commit()
+    conn.close()
+
+    # Redirect to the home page after deleting the image
+    return image_data
+
 def update_downloads(ship_id):
     conn = connect_to_server()
     cursor = conn.cursor()
