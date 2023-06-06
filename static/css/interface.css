@@ -23,6 +23,13 @@
     box-sizing: border-box;
 }
 
+.blue-btn.disabled {
+    pointer-events: none; /* Disable button interactions */
+    opacity: 0.6; /* Reduce opacity to indicate disabled state */
+    /* Additional styling as desired */
+}
+
+
 body {
     background-image: url(../img/background.webp);
     background-image: url(../img/background-alpha-mobile.webp), linear-gradient(90deg, #0078bd, #07b3d1, #ada270, #28c098, #0078bd);
@@ -205,7 +212,7 @@ header .user-container {
         float: right;
         position: relative;
         margin: -41px 2.5% -1px 0px;
-        grid-template-columns: repeat(2, 100px);
+        grid-template-columns: repeat(3, 100px);
         gap: 10px;
     }
 
