@@ -62,10 +62,7 @@ def connect_to_server():
 def get_upload_data(request: Request):
     return request.session.get("upload_data")
 
-# init login
-@app.get('/login')
-async def start_login():
-    return client.redirect()
+
 
 # ship specific page
 @app.get("/ship/{id}", response_class=HTMLResponse)
@@ -188,24 +185,65 @@ async def edit_image(id: int, request: Request):
     # Redirect to the home page
     return RedirectResponse(url="/", status_code=303)
 
+# init login
+@app.route('/login')
+async def start_login(request: Request):
+    button_clicked = request.query_params.get('button')
+    if button_clicked == "upload":
+        request.session["button_clicked"] = "upload"  # Store button state in the session
+        user = request.session.get("discord_user")
+        if not user:
+            return client.redirect(request)
+        else:
+            return RedirectResponse("/initupload")  # Skip the login and redirect to initupload
+    elif button_clicked == "myships":
+        request.session["button_clicked"] = "myships"  # Store button state in the session
+        user = request.session.get("discord_user")
+        if not user:
+            return client.redirect(request)
+        return RedirectResponse("/myships")  # Redirect to the same login route
+    else:
+        request.session["button_clicked"] = "login"  # Store button state in the session
+        return client.redirect("/login")  # Redirect to the same login route
+
 # login finish
 @app.get('/callback')
-async def finish_login(code: str, request: Request):
+async def finish_login(request: Request):
+    code = request.query_params.get('code')
     async with client.session(code) as session:
         user = await session.identify()
         guilds = await session.guilds()
         if not user:
             return RedirectResponse("/login")
-        # get guilds and parse them
+
         request.session["discord_user"] = str(user)
-        # Access the parsed data
         desired_id = int(os.getenv('guild_id'))  # Excelsior server
         for guild in guilds:
             if guild.id == desired_id:
-                # print(user)
-                return templates.TemplateResponse("initupload.html", {"request": request, "user": user})
-    # redirect to join the server before uploading
-    return templates.TemplateResponse("auth.html", {"request": request, "user": user})    
+                redirect_url = "/"
+                button_clicked = request.session.pop("button_clicked", None)  # Retrieve button state from the session
+                if button_clicked == "upload":
+                    redirect_url = "/initupload"
+                elif button_clicked == "myships":
+                    redirect_url = "/myships"
+                return RedirectResponse(redirect_url)
+
+    return templates.TemplateResponse("auth.html", {"request": request, "user": None})
+
+# Endpoint for displaying the file initupload page
+@app.get("/initupload", response_class=FileResponse)
+async def upload_page(request: Request):
+    user = request.session.get("discord_user")
+    if not user:
+        return RedirectResponse("/login")
+    return templates.TemplateResponse("initupload.html", {"request": request, "user": user})
+
+# Logoff route
+@app.get('/logoff')
+async def logoff(request: Request):
+    request.session.pop("discord_user", None)
+    return RedirectResponse("/")
+
 
 # Endpoint for uploading files
 @app.post("/upload")
@@ -311,6 +349,23 @@ async def index(request: Request):
     conn = connect_to_server()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM images')
+    images = cursor.fetchall()
+    conn.close()
+
+    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+
+@app.get("/myships")
+async def index(request: Request):
+    user = request.session.get("discord_user")
+    # print(user)
+    if not user:
+        # print("DEBUG not a user home")
+        return RedirectResponse("/login")
+        
+    # conn = sqlite3.connect('example.db')
+    conn = connect_to_server()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM images WHERE submitted_by=%s', (user,))
     images = cursor.fetchall()
     conn.close()
 
@@ -481,19 +536,14 @@ def search(request: Request):
 
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
-
-
-
 # Catch-all endpoint for serving static files or the index page
 @app.get("/{catchall:path}")
 def serve_files(request: Request):
-    # Check if the requested file exists
-    path = request.path_params["catchall"]
-    file = 'templates/' + path
-    # if os.path.exists(file):
-    #     return FileResponse(file)
-    # Otherwise, return the index file
-    # index = 'templates/index.html'
+    user = request.session.get("discord_user")
+    # print(user)
+    if not user:
+        # print("DEBUG not a user home")
+        user = "Guest"
     return RedirectResponse(url="/", status_code=303)
 
 # session settings
