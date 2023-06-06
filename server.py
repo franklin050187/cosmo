@@ -19,8 +19,8 @@ from dotenv import load_dotenv
 import psycopg2
 import uvicorn
 import re
-from fastapi import FastAPI, Request, File, UploadFile, Depends, Query, Response
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Request, File, UploadFile, Response
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -28,11 +28,10 @@ from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
 from png_upload import upload_image_to_imgbb
 from tagextractor import PNGTagExtractor
-from db import upload_image, get_image_data, get_image_url, update_downloads, delete_ship, edit_ship
+from db import upload_image, get_image_data, delete_ship, edit_ship, post_edit_ship, download_ship_png, get_index, get_my_ships, get_search
 from fastapi.middleware.gzip import GZipMiddleware
 from pricegen import calculate_price
 from urllib.parse import urlencode
-from collections import OrderedDict
 import requests
 
 load_dotenv()
@@ -50,24 +49,12 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 #app.mount("/tmp", StaticFiles(directory="tmp"), name="tmp") # mounting tmp crashed the serverless function
 templates = Jinja2Templates(directory="templates")
 
-# postgresql configuration (db and table must be setup before use)
-def connect_to_server():
-    conn = psycopg2.connect(database=os.getenv('POSTGRES_DATABASE'),
-                    host=os.getenv('POSTGRES_HOST'),
-                    user=os.getenv('POSTGRES_USER'),
-                    password=os.getenv('POSTGRES_PASSWORD'),
-                    port=5432)
-    return conn
-
-
 # ship specific page
 @app.get("/ship/{id}")
 def get_image(id: int, request: Request):
     user = request.session.get("discord_user")
-    
     image_data = get_image_data(id)
     url_png = image_data[2] # change to send the url instead of the image
-    
     return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png})
 
 # delete user ship
@@ -97,63 +84,12 @@ def edit_image(id: int, request: Request):
 # edit post
 @app.post("/edit/{id}")
 async def edit_image(id: int, request: Request):
-
     # Get the user from the session
     user = request.session.get("discord_user")
-    # conn = sqlite3.connect('example.db')
-    conn = connect_to_server()
-    cursor = conn.cursor()
-
-    # Retrieve the existing image data from the database
-    cursor.execute("SELECT * FROM images WHERE id=%s", (id,))
-    image_data = list(cursor.fetchone())
-    #print(image_data)
-    if user != image_data[3]:
-        # print("not allowed")
-        conn.commit()
-        conn.close()
-        return RedirectResponse("/")
-    # Prepare the data
     form_data = await request.form()
-    # print("allowed")
-    # Keep the existing values for 'name' and 'data'
-    image_data[2] = image_data[2]
-    image_data[3] = user
-    image_data[4] = form_data.get('description', '')
-    image_data[5] = form_data.get('ship_name', '')
-    image_data[6] = form_data.get('author', '')
-    image_data[7] = int(form_data.get('price', 0))
-
-    # Update the boolean columns
-    boolean_columns = [
-        'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes',
-        'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors',
-        'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense', 'boost_thruster',
-        'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
-        'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor',
-        'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust',
-        'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'Corvette', 'diagonal', 'flanker',
-        'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer', 'campaign_ship', 'factories'
-    ]
-    for i, column in enumerate(boolean_columns, start=8):
-        if column in form_data:
-            image_data[i] = 1
-        else:
-            image_data[i] = 0
-
-    # Update the image data in the database
-    columns = ['name', 'data', 'submitted_by', 'description', 'ship_name', 'author', 'price'] + boolean_columns + ['downloads'] + ['date']
-    
-    values = [image_data[1]] + [image_data[2]] + [image_data[3]] + image_data[4:8] + image_data[8:]
-    query = f"UPDATE images SET {', '.join([f'{column}=%s' for column in columns])} WHERE id=%s"
-
-    cursor.execute(query, tuple(values + [id]))
-
-    # Commit and close the connection
-    conn.commit()
-    conn.close()
-
-    # Redirect to the home page
+    check = post_edit_ship(id, form_data, user)
+    if check == "ko":
+        return RedirectResponse("/")
     return RedirectResponse(url="/", status_code=303)
 
 # init login
@@ -278,35 +214,21 @@ async def upload(request: Request, file: UploadFile = File(...)):
 
 @app.get("/download/{image_id}")
 async def download_ship(image_id: str):
-    # Call the update_downloads function with the ship_id
-    
-
     # Logic to retrieve the file path and filename based on the image_id
-    conn = connect_to_server()
-    cursor = conn.cursor()
-    cursor.execute("SELECT data, name FROM images WHERE id = %s", (image_id,))
-    result = cursor.fetchone()  # Retrieve the first row of the query result
-    # print(result)
+    result = download_ship_png(image_id)
     if result:
         image_url, filename = result
-        cursor.close()
-        conn.close()
-        update_downloads(image_id)
-
         # Fetch the image content from the URL
         response = requests.get(image_url)
         if response.status_code == 200:
             # Set the appropriate content type based on the response headers
             content_type = response.headers.get("content-type", "application/octet-stream")
-            
             # Return the image content as bytes
             return Response(content=response.content, media_type=content_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
         else:
             return "Failed to fetch the image from the URL"
     else:
         # Handle the case when the image_id is not found
-        cursor.close()
-        conn.close()
         return "Image not found"
 
 @app.get("/")
@@ -316,12 +238,7 @@ async def index(request: Request):
     if not user:
         # print("DEBUG not a user home")
         user = "Guest"
-    # conn = sqlite3.connect('example.db')
-    conn = connect_to_server()
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM images')
-    images = cursor.fetchall()
-    conn.close()
+    images = get_index()
 
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
@@ -331,14 +248,9 @@ async def index(request: Request):
     # print(user)
     if not user:
         # print("DEBUG not a user home")
-        return RedirectResponse("/login")
+        return RedirectResponse("/login?button=myships")
         
-    # conn = sqlite3.connect('example.db')
-    conn = connect_to_server()
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM images WHERE submitted_by=%s', (user,))
-    images = cursor.fetchall()
-    conn.close()
+    images = get_my_ships(user)
 
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
@@ -418,46 +330,9 @@ def search(request: Request):
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
-
     # Get the query parameters from the request URL
     query_params = request.query_params
-
-    # print("qp",query_params)
-    # print("qp items",query_params.items())
-    
-    # Build the SQL query based on the search criteria
-    query = "SELECT * FROM images"
-    conditions = []
-    args = []
-
-        # searching ships
-    TAGS = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
-            'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer']
-
-    
-    for tag, arg in query_params.items():
-        if tag in TAGS:
-            if arg.lower() == '1':
-                conditions.append(f"{tag} = %s")
-                args.append(1)
-            elif arg.lower() == '0':
-                conditions.append(f"{tag} = %s")
-                args.append(0)
-
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
-
-    # print(query_tags)
-    # print("args",args)
-    # print("query", query)
-
-    conn = connect_to_server()
-    cursor = conn.cursor()
-    # Execute the query with the parameters
-    cursor.execute(query, args)
-    images = cursor.fetchall()
-    conn.close()
-
+    images = get_search(query_params)
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 @app.post("/search")
@@ -465,46 +340,9 @@ def search(request: Request):
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
-
     # Get the query parameters from the request URL
     query_params = request.query_params
-
-    # print("qp",query_params)
-    # print("qp items",query_params.items())
-    
-    # Build the SQL query based on the search criteria
-    query = "SELECT * FROM images"
-    conditions = []
-    args = []
-
-        # searching ships
-    TAGS = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
-            'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer']
-
-    
-    for tag, arg in query_params.items():
-        if tag in TAGS:
-            if arg.lower() == '1':
-                conditions.append(f"{tag} = %s")
-                args.append(1)
-            elif arg.lower() == '0':
-                conditions.append(f"{tag} = %s")
-                args.append(0)
-
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
-
-    # print(query_tags)
-    # print("args",args)
-    # print("query", query)
-
-    conn = connect_to_server()
-    cursor = conn.cursor()
-    # Execute the query with the parameters
-    cursor.execute(query, args)
-    images = cursor.fetchall()
-    conn.close()
-
+    images = get_search(query_params)
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 # Catch-all endpoint for serving static files or the index page

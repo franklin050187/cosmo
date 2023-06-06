@@ -25,10 +25,12 @@ def delete_ship(ship_id, user):
     if user != image_data[0]:
         # print("not allowed")
         conn.commit()
+        cursor.close()
         conn.close()
         return "ko"
     cursor.execute("DELETE FROM images WHERE id=%s", (ship_id,))
     conn.commit()
+    cursor.close()
     conn.close()
     return
 
@@ -40,24 +42,151 @@ def edit_ship(ship_id, user):
     image_data = cursor.fetchone()
     if user != image_data[0]:
         conn.commit()
+        cursor.close()
         conn.close()
         return "ko"
     cursor.execute("SELECT * FROM images WHERE id=%s", (ship_id,))
     image_data = cursor.fetchone()
     conn.commit()
+    cursor.close()
     conn.close()
 
     # Redirect to the home page after deleting the image
     return image_data
 
-def update_downloads(ship_id):
+def post_edit_ship(id, form_data, user):
+
     conn = connect_to_server()
     cursor = conn.cursor()
 
+    # Retrieve the existing image data from the database
+    cursor.execute("SELECT * FROM images WHERE id=%s", (id,))
+    image_data = list(cursor.fetchone())
+
+    if user != image_data[3]:
+        # print("not allowed")
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return "ko"
+
+    # Keep the existing values for 'name' and 'data'
+    image_data[2] = image_data[2]
+    image_data[3] = user
+    image_data[4] = form_data.get('description', '')
+    image_data[5] = form_data.get('ship_name', '')
+    image_data[6] = form_data.get('author', '')
+    image_data[7] = int(form_data.get('price', 0))
+
+    # Update the boolean columns
+    boolean_columns = [
+        'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes',
+        'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors',
+        'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense', 'boost_thruster',
+        'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
+        'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor',
+        'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust',
+        'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'Corvette', 'diagonal', 'flanker',
+        'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer', 'campaign_ship', 'factories'
+    ]
+    for i, column in enumerate(boolean_columns, start=8):
+        if column in form_data:
+            image_data[i] = 1
+        else:
+            image_data[i] = 0
+
+    # Update the image data in the database
+    columns = ['name', 'data', 'submitted_by', 'description', 'ship_name', 'author', 'price'] + boolean_columns + ['downloads'] + ['date']
+    
+    values = [image_data[1]] + [image_data[2]] + [image_data[3]] + image_data[4:8] + image_data[8:]
+    query = f"UPDATE images SET {', '.join([f'{column}=%s' for column in columns])} WHERE id=%s"
+
+    cursor.execute(query, tuple(values + [id]))
+
+    # Commit and close the connection
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    # Redirect to the home page
+    return
+    
+def download_ship_png(image_id):
+    # Logic to retrieve the file path and filename based on the image_id
+    conn = connect_to_server()
+    cursor = conn.cursor()
+    cursor.execute("SELECT data, name FROM images WHERE id = %s", (image_id,))
+    result = cursor.fetchone()  # Retrieve the first row of the query result
+    # print(result)
+    if result:
+
+        cursor.close()
+        conn.close()
+        update_downloads(image_id)
+        return result
+    else:
+        # Handle the case when the image_id is not found
+        cursor.close()
+        conn.close()
+        return "Image not found"
+
+def get_index():
+    conn = connect_to_server()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM images')
+    images = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return images
+
+def get_my_ships(user):
+    conn = connect_to_server()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM images WHERE submitted_by=%s', (user,))
+    images = cursor.fetchall()
+    conn.close()
+
+    return images
+
+def get_search(query_params):
+    # Build the SQL query based on the search criteria
+    query = "SELECT * FROM images"
+    conditions = []
+    args = []
+
+        # searching ships
+    TAGS = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
+            'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer']
+
+    for tag, arg in query_params.items():
+        if tag in TAGS:
+            if arg.lower() == '1':
+                conditions.append(f"{tag} = %s")
+                args.append(1)
+            elif arg.lower() == '0':
+                conditions.append(f"{tag} = %s")
+                args.append(0)
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    conn = connect_to_server()
+    cursor = conn.cursor()
+    # Execute the query with the parameters
+    cursor.execute(query, args)
+    images = cursor.fetchall()
+    conn.close()
+
+    return images
+
+def update_downloads(ship_id):
+    conn = connect_to_server()
+    cursor = conn.cursor()
     # Execute an UPDATE query to increment the downloads column by 1 for the given ship_id
     cursor.execute("UPDATE images SET downloads = downloads + 1 WHERE id = %s", (ship_id,))
-
     conn.commit()
+    cursor.close()
     conn.close()
 
 def get_image_data(id: int):
@@ -66,8 +195,8 @@ def get_image_data(id: int):
     cursor.execute("SELECT * FROM images WHERE id=%s", (id,))
     image_data = cursor.fetchone()
     conn.commit()
+    cursor.close()
     conn.close()
-
     return image_data
 
 def get_image_url(image_data):
@@ -115,6 +244,7 @@ def upload_image(form_data, user):
     cursor.execute(query, tuple(values + boolean_values))
 
     conn.commit()
+    cursor.close()
     conn.close()
 
     return
