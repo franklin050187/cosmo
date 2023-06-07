@@ -78,9 +78,17 @@
                            <tr>
                               <td>
                               </ul>
+                              {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %}
+                              {% set image_tags_list = image_tags.split(",") %}
                               <ul>
                                  <label for="cannon">Cannon:</label>
-                                 <input type="checkbox" name="cannon" id="cannon" {% if image[8] == 1 %}checked{% endif %}>
+                                 <input type="checkbox" name="cannon" id="cannon" {% if tag == "cannon" %}checked{% endif %}>
+
+                                 {% for tag in image_tags_list %}
+                                     {% if tag == "cannon" %}
+                                     <span class="selected-tag">{{ tag }}</span>
+                                     {% endif %}
+                                 {% endfor %}
                              </ul>
                              <ul>
                                  <label for="deck_cannon">Deck Cannon:</label>

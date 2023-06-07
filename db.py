@@ -93,30 +93,54 @@ class ShipImageDatabase:
         query = "SELECT * FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
         return image_data[0]
-
+# to do 
     def post_edit_ship(self, id, form_data, user):
-        query = "SELECT * FROM images WHERE id=%s"
+        query = "SELECT * FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (id,))
+        print("image_data = ", image_data)
 
-        if user != image_data[0][3]:
+        if user != image_data[3]:
             return "ko"
-
-        image_data = list(image_data[0])
-        image_data[4] = form_data.get('description', '')
-        image_data[5] = form_data.get('ship_name', '')
-        image_data[6] = form_data.get('author', '')
-        image_data[7] = int(form_data.get('price', 0))
-
-        for i, column in enumerate(self.boolean_columns, start=8):
-            if column in form_data:
-                image_data[i] = 1
-            else:
-                image_data[i] = 0
-
-        columns = ['name', 'data', 'submitted_by', 'description', 'ship_name', 'author', 'price'] + self.boolean_columns + ['downloads'] + ['date']
-        values = [image_data[1]] + [image_data[2]] + [image_data[3]] + image_data[4:8] + image_data[8:]
-        query = f"UPDATE images SET {', '.join([f'{column}=%s' for column in columns])} WHERE id=%s"
-        self.execute_query(query, tuple(values + [id]))
+        print("form_data = ", form_data)
+        tup_for = []
+        if 'thrust_type' in form_data:
+            tup_for.append(form_data['thrust_type'])
+        if 'defense_type' in form_data:
+            tup_for.append(form_data['defense_type'])
+        for key, value in form_data.items():
+            if value == 'on':
+                tup_for.append(key)
+        if 'tags' in form_data:
+            tags_value = form_data['tags']
+            tags_list = ast.literal_eval(tags_value)  # Safely evaluate the string as a list
+            tup_for.extend(tags_list)
+        # prepare data
+        image_data = {
+            'description': form_data.get('description', ''),
+            'ship_name': form_data.get('ship_name', ''),
+            'author': form_data.get('author', ''),
+            'price': int(form_data.get('price', 0)),
+            'tags': tup_for,  # Use getlist() to get all values of 'tags' as a list
+            'id' : id
+        }
+        # print("tup_for = ", tup_for)
+        # prepare query
+        insert_query = """
+            UPDATE shipdb SET
+            (description, ship_name, author, price, tags)
+            VALUES (%s, %s, %s, %s, %s::text[]) WHERE id = %s
+        """
+        # prepare values
+        values = (
+            image_data['description'],
+            image_data['ship_name'],
+            image_data['author'],
+            image_data['price'],
+            image_data['tags'],
+            image_data['id'],
+        )
+        # execute
+        self.execute_query(insert_query, values)
 
     def download_ship_png(self, image_id):
         query = "SELECT data, name FROM shipdb WHERE id = %s"
@@ -134,28 +158,39 @@ class ShipImageDatabase:
     def get_my_ships(self, user):
         query = "SELECT * FROM shipdb WHERE submitted_by=%s"
         return self.fetch_data(query, (user,))
-    
+  # done  
     def get_search(self, query_params):
-        query = "SELECT * FROM images"
-        conditions = []
-        args = []
         query_params = str(query_params)
         print("query_params =", query_params)
-        for param in query_params.split("&"):
-            key, value = param.split("=")
-            if key.lower() in [column.lower() for column in self.boolean_columns]:
-                if value.lower() == '1':
-                    conditions.append(f"{key} = %s")
-                    args.append(1)
-                elif value.lower() == '0':
-                    conditions.append(f"{key} = %s")
-                    args.append(0)
-            print("param =", param)
-            print("conditions =", conditions)
-        if conditions:
-            query += " WHERE " + " AND ".join(conditions)
-        print("query =", query)
-        return self.fetch_data(query, args)
+        
+        conditions = []
+        not_conditions = []
+        if query_params:
+            for param in query_params.split("&"):
+                key, value = param.split("=")
+                if value == "1":
+                    conditions.append(key)
+                elif value == "0":
+                    not_conditions.append(key)
+
+        # Build the query dynamically
+        if conditions and not_conditions:
+            query = "SELECT * FROM shipdb WHERE tags @> ARRAY{} AND NOT tags @> ARRAY{}".format(
+                conditions,
+                not_conditions
+            )
+        elif conditions:
+            query = "SELECT * FROM shipdb WHERE tags @> ARRAY{}".format(conditions)
+        elif not_conditions:
+            query = "SELECT * FROM shipdb WHERE NOT tags @> ARRAY{}".format(not_conditions)
+        else:
+            query = "SELECT * FROM shipdb"
+        
+        print("conditions = ", conditions)
+        print("not conditions = ", not_conditions)
+
+        print("query = ", query)
+        return self.fetch_data(query)
 
     def update_downloads(self, ship_id):
         query = "UPDATE shipdb SET downloads = downloads + 1 WHERE id = %s"
