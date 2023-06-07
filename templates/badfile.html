@@ -63,7 +63,6 @@ input#author {
    </head>
    <body>
       <header>
-         <button id="menu-btn" class="menu-btn blue-btn" type="button" onclick="redirectToHomePage()"><span></span><span></span><span></span></button>
          <img loading="lazy"alt="Excelsior logo" src="/static/img/excelsior-logo.webp"  href="/">
          <ul class="user-container">
             <p class="username">Welcome {{ user }}</p>
@@ -98,11 +97,12 @@ input#author {
         </ul>
       </header>
       <main>
-         <h1>Unable to read the file</h1>
+         <h1>Error</h1>
          <section id="competitive" class="content-container">
             <div class="section-description">
-               <h2>Invalid file submitted</h2>
-               <p>Please make sure to upload file from the game</p>
+               <h2>Oops, there was an error... {{ error }}</h2>
+               <p>{{ error }}</p>
+               
                
             </div>
             <div class="tabs-container">

@@ -16,7 +16,6 @@
 
 <body>
     <header>
-        <button id="menu-btn" class="menu-btn blue-btn" type="button" onclick="redirectToHomePage()"><span></span><span></span><span></span></button>
         <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
         <ul class="user-container">
             <p class="username">Welcome {{ user }}</p>
@@ -60,10 +59,11 @@
                     <p>Author : {{ image[0][6] }}</p>
                     <p>Ship description : {{ image[0][4] }}</p>
                     <p></p>
-                    <p class="data">Submitted by : {{ image[0][3] }}</p>
-                    <p class="data credits"><span>Cost:</span> {{ image[0][7] }}₡</p>
-                    <P class="data" ><span>Popularity :</span> {{ image[0][62] }}</P>
-                    <P class="data" ><span>Date of submission :</span> {{ image[0][63] }}</P>
+                    <p><span class="data credits"><span>Cost:</span> {{ image[0][7] }}₡</span></p>
+                    <P class="data" ><span>Popularity :</span> {{ image[0][8] }}</P>
+                    <P class="data" ><span>Date of submission :</span> {{ image[0][9] }}</P>
+                    <p></p>
+                    <p class="data" style="font-size: 12px;">Submitted by : {{ image[0][3] }}</p>
 
                 </div>
             </div>
@@ -79,12 +79,12 @@
                         <span class="data">
                             <span>Ship tags:</span>
                             <ul>
-                                {% set column_names = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'Corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer', 'campaign_ship', 'factories'] %}
-                                {% for index in range(8, image[0]|length) %}
-                                    {% set tag = image[0][index] %}
-                                    {% if tag == 1 %}
-                                        <li>{{ column_names[index - 8] }}</li>
-                                    {% endif %}
+                                {% set image_tags = image[0][10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %}
+                                {% set image_tags_list = image_tags.split(",") %}
+                                {% for tag in image_tags_list %}
+
+                                <li><span class="selected-tag">{{ tag }}</span></li>
+
                                 {% endfor %}
                             </ul>
                         </span>

@@ -16,7 +16,6 @@ import os
 import base64
 from dotenv import load_dotenv
 
-import psycopg2
 import uvicorn
 import re
 from fastapi import FastAPI, Request, File, UploadFile, Response
@@ -26,9 +25,8 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
-from png_upload import upload_image_to_imgbb
+from png_upload import upload_image_to_imgbb, upload_image_to_cloudinary
 from tagextractor import PNGTagExtractor
-# from db import upload_image, get_image_data, delete_ship, edit_ship, post_edit_ship, download_ship_png, get_index, get_my_ships, get_search
 from db import ShipImageDatabase
 from fastapi.middleware.gzip import GZipMiddleware
 from pricegen import calculate_price
@@ -51,6 +49,9 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 #app.mount("/tmp", StaticFiles(directory="tmp"), name="tmp") # mounting tmp crashed the serverless function
 templates = Jinja2Templates(directory="templates")
+
+#init db as array
+db_manager.init_db()
 
 # ship specific page
 @app.get("/ship/{id}")
@@ -166,16 +167,6 @@ async def upload(request: Request):
     db_manager.upload_image(form_data, user)
     return RedirectResponse(url="/", status_code=303)
 
-# Endpoint for displaying the file initupload page
-@app.get("/initupload", response_class=FileResponse)
-async def upload_page(request: Request):
-    user = request.session.get("discord_user")
-    if not user:
-        # print("DEBUG not a user upload")
-        return RedirectResponse("/login")
-    # print(user)
-    return templates.TemplateResponse("initupload.html", {"request": request, "user": user})
-
 # Endpoint for checking file and getting tags
 @app.post("/initupload")
 async def upload(request: Request, file: UploadFile = File(...)):
@@ -183,16 +174,21 @@ async def upload(request: Request, file: UploadFile = File(...)):
     contents = await file.read()
     # Encode the contents as base64
     encoded_data = base64.b64encode(contents).decode("utf-8")
-    # push to imagebb to be able to read it
+    # push to imagebb to be able to read it (fallback is enabled)
     url_png = upload_image_to_imgbb(encoded_data)
+    if url_png == "ko":
+        print("Uploading error")
+        error = 'upload servers are down, try again later'
+        return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
     # get the tags
     try:
         extractor = PNGTagExtractor()
         tags = extractor.extract_tags(url_png)
         author = extractor.extract_author(url_png)
+        # print("tags = ",tags)
     except Exception as e:
-    # Redirect the user to the "badfile.html" page
-        return templates.TemplateResponse("badfile.html", {"request": request})
+        error = 'unable to decode file provided, check upload guide below'
+        return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
         
     # Modify the file name to use authorized characters for HTML
     file_name = file.filename

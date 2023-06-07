@@ -476,6 +476,9 @@ main .content-container {
 .ship-data .data.credits {
     color: #0AD448;
 }
+.data.credits {
+    color: #0AD448;
+}
 
 .ship-data .data span {
     color: #BBE0FF;

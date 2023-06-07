@@ -23,7 +23,18 @@
     td {
        vertical-align: top;
      }
- 
+     .form-group {
+      display: flex;
+      align-items: flex-start;
+  }
+
+  .form-group label {
+      margin-right: 10px;
+  }
+
+  .form-group textarea {
+      margin-top: 3px;
+  }
      input#price {
          background-color: darkblue;
          color: white;
@@ -32,6 +43,10 @@
        background-color: darkblue;
        color: white;
    }
+   textarea#description {
+      background-color: darkblue;
+      color: white;
+  }
    input#submitted_by {
     background-color: darkblue;
     color: white;

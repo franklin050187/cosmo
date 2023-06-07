@@ -1,8 +1,9 @@
 import requests
 import psycopg2
 import os
+import ast
 from dotenv import load_dotenv
-from png_upload import upload_image_to_imgbb
+# from png_upload import upload_image_to_imgbb
 
 load_dotenv()
 
@@ -56,21 +57,40 @@ class ShipImageDatabase:
         self.cursor.close()
         self.conn.close()
 
+    def init_db(self):
+        # Define the create table query
+        create_table_query = """
+            CREATE TABLE IF NOT EXISTS shipdb (
+                id SERIAL PRIMARY KEY,
+                name TEXT,
+                data TEXT,
+                submitted_by TEXT,
+                description TEXT,
+                ship_name TEXT,
+                author TEXT,
+                price integer null default 0,
+                downloads integer null default 0,
+                date date null default current_date,
+                tags TEXT[]
+            )
+        """
+        self.execute_query(create_table_query)
+        
 
     def delete_ship(self, ship_id, user):
-        query = "SELECT submitted_by FROM images WHERE id=%s"
+        query = "SELECT submitted_by FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
         if user != image_data[0][0]:
             return "ko"
-        query = "DELETE FROM images WHERE id=%s"
+        query = "DELETE FROM shipdb WHERE id=%s"
         self.execute_query(query, (ship_id,))
 
     def edit_ship(self, ship_id, user):
-        query = "SELECT submitted_by FROM images WHERE id=%s"
+        query = "SELECT submitted_by FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
         if user != image_data[0][0]:
             return "ko"
-        query = "SELECT * FROM images WHERE id=%s"
+        query = "SELECT * FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
         return image_data[0]
 
@@ -99,7 +119,7 @@ class ShipImageDatabase:
         self.execute_query(query, tuple(values + [id]))
 
     def download_ship_png(self, image_id):
-        query = "SELECT data, name FROM images WHERE id = %s"
+        query = "SELECT data, name FROM shipdb WHERE id = %s"
         result = self.fetch_data(query, (image_id,))
         if result:
             self.update_downloads(image_id)
@@ -108,11 +128,11 @@ class ShipImageDatabase:
             return "Image not found"
 
     def get_index(self):
-        query = "SELECT * FROM images"
+        query = "SELECT * FROM shipdb"
         return self.fetch_data(query)
 
     def get_my_ships(self, user):
-        query = "SELECT * FROM images WHERE submitted_by=%s"
+        query = "SELECT * FROM shipdb WHERE submitted_by=%s"
         return self.fetch_data(query, (user,))
     
     def get_search(self, query_params):
@@ -137,25 +157,32 @@ class ShipImageDatabase:
         print("query =", query)
         return self.fetch_data(query, args)
 
-
-
     def update_downloads(self, ship_id):
-        query = "UPDATE images SET downloads = downloads + 1 WHERE id = %s"
+        query = "UPDATE shipdb SET downloads = downloads + 1 WHERE id = %s"
         self.execute_query(query, (ship_id,))
 
     def get_image_data(self, id):
-        query = "SELECT * FROM images WHERE id=%s"
+        query = "SELECT * FROM shipdb WHERE id=%s"
         return self.fetch_data(query, (id,))
-
-    def get_image_url(self, image_data):
-        url_png = upload_image_to_imgbb(image_data[2])
-        return url_png
 
     def upload_image(self, form_data, user):
         url_png = form_data.get('url_png')
         response = requests.get(url_png)
         image_data = response.content
-
+        print("form_data = ", form_data)
+        tup_for = []
+        if 'thrust_type' in form_data:
+            tup_for.append(form_data['thrust_type'])
+        if 'defense_type' in form_data:
+            tup_for.append(form_data['defense_type'])
+        for key, value in form_data.items():
+            if value == 'on':
+                tup_for.append(key)
+        if 'tags' in form_data:
+            tags_value = form_data['tags']
+            tags_list = ast.literal_eval(tags_value)  # Safely evaluate the string as a list
+            tup_for.extend(tags_list)
+        # prepare data
         image_data = {
             'name': form_data.get('filename', ''),
             'data': url_png,  # change to store URL of the image instead of the base64 image
@@ -163,14 +190,26 @@ class ShipImageDatabase:
             'description': form_data.get('description', ''),
             'ship_name': form_data.get('ship_name', ''),
             'author': form_data.get('author', ''),
-            'price': int(form_data.get('price', 0))
+            'price': int(form_data.get('price', 0)),
+            'tags': tup_for  # Use getlist() to get all values of 'tags' as a list
         }
-
-        columns = ['name', 'data', 'submitted_by', 'description', 'ship_name', 'author', 'price']
-        values = [image_data[column] for column in columns]
-        boolean_values = [1 if column in form_data else 0 for column in self.boolean_columns]
-
-        query = f"INSERT INTO images ({', '.join(columns + self.boolean_columns)}) VALUES ({', '.join(['%s'] * (len(columns) + len(self.boolean_columns)))})"
-        self.execute_query(query, tuple(values + boolean_values))
-
-
+        # print("tup_for = ", tup_for)
+        # prepare query
+        insert_query = """
+            INSERT INTO shipdb
+            (name, data, submitted_by, description, ship_name, author, price, tags)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s::text[])
+        """
+        # prepare values
+        values = (
+            image_data['name'],
+            image_data['data'],
+            image_data['submitted_by'],
+            image_data['description'],
+            image_data['ship_name'],
+            image_data['author'],
+            image_data['price'],
+            image_data['tags']
+        )
+        # execute
+        self.execute_query(insert_query, values)
