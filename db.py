@@ -3,6 +3,7 @@ import psycopg2
 import os
 import ast
 from dotenv import load_dotenv
+from tagextractor import PNGTagExtractor
 # from png_upload import upload_image_to_imgbb
 
 load_dotenv()
@@ -99,9 +100,11 @@ class ShipImageDatabase:
         image_data = self.fetch_data(query, (id,))
         print("image_data = ", image_data)
 
-        if user != image_data[3]:
+        if user != image_data[0][3]:
             return "ko"
+        
         print("form_data = ", form_data)
+        
         tup_for = []
         if 'thrust_type' in form_data:
             tup_for.append(form_data['thrust_type'])
@@ -110,26 +113,35 @@ class ShipImageDatabase:
         for key, value in form_data.items():
             if value == 'on':
                 tup_for.append(key)
-        if 'tags' in form_data:
-            tags_value = form_data['tags']
-            tags_list = ast.literal_eval(tags_value)  # Safely evaluate the string as a list
-            tup_for.extend(tags_list)
+        # generate ship tags
+        url_png = image_data[0][2]
+        extractor = PNGTagExtractor()
+        tags = extractor.extract_tags(url_png)
+        print("tags = ",tags)
+        if tags : 
+            tup_for.extend(tags)
+
         # prepare data
         image_data = {
             'description': form_data.get('description', ''),
             'ship_name': form_data.get('ship_name', ''),
             'author': form_data.get('author', ''),
             'price': int(form_data.get('price', 0)),
-            'tags': tup_for,  # Use getlist() to get all values of 'tags' as a list
+            'tags' : tup_for,
             'id' : id
         }
-        # print("tup_for = ", tup_for)
+        print("tup_for = ", tup_for)
         # prepare query
         insert_query = """
             UPDATE shipdb SET
-            (description, ship_name, author, price, tags)
-            VALUES (%s, %s, %s, %s, %s::text[]) WHERE id = %s
+            description = %s,
+            ship_name = %s,
+            author = %s,
+            price = %s,
+            tags = %s::text[]
+            WHERE id = %s
         """
+        
         # prepare values
         values = (
             image_data['description'],
