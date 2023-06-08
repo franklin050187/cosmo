@@ -227,8 +227,12 @@ class ShipImageDatabase:
                 tup_for.append(key)
         if 'tags' in form_data:
             tags_value = form_data['tags']
-            tags_list = ast.literal_eval(tags_value)  # Safely evaluate the string as a list
-            tup_for.extend(tags_list)
+            try:
+                tags_list = ast.literal_eval(tags_value)  # Safely evaluate the string as a list
+                tup_for.extend(tags_list)
+            except (SyntaxError, ValueError):
+                # Handle the exception here (e.g., keep the tags as a string)
+                tup_for.append(tags_value)
         # prepare data
         image_data = {
             'name': form_data.get('filename', ''),

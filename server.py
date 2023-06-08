@@ -25,13 +25,14 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
-from png_upload import upload_image_to_imgbb, upload_image_to_cloudinary
+from png_upload import upload_image_to_imgbb
 from tagextractor import PNGTagExtractor
 from db import ShipImageDatabase
 from fastapi.middleware.gzip import GZipMiddleware
 from pricegen import calculate_price
 from urllib.parse import urlencode
 import requests
+from typing import List
 
 load_dotenv()
 
@@ -152,6 +153,75 @@ async def upload_page(request: Request):
     if not user:
         return RedirectResponse("/login")
     return templates.TemplateResponse("initupload.html", {"request": request, "user": user})
+
+# Endpoint for displaying the file initupload page
+@app.get("/inituploadmass", response_class=FileResponse)
+async def upload_page(request: Request):
+    user = request.session.get("discord_user")
+    if not user:
+        return RedirectResponse("/login")
+    return templates.TemplateResponse("massupload.html", {"request": request, "user": user})
+
+@app.post("/inituploadmass")
+async def upload(request: Request, files: List[UploadFile] = File(...)):
+    # Read the image file
+    for file in files:
+        try:
+            contents = await file.read()
+            # Encode the contents as base64
+            encoded_data = base64.b64encode(contents).decode("utf-8")
+            # push to imagebb to be able to read it (fallback is enabled)
+            try:
+                url_png = upload_image_to_imgbb(encoded_data)
+            except Exception as e:
+                print(f"Error extracting tags for file {file.filename}: {str(e)}")
+                continue  # Skip the current file and proceed to the next one
+
+            if url_png == "ko":
+                print("Uploading error")
+                error = 'upload servers are down, try again later'
+                continue
+            # get the tags
+            try:
+                extractor = PNGTagExtractor()
+                tags = extractor.extract_tags(url_png)
+                author = extractor.extract_author(url_png)
+                # print("tags = ",tags)
+            except Exception as e:
+                print(f"Error extracting tags for file {file.filename}: {str(e)}")
+                continue  # Skip the current file and proceed to the next one
+
+            # Modify the file name to use authorized characters for HTML
+            file_name = file.filename
+            authorized_chars = re.sub(r'[^\w\-_.]', '_', file_name)
+
+            shipname = authorized_chars
+            if ".png" in shipname:
+                shipname = authorized_chars.replace(".png", "")
+            if ".ship" in shipname:
+                shipname = shipname.replace(".ship", "")
+
+            price = calculate_price(url_png)
+            user = request.session.get("discord_user")
+            form_data = {
+                'name': authorized_chars,
+                'data': url_png,
+                'submitted_by': user,
+                'description': "BATCH IMPORT: ship needs to be reviewed",
+                'shipname': shipname,
+                'author': author,
+                'price': price,
+                'tags': tags,
+                'url_png': url_png
+            }
+
+            db_manager.upload_image(form_data, user)
+        except Exception as e:
+            print(f"Error processing file {file.filename}: {str(e)}")
+            continue  # Skip the current file and proceed to the next one
+        
+    # Redirect to the index page
+    return RedirectResponse(url="/", status_code=303)
 
 # Logoff route
 @app.get('/logoff')

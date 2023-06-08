@@ -1,5 +1,27 @@
 <!DOCTYPE html>
 
+<style>
+
+
+   .file-upload label {
+       margin-bottom: 10px;
+       font-weight: bold;
+   }
+
+
+   .file-upload .btn-upload {
+       background-color: #4CAF50;
+       color: white;
+       border: none;
+       padding: 8px 16px;
+       text-align: center;
+       text-decoration: none;
+       display: inline-block;
+       font-size: 16px;
+       cursor: pointer;
+   }
+</style>
+
 <html lang="es">
    <head>
       <meta charset="utf-8">
@@ -61,11 +83,12 @@
                   
                   <ul>
                      <h1>Ship Upload</h1>
-                     <form action="/initupload" method="post" enctype="multipart/form-data">
-                        <ul>
-                           <input type="file" name="file" accept=".png" required>
-                           <button type="submit" class="blue-btn register" >Next</button>
-                        </ul>
+                     <form action="/inituploadmass" method="post" enctype="multipart/form-data">
+                        <ul class="file-upload">
+                           <label for="files">Select multiple PNG files:</label>
+                           <input type="file" name="files" id="files" accept=".png" required multiple>
+                           <button type="submit" class="btn-upload">Upload all at once !</button>
+                       </ul>
                      </form>  
                   </ul>
                </div>
