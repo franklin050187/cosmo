@@ -16,11 +16,37 @@
 
 <body>
     <header>
-        <button id="menu-btn" class="menu-btn blue-btn" type="button" onclick="redirectToHomePage()"><span></span><span></span><span></span></button>
         <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
         <ul class="user-container">
-            <p>Welcome {{ user }} </p>
-            <li><a title="Upload" class="blue-btn register" href="/initupload"><span>Upload</span></a></li>
+            <p class="username">Welcome {{ user }}</p>
+                <li>
+                    {% if user == "Guest" %}
+                    <a title="Login" class="blue-btn register" href="/login?button=login">
+                        <span>Login</span>
+                    </a>
+                    {% else %}
+                    <a title="Logout" class="blue-btn register" href="/logoff">
+                        <span>Log out</span>
+                    </a>
+                    {% endif %}
+                </li>
+                <li>
+                    <a title="Upload" class="blue-btn register" href="/login?button=upload">
+                        <span>Upload</span>
+                    </a>
+                </li>
+                <li>
+                </li>
+                <li>
+                    <a title="Myships" class="blue-btn register" href="/login?button=myships">
+                        <span>My Ships</span>
+                    </a>
+                </li>
+                <li>
+                    <a title="Home" class="blue-btn register" href="/">
+                        <span>Home</span>
+                    </a>
+                </li>
         </ul>
     </header>
 
@@ -28,15 +54,16 @@
         <h1>Excelsior Ship Library</h1>
         <section id="competitive" class="content-container">
             <div class="section-description">
-                <h2>Ship name : {{ image[5] }}</h2>
+                <h2>Ship name : {{ image[0][5] }}</h2>
                 <div class="search-container">
-                    <p>Author : {{ image[6] }}</p>
-                    <p>Ship description : {{ image[4] }}</p>
+                    <p>Author : {{ image[0][6] }}</p>
+                    <p>Ship description : {{ image[0][4] }}</p>
                     <p></p>
-                    <p class="data">Submitted by : {{ image[3] }}</p>
-                    <p class="data credits"><span>Cost:</span> {{ image[7] }}₡</p>
-                    <span class="data" ><span>Downloads :</span> {{ image[62] }}</span>
-                    <span class="data" ><span>Date of submission :</span> {{ image[63] }}</span>
+                    <p><span class="data credits"><span>Cost:</span> {{ image[0][7] }}₡</span></p>
+                    <P class="data" ><span>Popularity :</span> {{ image[0][8] }}</P>
+                    <P class="data" ><span>Date of submission :</span> {{ image[0][9] }}</P>
+                    <p></p>
+                    <p class="data" style="font-size: 12px;">Submitted by : {{ image[0][3] }}</p>
 
                 </div>
             </div>
@@ -52,22 +79,22 @@
                         <span class="data">
                             <span>Ship tags:</span>
                             <ul>
-                                {% set column_names = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'Corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer', 'campaign_ship', 'factories'] %}
-                                {% for index in range(8, image|length) %}
-                                    {% set tag = image[index] %}
-                                    {% if tag == 1 %}
-                                        <li>{{ column_names[index - 8] }}</li>
-                                    {% endif %}
+                                {% set image_tags = image[0][10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %}
+                                {% set image_tags_list = image_tags.split(",") %}
+                                {% for tag in image_tags_list %}
+
+                                <li><span class="selected-tag">{{ tag }}</span></li>
+
                                 {% endfor %}
                             </ul>
                         </span>
                         <li>
                             <img loading="lazy" src="{{ url_png }}" width="512" height="512">
                         </li>
-                        <ul><a title="Edit" class="blue-btn register" onclick="downloadShip('{{ image[0] }}')"><span>Download</span></a></ul>
-                        {% if user == image[3] %}
-                            <ul><a title="Edit" class="blue-btn register" href="/edit/{{ image[0] }}"><span>Edit</span></a></ul>
-                            <ul><a title="Delete" class="red-btn register" href="/delete/{{ image[0] }}"><span>Delete</span></a></ul>
+                        <ul><a title="Edit" class="blue-btn register" onclick="downloadShip('{{ image[0][0] }}')"><span>Download</span></a></ul>
+                        {% if user == image[0][3] %}
+                            <ul><a title="Edit" class="blue-btn register" href="/edit/{{ image[0][0] }}"><span>Edit</span></a></ul>
+                            <ul><a title="Delete" class="red-btn register" href="/delete/{{ image[0][0] }}"><span>Delete</span></a></ul>
                         {% endif %}
                     </ul>
                 </div>

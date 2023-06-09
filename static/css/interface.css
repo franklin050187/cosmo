@@ -23,6 +23,13 @@
     box-sizing: border-box;
 }
 
+.blue-btn.disabled {
+    pointer-events: none; /* Disable button interactions */
+    opacity: 0.6; /* Reduce opacity to indicate disabled state */
+    /* Additional styling as desired */
+}
+
+
 body {
     background-image: url(../img/background.webp);
     background-image: url(../img/background-alpha-mobile.webp), linear-gradient(90deg, #0078bd, #07b3d1, #ada270, #28c098, #0078bd);
@@ -205,7 +212,7 @@ header .user-container {
         float: right;
         position: relative;
         margin: -41px 2.5% -1px 0px;
-        grid-template-columns: repeat(2, 100px);
+        grid-template-columns: repeat(3, 100px);
         gap: 10px;
     }
 
@@ -346,7 +353,7 @@ body main {
 main h1 {
     display: block;
     float: left;
-    margin-top: 110px;
+    margin-top: 150px;
     color: #fff;
     font-size: 40px;
     text-align: center;
@@ -467,6 +474,9 @@ main .content-container {
     width: 100%;
 }
 .ship-data .data.credits {
+    color: #0AD448;
+}
+.data.credits {
     color: #0AD448;
 }
 
@@ -667,6 +677,7 @@ footer .footer-content {
 /* ######################### */
 .tag-suggestions {
     position: relative;
+    margin-left: 46%;
   }
   
   .tag-suggestions ul {
@@ -676,7 +687,7 @@ footer .footer-content {
     background-color: #207eca;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
     position: absolute;
-    width: 100%;
+    width: 50%;
     max-height: 200px;
     overflow-y: auto;
     z-index: 1;

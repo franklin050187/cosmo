@@ -15,7 +15,7 @@ function downloadShip(imageUrl) {
 }
 
 
-const tagList = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer']; // Predefined list of tags
+const tagList = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer', 'domination_ship', 'elimination_ship']; // Predefined list of tags
 const infoIcon = document.querySelector('.info-icon');
 infoIcon.setAttribute('data-tags', tagList.join('\n'));
 
@@ -48,6 +48,26 @@ window.addEventListener('DOMContentLoaded', () => {
 
 tagInput.addEventListener('input', filterTags);
 
+$(document).ready(function() {
+  $("#authorinput").autocomplete({
+    source: function(request, response) {
+      $.ajax({
+        url: "/authors",
+        dataType: "json",
+        success: function(data) {
+          // Filter the authors based on the typed characters
+          const filteredAuthors = data.authors.filter(function(author) {
+            return author.toLowerCase().startsWith(request.term.toLowerCase());
+          });
+          response(filteredAuthors);
+        }
+      });
+    },
+    minLength: 1
+  });
+});
+
+
 function filterTags() {
   const query = tagInput.value.trim();
   matchedTags = [];
@@ -75,9 +95,12 @@ function filterTags() {
       return '-' + tag;
     });
   }
-
+  
   displayTagSuggestions(matchedTags);
   toggleTableVisibility();
+  console.log(finalSearchQuery.value);
+  console.log(query.value);
+
 }
 
 function displayTagSuggestions(tags) {
@@ -111,6 +134,15 @@ function clearTagSuggestions() {
   tagSuggestionsDiv.style.display = 'none';
   tagSuggestionsDiv.innerHTML = '';
   toggleTableVisibility();
+}
+
+function selectAuthor(author) {
+  const authorInput = document.getElementById('authorinput');
+  author = authorInput.value;
+
+  // Add the selected author as a tag
+  // updateFinalSearchQuery(author);
+  addTag('author', author);
 }
 
 function addTag(tag, isExcluded) {
@@ -188,18 +220,28 @@ function toggleTableVisibility() {
 
 function updateFinalSearchQuery() {
   finalSearchQuery.value = selectedTags.join(' ') + (excludedTags.length > 0 ? ' -' + excludedTags.join(' -') : '');
+  console.log(finalSearchQuery.value);
 }
 
 function appendSearchInput() {
-  const input = tagInput.value.trim();
-  if (input !== '') {
-    finalSearchQuery.value += ' ' + input;
-    tagInput.value = '';
-    clearTagSuggestions();
-    filterTags();
-    toggleTableVisibility();
-    updateFinalSearchQuery();
-  }
+  // const selectedAuthor = document.getElementById('authorinput').value.trim();
+  // const authorParam = selectedAuthor !== '' ? `&author=${encodeURIComponent(selectedAuthor)}` : '';
+  // console.log(finalSearchQuery.value);
+  // if (selectedAuthor !== '') {
+  //   finalSearchQuery.value;
+  //   tagInput.value = '';
+  //   // console.log(finalSearchQuery.value)
+  //   clearTagSuggestions();
+  //   // console.log(finalSearchQuery.value)
+  //   filterTags();
+  //   // console.log(finalSearchQuery.value)
+  //   toggleTableVisibility();
+  //   // console.log(finalSearchQuery.value)
+  //   updateFinalSearchQuery();
+  //   // finalSearchQuery.value += ' ' + authorParam;
+  //   console.log(finalSearchQuery.value);
+  // }
 }
+
 
 filterTags();

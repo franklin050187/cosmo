@@ -173,10 +173,23 @@
 input#tag-input {
     background-color: darkblue;
     color: white;
-    width: 100%; /* Set the input width to 100% of its parent container */
+    width: 50%; /* Set the input width to 100% of its parent container */
     box-sizing: border-box; /* Include padding and border in the total width */
-    height: 50px;
+    height: 30px;
  }
+ input#authorinput {
+    background-color: darkblue;
+    color: white;
+    width: 20%; /* Set the input width to 100% of its parent container */
+    box-sizing: border-box; /* Include padding and border in the total width */
+    height: 30px;
+ }
+ .ui-menu-item {
+    background-color: #207eca; /* Change this to your desired background color */
+    border: 1px solid #ccc;
+    color: #fff;
+  }
+
 .search-container {
     position: relative;
     display: inline-block; /* Change to inline-block */

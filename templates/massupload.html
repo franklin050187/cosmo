@@ -1,53 +1,27 @@
 <!DOCTYPE html>
+
 <style>
-   .form-container {
-   display: flex;
-   justify-content: space-between;
-   }
-   .form-list {
-   list-style: none;
-   padding: 0;
-   margin: 0;
-   }
-   .form-table {
-   display: table;
-   width: 100%;
-   }
-   .form-table-row {
-   display: table-row;
-   }
-   .form-table-cell {
-   display: table-cell;
-   width: 100%; /* Adjust the width as needed */
-   padding-right: 20px; /* Adjust the spacing between cells as needed */
-   
-   }
-   td {
-      vertical-align: top;
-    }
 
-    input#price {
-        background-color: darkblue;
-        color: white;
-    }
-    input#description {
-      background-color: darkblue;
-      color: white;
-  }
-  input#submitted_by {
-   background-color: darkblue;
-   color: white;
-}
-input#ship_name {
-   background-color: darkblue;
-   color: white;
-}
-input#author {
-   background-color: darkblue;
-   color: white;
-}
 
+   .file-upload label {
+       margin-bottom: 10px;
+       font-weight: bold;
+   }
+
+
+   .file-upload .btn-upload {
+       background-color: #4CAF50;
+       color: white;
+       border: none;
+       padding: 8px 16px;
+       text-align: center;
+       text-decoration: none;
+       display: inline-block;
+       font-size: 16px;
+       cursor: pointer;
+   }
 </style>
+
 <html lang="es">
    <head>
       <meta charset="utf-8">
@@ -57,13 +31,14 @@ input#author {
       <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
       <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
       <link rel="stylesheet" type="text/css" href="/static/css/index.css">
+      <link rel="stylesheet" type="text/css" href="/static/css/upload.css">
       <script src="/static/js/jquery-3.6.0.min.js"></script>
       <script src="/static/js/common.js"></script>
       <script src="/static/js/index.js"></script>
-   </head>
+  </head>
    <body>
       <header>
-         <img loading="lazy"alt="Excelsior logo" src="/static/img/excelsior-logo.webp"  href="/">
+         <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
          <ul class="user-container">
             <p class="username">Welcome {{ user }}</p>
                 <li>
@@ -97,19 +72,24 @@ input#author {
         </ul>
       </header>
       <main>
-         <h1>Unauthorized access</h1>
+         <h1>Upload your ship !</h1>
          <section id="competitive" class="content-container">
             <div class="section-description">
-               <h2>Join now the Excelsior server to be able to upload your ship !</h2>
-               <p>Please click the button below to join the Discord server: Excelsior</p>
-               
+               <h2>Share your ships with the community</h2>
+               <p>All ships posted are under the CC BY 4.0</p>
             </div>
             <div class="tabs-container">
                <div id="elim-competitive-tab" class="tab active">
                   
                   <ul>
-                    <a title="Join" class="blue-btn register center" href="https://discord.gg/736FAtJ"><span>Join</span></a>
-                      
+                     <h1>Ship Upload</h1>
+                     <form action="/inituploadmass" method="post" enctype="multipart/form-data">
+                        <ul class="file-upload">
+                           <label for="files">Select multiple PNG files:</label>
+                           <input type="file" name="files" id="files" accept=".png" required multiple>
+                           <button type="submit" class="btn-upload">Upload all at once !</button>
+                       </ul>
+                     </form>  
                   </ul>
                </div>
             </div>
@@ -117,7 +97,7 @@ input#author {
       </main>
       <footer>
          <div class="footer-content">
-            <img loading="lazy"alt="Excelsior logo" src="/static/img/excelsior-logo.webp">
+            <img loading="lazy"alt="Excelsior logo" src="img/excelsior-logo.webp">
             <ul>
                <li><a title="Cookies policy" href="#">Cookies policy</a></li>
                   <li><a title="Another footer link" href="#">Another footer link</a></li>
