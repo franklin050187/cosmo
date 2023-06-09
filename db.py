@@ -4,6 +4,7 @@ import os
 import ast
 from dotenv import load_dotenv
 from tagextractor import PNGTagExtractor
+from urllib.parse import unquote, unquote_plus
 # from png_upload import upload_image_to_imgbb
 
 load_dotenv()
@@ -12,16 +13,6 @@ class ShipImageDatabase:
     def __init__(self):
         self.conn = self.connect_to_server()
         self.cursor = self.conn.cursor()
-        self.boolean_columns = [
-            'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes',
-            'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors',
-            'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense', 'boost_thruster',
-            'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
-            'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor',
-            'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust',
-            'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'Corvette', 'diagonal', 'flanker',
-            'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer', 'campaign_ship', 'factories'
-        ]
 
     def execute_query(self, query, values=None):
         conn = self.connect_to_server()
@@ -57,6 +48,15 @@ class ShipImageDatabase:
     def close_connection(self):
         self.cursor.close()
         self.conn.close()
+        
+    def get_authors(self):
+        query = "SELECT DISTINCT author FROM shipdb;"
+        authors = self.fetch_data(query)
+        print(authors)
+        # authors = [author[0] for author in authors]  # Extracting only the author value
+        return {'authors': authors}
+
+    
 
     def init_db(self):
         # Define the create table query
@@ -77,7 +77,6 @@ class ShipImageDatabase:
         """
         self.execute_query(create_table_query)
         
-
     def delete_ship(self, ship_id, user):
         query = "SELECT submitted_by FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
@@ -94,7 +93,7 @@ class ShipImageDatabase:
         query = "SELECT * FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
         return image_data[0]
-# to do 
+# done
     def post_edit_ship(self, id, form_data, user):
         query = "SELECT * FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (id,))
@@ -177,10 +176,14 @@ class ShipImageDatabase:
         
         conditions = []
         not_conditions = []
+        author_condition = None
+        
         if query_params:
             for param in query_params.split("&"):
                 key, value = param.split("=")
-                if value == "1":
+                if key == "author":
+                    author_condition = unquote_plus(value)
+                elif value == "1":
                     conditions.append(key)
                 elif value == "0":
                     not_conditions.append(key)
@@ -197,12 +200,20 @@ class ShipImageDatabase:
             query = "SELECT * FROM shipdb WHERE NOT tags @> ARRAY{}".format(not_conditions)
         else:
             query = "SELECT * FROM shipdb"
-        
-        print("conditions = ", conditions)
-        print("not conditions = ", not_conditions)
 
-        print("query = ", query)
+        if author_condition:
+            if conditions or not_conditions:
+                query += " AND author = '{}'".format(author_condition)
+            else:
+                query += " WHERE author = '{}'".format(author_condition)
+
+        print("conditions =", conditions)
+        print("not conditions =", not_conditions)
+        print("author condition =", author_condition)
+        print("query =", query)
+        
         return self.fetch_data(query)
+
 
     def update_downloads(self, ship_id):
         query = "UPDATE shipdb SET downloads = downloads + 1 WHERE id = %s"

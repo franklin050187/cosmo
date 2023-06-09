@@ -212,7 +212,9 @@ async def upload(request: Request, files: List[UploadFile] = File(...)):
                 'author': author,
                 'price': price,
                 'tags': tags,
-                'url_png': url_png
+                'url_png': url_png,
+                'filename' : authorized_chars,
+                'ship_name' : shipname
             }
 
             db_manager.upload_image(form_data, user)
@@ -341,11 +343,13 @@ async def home(request: Request):
 
     # get the form
     form_input = await request.form()
-    # print("form", form_input) # debug
-    
+    print("form", form_input) # debug
+    # author = form_input['author']
+    # print("author", author)
     # find the form data
     query: str = form_input.get("query").strip()
-    
+    authorstrip: str = form_input.get("author").strip()
+    # print("author", authorstrip)
     # split query string
     words = query.lower().split(" ")
     
@@ -363,7 +367,8 @@ async def home(request: Request):
             value = 1
             if tag in TAGS:
                 query_tags.append((tag, value))
-
+    if authorstrip :
+        query_tags.append(("author", authorstrip))
     # print("post qt", query_tags) # debug
     # Build the SQL query based on the query tags
     query = "SELECT * FROM images"
@@ -404,7 +409,7 @@ def search(request: Request):
     # Get the query parameters from the request URL
     query_params = request.query_params
     images = db_manager.get_search(query_params)
-    # print("query_param_get = ",query_params)
+    print("query_param_get = ",query_params)
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 @app.post("/search")
@@ -415,8 +420,16 @@ def search(request: Request):
     # Get the query parameters from the request URL
     query_params = request.query_params
     images = db_manager.get_search(query_params)
-    # print("query_param_post = ",query_params)
+    print("query_param_post = ",query_params)
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+
+@app.get('/authors')
+def get_authors():
+    query_result = db_manager.get_authors()
+    print("query_result = ",query_result)
+    authors = [author for author, in query_result['authors']][2:]
+    print("authors = ",authors)
+    return {'authors': authors}
 
 # Catch-all endpoint for serving static files or the index page
 @app.get("/{catchall:path}")
