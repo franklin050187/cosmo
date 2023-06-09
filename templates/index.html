@@ -64,16 +64,25 @@
                         <input type="hidden" name="query" id="final_search_query">
                         <label for="authorinput">Search by author:</label>
                         <input type="text" id="authorinput" name="author" >
-                        <button type="submit" class="blue-btn register" onclick="appendSearchInput()">Search</button>
-                    </form>
 
+                    
+                    <p></p>
+                        <label for="tag-input">Search by tags:</label>
                     <input type="text" id="tag-input" oninput="filterTags()" placeholder="Type your tags here">
                     <div id="tag-suggestions" class="tag-suggestions"></div>
-                    <div class="tag-container">
+                    <!-- <div class="tag-container"> -->
+                        <div class="search-container">
+                        <div class="tag-container">
                         <div id="selected-tags" class="tag-box"></div>
                         <div id="excluded-tags" class="tag-box"></div>
-                      </div>
+                    </div>
                 </div>
+                    <!--   </div> -->
+                      <p></p>
+                      <button type="submit" class="blue-btn register" onclick="appendSearchInput()">Search</button>
+                    </form>
+                </div>
+
             </div>
             <div class="tabs-container">
                 <button id="elim-competitive-btn" class="active blue-btn" type="button">Sort by new first</button>
