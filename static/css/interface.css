@@ -212,7 +212,7 @@ header .user-container {
         float: right;
         position: relative;
         margin: -41px 2.5% -1px 0px;
-        grid-template-columns: repeat(3, 100px);
+        grid-template-columns: auto auto auto auto auto auto;
         gap: 10px;
     }
 
