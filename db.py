@@ -4,7 +4,7 @@ import os
 import ast
 from dotenv import load_dotenv
 from tagextractor import PNGTagExtractor
-from urllib.parse import unquote, unquote_plus
+from urllib.parse import unquote_plus
 # from png_upload import upload_image_to_imgbb
 
 load_dotenv()

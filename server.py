@@ -427,7 +427,7 @@ async def search(request: Request):
 async def get_authors():
     query_result = db_manager.get_authors()
     print("query_result = ",query_result)
-    authors = [author for author, in query_result['authors']][2:]
+    authors = [author for author, in query_result['authors']]
     print("authors = ",authors)
     return {'authors': authors}
 

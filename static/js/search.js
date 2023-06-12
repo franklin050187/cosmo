@@ -14,6 +14,63 @@ function downloadShip(imageUrl) {
   xhr.send();
 }
 
+$(document).ready(function() {
+  let jsonData = null; // Variable to store the JSON data
+
+  // Function to fetch the JSON data
+  function fetchAuthorsData(callback) {
+    if (jsonData) {
+      // If the JSON data is already fetched, invoke the callback function
+      callback(jsonData);
+    } else {
+      $.ajax({
+        url: "/authors",
+        dataType: "json",
+        success: function(data) {
+          jsonData = data; // Store the fetched JSON data
+          callback(jsonData); // Invoke the callback function with the data
+        }
+      });
+    }
+  }
+
+    // Function to filter the authors based on the typed characters
+    function filterAuthors(request, callback) {
+      const filteredAuthors = jsonData.authors.filter(function(author) {
+        return author.toLowerCase().startsWith(request.term.toLowerCase());
+      });
+      callback(filteredAuthors);
+    }
+
+    $("#authorinput").autocomplete({
+      source: function(request, response) {
+        fetchAuthorsData(function(data) {
+          filterAuthors(request, response);
+        });
+      },
+      minLength: 1
+    });
+  });
+
+      // Function to retrieve the value from the request parameter
+      function getParameterValue(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+      }
+      
+      // Fill the value in the author input if present in the request parameter
+      const authorParam = getParameterValue('author');
+      if (authorParam) {
+        $('#authorinput').val(authorParam);
+      }
+    
+
+function selectAuthor() {
+  const authorInput = document.getElementById('authorinput');
+  const author = authorInput.value;
+  addTag('author', author);
+}  
+
 
 const tagList = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer', 'domination_ship', 'elimination_ship']; // Predefined list of tags
 const infoIcon = document.querySelector('.info-icon');
@@ -28,6 +85,8 @@ const finalSearchQuery = document.getElementById('final_search_query');
 let matchedTags = [];
 let selectedTags = [];
 let excludedTags = [];
+
+
 
 // Extract tags from URL parameters on page load
 window.addEventListener('DOMContentLoaded', () => {
@@ -47,26 +106,6 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 tagInput.addEventListener('input', filterTags);
-
-$(document).ready(function() {
-  $("#authorinput").autocomplete({
-    source: function(request, response) {
-      $.ajax({
-        url: "/authors",
-        dataType: "json",
-        success: function(data) {
-          // Filter the authors based on the typed characters
-          const filteredAuthors = data.authors.filter(function(author) {
-            return author.toLowerCase().startsWith(request.term.toLowerCase());
-          });
-          response(filteredAuthors);
-        }
-      });
-    },
-    minLength: 1
-  });
-});
-
 
 function filterTags() {
   const query = tagInput.value.trim();
@@ -134,15 +173,6 @@ function clearTagSuggestions() {
   tagSuggestionsDiv.style.display = 'none';
   tagSuggestionsDiv.innerHTML = '';
   toggleTableVisibility();
-}
-
-function selectAuthor(author) {
-  const authorInput = document.getElementById('authorinput');
-  author = authorInput.value;
-
-  // Add the selected author as a tag
-  // updateFinalSearchQuery(author);
-  addTag('author', author);
 }
 
 function addTag(tag, isExcluded) {
@@ -242,6 +272,5 @@ function appendSearchInput() {
   //   console.log(finalSearchQuery.value);
   // }
 }
-
 
 filterTags();
