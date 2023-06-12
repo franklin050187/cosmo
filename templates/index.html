@@ -63,25 +63,16 @@
                     <p>Search by ship name, author, description or tags.<span class="info-icon" title="Tags"></span></p>
                     <p>Add a - before a tag to add it to the exclusion list.</p>
                     <form action="/" method="post" enctype="multipart/form-data">
+                        <button type="submit" class="blue-btn register" onclick="appendSearchInput()">Search</button>
                         <input type="hidden" name="query" id="final_search_query">
                         <label for="authorinput">Search by author:</label>
                         <input type="text" id="authorinput" name="author">
-
-                    
-                    <p></p>
                         <label for="tag-input">Search by tags:</label>
-                    <input type="text" id="tag-input"  placeholder="Type your tags here">
-
-                    <!-- <div class="tag-container"> -->
+                        <input type="text" id="tag-input"  placeholder="Type your tags here">
                         <div class="search-container">
                         <div class="tag-container">
                         <div id="selected-tags" class="tag-box"></div>
                         <div id="excluded-tags" class="tag-box"></div>
-
-                </div>
-                    <!--   </div> -->
-                      <p></p>
-                      <button type="submit" class="blue-btn register" onclick="appendSearchInput()">Search</button>
                     </form>
                 </div>
 
