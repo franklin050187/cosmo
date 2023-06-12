@@ -56,7 +56,7 @@ db_manager.init_db()
 
 # ship specific page
 @app.get("/ship/{id}")
-def get_image(id: int, request: Request):
+async def get_image(id: int, request: Request):
     user = request.session.get("discord_user")
     if not user:
         # print("DEBUG not a user home")
@@ -68,7 +68,7 @@ def get_image(id: int, request: Request):
 
 # delete user ship
 @app.get("/delete/{id}")
-def delete_image(id: int, request: Request):
+async def delete_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
     # print(user)
@@ -81,7 +81,7 @@ def delete_image(id: int, request: Request):
 
 # edit page get
 @app.get("/edit/{id}")
-def edit_image(id: int, request: Request):
+async def edit_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
     check = db_manager.edit_ship(id, user)
@@ -402,7 +402,7 @@ async def home(request: Request):
     return RedirectResponse(redirect_url, status_code=307)
 
 @app.get("/search")
-def search(request: Request):
+async def search(request: Request):
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
@@ -413,7 +413,7 @@ def search(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 @app.post("/search")
-def search(request: Request):
+async def search(request: Request):
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
@@ -424,7 +424,7 @@ def search(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 @app.get('/authors')
-def get_authors():
+async def get_authors():
     query_result = db_manager.get_authors()
     print("query_result = ",query_result)
     authors = [author for author, in query_result['authors']][2:]
@@ -433,7 +433,7 @@ def get_authors():
 
 # Catch-all endpoint for serving static files or the index page
 @app.get("/{catchall:path}")
-def serve_files(request: Request):
+async def serve_files(request: Request):
     user = request.session.get("discord_user")
     # print(user)
     if not user:

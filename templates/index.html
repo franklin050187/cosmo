@@ -10,6 +10,7 @@
     <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
     <link rel="stylesheet" type="text/css" href="/static/css/index.css">
     <script src="/static/js/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/jquery-ui.min.js"></script>
     <script src="/static/js/common.js"></script>
     <script src="/static/js/index.js"></script>
 
@@ -91,7 +92,9 @@
                     <ul class="ships-list" id="elim-competitive-ship-list">
                         {% for image in images %}
                         <li class="ship-card">
-                            <img loading="lazy" src="{{ image[2] }}">
+                            <div class="lazy-img-wrapper">
+                                <img class="lazy-img" data-src="{{ image[2] }}">
+                            </div>
                             <div class="ship-data">
                                 <span class="data"><span>Ship name:</span> {{ image[5] }}</span>
                                 <span class="data"><span>Ship weapons:</span>
@@ -127,7 +130,9 @@
                     <ul class="ships-list" id="dom-competitive-ship-list">
                         {% for image in images %}
                         <li class="ship-card">
-                            <img loading="lazy" src="{{ image[2] }}">
+                            <div class="lazy-img-wrapper">
+                                <img class="lazy-img" data-src="{{ image[2] }}">
+                            </div>
                             <div class="ship-data">
                                 <span class="data"><span>Ship name:</span> {{ image[5] }}</span>
                                 <span class="data"><span>Ship weapons:</span>
@@ -179,4 +184,22 @@
 
 <script src="/static/js/search.js"></script>
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+<script>
+const lazyImages = document.querySelectorAll('.lazy-img');
+
+const observer = new IntersectionObserver((entries, observer) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      const img = entry.target;
+      img.src = img.dataset.src;
+      img.classList.remove('lazy-img');
+      observer.unobserve(img);
+    }
+  });
+});
+
+lazyImages.forEach((img) => {
+  observer.observe(img);
+});
+</script>
