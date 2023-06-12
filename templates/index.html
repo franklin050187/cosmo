@@ -3,7 +3,7 @@
     <div class="site-container">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Demo Excelsior | Cosmoteer</title>
     <meta name="robots" content="noindex,nofollow">
     <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
@@ -13,7 +13,6 @@
     <script src="/static/js/jquery-ui.min.js"></script>
     <script src="/static/js/common.js"></script>
     <script src="/static/js/index.js"></script>
-
 </head>
 
 <body>
@@ -93,7 +92,7 @@
                         {% for image in images %}
                         <li class="ship-card">
                             <div class="lazy-img-wrapper">
-                                <img class="lazy-img" data-src="{{ image[2] }}">
+                                <img class="lazy-img" data-src="{{ image[2] }}" alt="{{ image[5] }}">
                             </div>
                             <div class="ship-data">
                                 <span class="data"><span>Ship name:</span> {{ image[5] }}</span>
@@ -131,7 +130,7 @@
                         {% for image in images %}
                         <li class="ship-card">
                             <div class="lazy-img-wrapper">
-                                <img class="lazy-img" data-src="{{ image[2] }}">
+                                <img class="lazy-img" data-src="{{ image[2] }}" alt="{{ image[5] }}">
                             </div>
                             <div class="ship-data">
                                 <span class="data"><span>Ship name:</span> {{ image[5] }}</span>
@@ -139,7 +138,7 @@
                                     {% set tagList = [
                                         'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes',
                                         'railgun', 'factories', 'disruptors',
-                                        'heavy_Laser', 'ion_Beam', 'ion_Prism', 'laser', 'mining_Laser', 'point_Defense'
+                                        'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense'
                                     ] %}
                                     {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %}
                                     {% set image_tags_list = image_tags.split(",") %}
