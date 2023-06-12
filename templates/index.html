@@ -10,9 +10,11 @@
     <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
     <link rel="stylesheet" type="text/css" href="/static/css/index.css">
     <script src="/static/js/jquery-3.6.0.min.js"></script>
-    <script src="/static/js/jquery-ui.min.js"></script>
     <script src="/static/js/common.js"></script>
     <script src="/static/js/index.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
+
 </head>
 
 <body>
@@ -63,19 +65,19 @@
                     <form action="/" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="query" id="final_search_query">
                         <label for="authorinput">Search by author:</label>
-                        <input type="text" id="authorinput" name="author" >
+                        <input type="text" id="authorinput" name="author">
 
                     
                     <p></p>
                         <label for="tag-input">Search by tags:</label>
-                    <input type="text" id="tag-input" oninput="filterTags()" placeholder="Type your tags here">
-                    <div id="tag-suggestions" class="tag-suggestions"></div>
+                    <input type="text" id="tag-input"  placeholder="Type your tags here">
+
                     <!-- <div class="tag-container"> -->
                         <div class="search-container">
                         <div class="tag-container">
                         <div id="selected-tags" class="tag-box"></div>
                         <div id="excluded-tags" class="tag-box"></div>
-                    </div>
+
                 </div>
                     <!--   </div> -->
                       <p></p>
