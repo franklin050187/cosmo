@@ -336,24 +336,20 @@ async def home(request: Request):
     if not user:
         # print("DEBUG not a user home")
         user = "Guest"
-
     # tag list
     TAGS = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
             'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer']
-
     # get the form
     form_input = await request.form()
     print("form", form_input) # debug
-    # author = form_input['author']
-    # print("author", author)
     # find the form data
     query: str = form_input.get("query").strip()
     authorstrip: str = form_input.get("author").strip()
-    # print("author", authorstrip)
     # split query string
     words = query.lower().split(" ")
-    
     # print("words", words)
+    minstrip: int = form_input.get("min-price").strip()
+    maxstrip: int = form_input.get("max-price").strip()
     # init query
     query_tags = []
     for word in words:
@@ -369,6 +365,8 @@ async def home(request: Request):
                 query_tags.append((tag, value))
     if authorstrip :
         query_tags.append(("author", authorstrip))
+    query_tags.append(("minprice", minstrip))
+    query_tags.append(("maxprice", maxstrip))
     # print("post qt", query_tags) # debug
     # Build the SQL query based on the query tags
     query = "SELECT * FROM images"
@@ -377,27 +375,20 @@ async def home(request: Request):
     for tag, value in query_tags:
         conditions.append(f"{tag} = %s")
         args.append(value)
-
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
-        
-        
     # print("post cond", conditions) 
     # print("post arg", args)
-
     # Construct the query parameters for the search tags
     query_params = {}
     for tag, value in query_tags:
         query_params[tag] = str(value)
-
     # Get the base URL of the "search" endpoint
     base_url = request.url_for("search")
-
     # Construct the redirect URL with query parameters
     redirect_url = f"{base_url}?"
     redirect_url += urlencode(query_params)
     # print("redirect", redirect_url)
-
     # Redirect the user to the search route
     return RedirectResponse(redirect_url, status_code=307)
 

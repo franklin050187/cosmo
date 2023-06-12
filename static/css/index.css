@@ -175,6 +175,29 @@
     height:30px;
     width:50%
     }
+
+    input#min-price {
+        background-color:#00008b;
+        box-sizing:border-box;
+        color:#fff;
+        height:30px;
+        width:10%
+        }
+        #price-slider {
+            background-color: #021526;
+
+
+            width: 20%;
+            }
+        
+
+    input#max-price {
+        background-color:#00008b;
+        box-sizing:border-box;
+        color:#fff;
+        height:30px;
+        width:10%
+        }
     
     input#authorinput {
     background-color:#00008b;

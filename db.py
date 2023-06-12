@@ -173,16 +173,22 @@ class ShipImageDatabase:
     def get_search(self, query_params):
         query_params = str(query_params)
         print("query_params =", query_params)
-        
+
         conditions = []
         not_conditions = []
         author_condition = None
-        
+        min_price_condition = None
+        max_price_condition = None
+
         if query_params:
             for param in query_params.split("&"):
                 key, value = param.split("=")
                 if key == "author":
                     author_condition = unquote_plus(value)
+                elif key == "minprice":
+                    min_price_condition = value
+                elif key == "maxprice":
+                    max_price_condition = value
                 elif value == "1":
                     conditions.append(key)
                 elif value == "0":
@@ -190,19 +196,46 @@ class ShipImageDatabase:
 
         # Build the query dynamically
         if conditions and not_conditions:
-            query = "SELECT * FROM shipdb WHERE tags @> ARRAY{} AND NOT tags @> ARRAY{}".format(
+            query = "SELECT * FROM shipdb WHERE tags @> ARRAY{} AND NOT tags @> ARRAY{}"
+            if min_price_condition and max_price_condition:
+                query += " AND price >= {} AND price <= {}".format(min_price_condition, max_price_condition)
+            elif min_price_condition:
+                query += " AND price >= {}".format(min_price_condition)
+            elif max_price_condition:
+                query += " AND price <= {}".format(max_price_condition)
+            query = query.format(
                 conditions,
                 not_conditions
             )
         elif conditions:
-            query = "SELECT * FROM shipdb WHERE tags @> ARRAY{}".format(conditions)
+            query = "SELECT * FROM shipdb WHERE tags @> ARRAY{}"
+            if min_price_condition and max_price_condition:
+                query += " AND price >= {} AND price <= {}".format(min_price_condition, max_price_condition)
+            elif min_price_condition:
+                query += " AND price >= {}".format(min_price_condition)
+            elif max_price_condition:
+                query += " AND price <= {}".format(max_price_condition)
+            query = query.format(conditions)
         elif not_conditions:
-            query = "SELECT * FROM shipdb WHERE NOT tags @> ARRAY{}".format(not_conditions)
+            query = "SELECT * FROM shipdb WHERE NOT tags @> ARRAY{}"
+            if min_price_condition and max_price_condition:
+                query += " AND price >= {} AND price <= {}".format(min_price_condition, max_price_condition)
+            elif min_price_condition:
+                query += " AND price >= {}".format(min_price_condition)
+            elif max_price_condition:
+                query += " AND price <= {}".format(max_price_condition)
+            query = query.format(not_conditions)
         else:
             query = "SELECT * FROM shipdb"
+            if min_price_condition and max_price_condition:
+                query += " WHERE price >= {} AND price <= {}".format(min_price_condition, max_price_condition)
+            elif min_price_condition:
+                query += " WHERE price >= {}".format(min_price_condition)
+            elif max_price_condition:
+                query += " WHERE price <= {}".format(max_price_condition)
 
         if author_condition:
-            if conditions or not_conditions:
+            if conditions or not_conditions or min_price_condition or max_price_condition:
                 query += " AND author = '{}'".format(author_condition)
             else:
                 query += " WHERE author = '{}'".format(author_condition)
@@ -210,9 +243,12 @@ class ShipImageDatabase:
         print("conditions =", conditions)
         print("not conditions =", not_conditions)
         print("author condition =", author_condition)
+        print("min price condition =", min_price_condition)
+        print("max price condition =", max_price_condition)
         print("query =", query)
-        
+
         return self.fetch_data(query)
+
 
 
     def update_downloads(self, ship_id):

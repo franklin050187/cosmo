@@ -14,6 +14,31 @@ function downloadShip(imageUrl) {
   xhr.send();
 }
 
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+const minPrice = urlParams.get('minprice') || 750000;
+const maxPrice = urlParams.get('maxprice') || 1500000;
+
+document.getElementById('min-price').value = minPrice;
+document.getElementById('max-price').value = maxPrice;
+
+
+$(function() {
+  // Initialize the price slider
+  $("#price-slider").slider({
+      range: true,
+      min: 0,
+      max: 2500000,
+      values: [minPrice, maxPrice],
+      slide: function(event, ui) {
+          // Update the hidden input fields with the selected values
+          $("#min-price").val(ui.values[0]);
+          $("#max-price").val(ui.values[1]);
+      }
+  });
+});
+
+
 $(document).ready(function() {
   let jsonData = null; // Variable to store the JSON data
 
