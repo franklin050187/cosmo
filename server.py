@@ -33,6 +33,7 @@ from pricegen import calculate_price
 from urllib.parse import urlencode
 import requests
 from typing import List
+import ast
 
 load_dotenv()
 
@@ -54,6 +55,10 @@ templates = Jinja2Templates(directory="templates")
 #init db as array
 db_manager.init_db()
 
+# get mod list
+modlist = os.getenv('mods_list')
+modlist = ast.literal_eval(modlist)
+
 # ship specific page
 @app.get("/ship/{id}")
 async def get_image(id: int, request: Request):
@@ -64,7 +69,7 @@ async def get_image(id: int, request: Request):
     db_manager.download_ship_png(id)
     image_data = db_manager.get_image_data(id)
     url_png = image_data[0][2] # change to send the url instead of the image
-    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png})
+    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png, "modlist": modlist})
 
 # delete user ship
 @app.get("/delete/{id}")

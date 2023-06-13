@@ -13,6 +13,8 @@ class ShipImageDatabase:
     def __init__(self):
         self.conn = self.connect_to_server()
         self.cursor = self.conn.cursor()
+        self.modlist = os.getenv('mods_list')
+        self.modlist = ast.literal_eval(self.modlist)
 
     def execute_query(self, query, values=None):
         conn = self.connect_to_server()
@@ -80,7 +82,7 @@ class ShipImageDatabase:
     def delete_ship(self, ship_id, user):
         query = "SELECT submitted_by FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
-        if user != image_data[0][0]:
+        if user != image_data[0][0] or user not in self.modlist:
             return "ko"
         query = "DELETE FROM shipdb WHERE id=%s"
         self.execute_query(query, (ship_id,))
@@ -88,7 +90,7 @@ class ShipImageDatabase:
     def edit_ship(self, ship_id, user):
         query = "SELECT submitted_by FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
-        if user != image_data[0][0]:
+        if user != image_data[0][0] or user not in self.modlist:
             return "ko"
         query = "SELECT * FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
@@ -99,7 +101,7 @@ class ShipImageDatabase:
         image_data = self.fetch_data(query, (id,))
         print("image_data = ", image_data)
 
-        if user != image_data[0][3]:
+        if user != image_data[0][3] or user not in self.modlist:
             return "ko"
         
         print("form_data = ", form_data)
@@ -125,6 +127,7 @@ class ShipImageDatabase:
             'description': form_data.get('description', ''),
             'ship_name': form_data.get('ship_name', ''),
             'author': form_data.get('author', ''),
+            'submitted_by': form_data.get('submitted_by', ''),
             'price': int(form_data.get('price', 0)),
             'tags' : tup_for,
             'id' : id
@@ -137,6 +140,7 @@ class ShipImageDatabase:
             ship_name = %s,
             author = %s,
             price = %s,
+            submitted_by = %s,
             tags = %s::text[]
             WHERE id = %s
         """
@@ -147,6 +151,7 @@ class ShipImageDatabase:
             image_data['ship_name'],
             image_data['author'],
             image_data['price'],
+            image_data['submitted_by'],
             image_data['tags'],
             image_data['id'],
         )
