@@ -351,7 +351,7 @@ class ShipImageDatabase:
         )
         # execute
         insertedid = self.execute_query_return(insert_query, values)
-        link = "https://cosmo-git-test-franklin050187.vercel.app/ship/"+str(insertedid)
+        link = "https://cosmo-lilac.vercel.app/ship/"+str(insertedid)
         # call webhook
         # send_message(shipurl, shipname, description, image, price, user, author):
         send_message(link, image_data['name'], image_data['description'],image_data['data'], image_data['price'], image_data['submitted_by'], image_data['author'])
