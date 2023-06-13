@@ -303,6 +303,7 @@ class ShipImageDatabase:
         response = requests.get(url_png)
         image_data = response.content
         # print("form_data = ", form_data)
+        # print("tags = ", form_data['tags'])
         tup_for = []
         if 'thrust_type' in form_data:
             tup_for.append(form_data['thrust_type'])

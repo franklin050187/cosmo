@@ -6,26 +6,24 @@
 </style>
 
 <html lang="es">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Demo Excelsior | Cosmoteer</title>
-    <meta name="robots" content="noindex,nofollow">
-    <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/index.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/upload.css">
-    <script src="/static/js/jquery-3.6.0.min.js"></script>
-    <script src="/static/js/common.js"></script>
-    <script src="/static/js/index.js"></script>
-</head>
-
-<body>
-    <header>
-        <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
-        <ul class="user-container">
-            <p class="username">Welcome {{ user }}</p>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Demo Excelsior | Cosmoteer</title>
+        <meta name="robots" content="noindex,nofollow">
+        <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
+        <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
+        <link rel="stylesheet" type="text/css" href="/static/css/index.css">
+        <link rel="stylesheet" type="text/css" href="/static/css/upload.css">
+        <script src="/static/js/jquery-3.6.0.min.js"></script>
+        <script src="/static/js/common.js"></script>
+        <script src="/static/js/index.js"></script>
+    </head>
+    <body>
+        <header>
+            <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
+            <ul class="user-container">
+                <p class="username">Welcome {{ user }}</p>
                 <li>
                     {% if user == "Guest" %}
                     <a title="Login" class="blue-btn register" href="/login?button=login">
@@ -54,22 +52,21 @@
                         <span>Home</span>
                     </a>
                 </li>
-        </ul>
-    </header>
-    <main>
-        <h1>Upload your ship !</h1>
-        <section id="competitive" class="content-container">
+            </ul>
+        </header>
+        <main>
+            <h1>Upload your ship !</h1>
+            <section id="competitive" class="content-container">
 
-            <div class="section-description">
-                <h2>Share your ships with the community</h2>
-                <p>Pick tags your ship has in order to help the community to find your creation !</p>
-                <p>To go back click on the hamburger menu on the top left.</p>
+                <div class="section-description">
+                    <h2>Share your ships with the community</h2>
+                    <p>Pick tags your ship has in order to help the community to find your creation !</p>
+                    <p>To go back click on the hamburger menu on the top left.</p>
 
-            </div>
-            <div class="tabs-container">
-                <div id="elim-competitive-tab" class="tab active">
-
-                    <ul>
+                </div>
+                <div class="tabs-container">
+                    <div id="elim-competitive-tab" class="tab active">
+                        <ul>
                         <h1>Ship Upload</h1>
                         <p>{{ data.name }}</p>
                         <form action="/upload" method="post" enctype="multipart/form-data">
@@ -111,12 +108,12 @@
                                         <div>
                                             <input type="radio" name="defense_type" id="shield_defenses" value="shield_defenses">
                                             <label for="shield_defenses">Shield Defenses</label>
-                                        </div>                                                                           
+                                        </div>
                                     </td>
                                     <td>
                                         <ul>
-                                            <input type="checkbox" name="corvette" id="corvette">
-                                            <label for="corvette">Corvette</label>
+                                            <input type="checkbox" name="kitter" id="kitter">
+                                            <label for="kitter">kitter</label>
                                         </ul>
                                         <ul>
                                             <input type="checkbox" name="campaign_ship" id="campaign_ship">
@@ -135,8 +132,8 @@
                                             <label for="diagonal">Diagonal</label>
                                         </ul>
                                         <ul>
-                                            <input type="checkbox" name="flanker" id="flanker">
-                                            <label for="flanker">Flanker</label>
+                                            <input type="checkbox" name="avoider" id="avoider">
+                                            <label for="avoider">avoider</label>
                                         </ul>
                                         <ul>
                                             <input type="checkbox" name="mixed_weapons" id="mixed_weapons">
@@ -155,71 +152,64 @@
                                             <label for="utility_weapons">Utility Weapons</label>
                                         </ul>
                                         <ul>
-                                            <input type="checkbox" name="transformer" id="transformer">
-                                            <label for="transformer">Transformer</label>
+                                            <input type="checkbox" name="rammer" id="rammer">
+                                            <label for="rammer">rammer</label>
                                         </ul>
-                    </ul>
-                    </td>
-                    </tr>
-                    </table>
-                    <table style="width:100%">
-                        <tr>
-                            <td>
-                                <ul>
-                                    <button type="submit" class="blue-btn register">Upload</button>
-                                </ul>
-                            </td>
-                            <td>
-                                <tr>
-                                    <ul>
-                                        <label for="author">Author:</label>
-                                        <input type="text" name="author" id="author" value="{{ data.author }}">
-                                        <label for="ship_name">Ship name:</label>
-                                        <input type="text" name="ship_name" id="ship_name" value="{{ data.shipname }}">
-                                    </ul>
+                                    </td>
                                 </tr>
-                            </td>
-                            <td>
+                            </table>
+                            <table style="width:100%">
                                 <tr>
-                                    <ul>
-                                        <label for="price">Price :</label>
-                                        <input type="text" name="price" id="price" pattern="[0-9]+" required value="{{ data.price }}">
-                                        <div class="form-group">
-                                            <label for="description">Description:</label>
-                                            <textarea name="description" id="description"></textarea>
-                                        </div>
-                                        <input type="hidden" name="filename" id="filename" value="{{ data.name }}">
-                                        <input type="hidden" name="url_png" id="url_png" value="{{ data.url_png }}">
-                                    </ul>
-                                </tr>
-                            </td>
-                        </tr>
-                    </table>
-                    </form>
-                    </ul>
+                                    <td>
+                                        <ul>
+                                            <button type="submit" class="blue-btn register">Upload</button>
+                                        </ul>
+                                    </td>
+                                <td>
+                                    <tr>
+                                        <ul>
+                                            <label for="author">Author:</label>
+                                            <input type="text" name="author" id="author" value="{{ data.author }}">
+                                            <label for="ship_name">Ship name:</label>
+                                            <input type="text" name="ship_name" id="ship_name" value="{{ data.shipname }}">
+                                        </ul>
+                                    </tr>
+                                </td>
+                                <td>
+                                    <tr>
+                                        <ul>
+                                            <label for="price">Price :</label>
+                                            <input type="text" name="price" id="price" pattern="[0-9]+" required value="{{ data.price }}">
+                                            <div class="form-group">
+                                                <label for="description">Description:</label>
+                                                <textarea name="description" id="description"></textarea>
+                                            </div>
+                                            <input type="hidden" name="filename" id="filename" value="{{ data.name }}">
+                                            <input type="hidden" name="url_png" id="url_png" value="{{ data.url_png }}">
+                                            <input type="hidden" name="tags" id="tags" value="{{ tags }}">
+                                        </ul>
+                                    </tr>
+                                </td>
+                            </table>
+                        </form>
+                    </div>
                 </div>
+            </section>
+        </main>
+        <footer>
+            <div class="footer-content">
+                <img loading="lazy" alt="Excelsior logo" src="img/excelsior-logo.webp">
+                <ul>
+                    <li><a title="Cookies policy" href="#">Cookies policy</a></li>
+                    <li><a title="Another footer link" href="#">Another footer link</a></li>
+                    <li><a title="More footer links" href="#">More footer links</a></li>
+                </ul>
             </div>
-        </section>
-    </main>
-    <footer>
-        <div class="footer-content">
-            <img loading="lazy" alt="Excelsior logo" src="img/excelsior-logo.webp">
-
-            <ul>
-                <li><a title="Cookies policy" href="#">Cookies policy</a></li>
-                <li><a title="Another footer link" href="#">Another footer link</a></li>
-                <li><a title="More footer links" href="#">More footer links</a></li>
-
-            </ul>
-        </div>
-    </footer>
-</body>
-
-
+        </footer>
+    </body>
 </html>
 <script>
     function redirectToHomePage() {
          window.location.href = "/";
        }
-
 </script>
