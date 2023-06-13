@@ -5,6 +5,7 @@ import ast
 from dotenv import load_dotenv
 from tagextractor import PNGTagExtractor
 from urllib.parse import unquote_plus
+from discordwh import send_message
 # from png_upload import upload_image_to_imgbb
 
 load_dotenv()
@@ -26,6 +27,23 @@ class ShipImageDatabase:
         conn.commit()
         cursor.close()
         conn.close()
+    def execute_query_return(self, query, values=None):
+        conn = self.connect_to_server()
+        cursor = conn.cursor()
+        if values is not None:
+            cursor.execute(query, values)
+            inserted_id = cursor.fetchone()[0]
+            print(inserted_id)
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return inserted_id
+        else:
+            cursor.execute(query)
+            conn.commit()
+            cursor.close()
+            conn.close()
+
 
     def fetch_data(self, query, values=None):
         conn = self.connect_to_server()
@@ -317,7 +335,7 @@ class ShipImageDatabase:
         insert_query = """
             INSERT INTO shipdb
             (name, data, submitted_by, description, ship_name, author, price, tags)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s::text[])
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s::text[]) RETURNING id
         """
         # prepare values
         values = (
@@ -331,7 +349,11 @@ class ShipImageDatabase:
             image_data['tags']
         )
         # execute
-        self.execute_query(insert_query, values)
+        insertedid = self.execute_query_return(insert_query, values)
+        link = "https://cosmo-git-test-franklin050187.vercel.app/ship/"+str(insertedid)
+        # call webhook
+        # send_message(shipurl, shipname, description, image, price, user, author):
+        send_message(link, image_data['name'], image_data['description'],image_data['data'], image_data['price'], image_data['submitted_by'], image_data['author'])
         
     def add_to_favorites(self, user, ship_id):
         query = "SELECT * FROM favoritedb WHERE name = %s"
