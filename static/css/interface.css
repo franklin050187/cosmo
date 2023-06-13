@@ -199,7 +199,7 @@
     display:grid;
     float:right;
     gap:10px;
-    grid-template-columns:auto auto auto auto auto auto;
+    grid-template-columns:auto auto auto auto auto auto auto auto;
     margin:-41px 2.5% -1px 0;
     position:relative
     }
@@ -517,6 +517,11 @@
     width:30px
     }
     
+    .actions-container .blue-btn.favorite-btn button::before{
+        background-image:url(../img/sprite.webp);
+        background-position:-95px center;
+        }
+
     .actions-container button {
     height:40px;
     margin-top:10px;

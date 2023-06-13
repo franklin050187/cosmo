@@ -63,13 +63,21 @@ modlist = ast.literal_eval(modlist)
 @app.get("/ship/{id}")
 async def get_image(id: int, request: Request):
     user = request.session.get("discord_user")
+    fav = 0
+    if user :
+        litsid = db_manager.get_my_favorite(user)
+        ids = [item[0] for item in litsid]
+        if id in ids:
+            fav = 1
+            print("DEBUG already in favorites")
     if not user:
         # print("DEBUG not a user home")
         user = "Guest"
     db_manager.download_ship_png(id)
     image_data = db_manager.get_image_data(id)
     url_png = image_data[0][2] # change to send the url instead of the image
-    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png, "modlist": modlist})
+    
+    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png, "modlist": modlist, "fav": fav})
 
 # delete user ship
 @app.get("/delete/{id}")
@@ -94,6 +102,46 @@ async def edit_image(id: int, request: Request):
         return RedirectResponse("/")
     # Redirect to the home page after deleting the image
     return templates.TemplateResponse("edit.html", {"request": request, "image": check, "user": user})
+
+# add favorite
+@app.get("/favorite/{id}")
+async def favorite(id: int, request: Request):
+    user = request.session.get("discord_user")
+    # print(user)
+    if not user:
+        # print("DEBUG not a user home")
+        return RedirectResponse("/login")
+    # Delete image information from the database based on the provided ID
+    user = request.session.get("discord_user")
+    db_manager.add_to_favorites(user, id)
+    url = "/ship/"+str(id) # change to send the url instead of the image id
+    return RedirectResponse(url)
+
+@app.get("/rmfavorite/{id}")
+async def rmfavorite(id: int, request: Request):
+    user = request.session.get("discord_user")
+    # print(user)
+    if not user:
+        # print("DEBUG not a user home")
+        return RedirectResponse("/login")
+    # Delete image information from the database based on the provided ID
+    user = request.session.get("discord_user")
+    db_manager.delete_from_favorites(user, id)
+    url = "/ship/"+str(id) # change to send the url instead of the image id
+    return RedirectResponse(url)
+
+    
+@app.get("/myfavorite")
+async def myfavorite(request: Request):
+    user = request.session.get("discord_user")
+    # print(user)
+    if not user:
+        # print("DEBUG not a user home")
+        return RedirectResponse("/login?button=myfavorite")
+        
+    images = db_manager.get_my_favorite(user)
+
+    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 # edit post
 @app.post("/edit/{id}")
@@ -123,6 +171,12 @@ async def start_login(request: Request):
         if not user:
             return client.redirect(request)
         return RedirectResponse("/myships")  # Redirect to the same login route
+    elif button_clicked == "myfavorite":
+        request.session["button_clicked"] = "myfavorite"  # Store button state in the session
+        user = request.session.get("discord_user")
+        if not user:
+            return client.redirect(request)
+        return RedirectResponse("/myfavorite")  # Redirect to the same login route
     else:
         request.session["button_clicked"] = "login"  # Store button state in the session
         return client.redirect("/login")  # Redirect to the same login route

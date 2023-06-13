@@ -186,6 +186,11 @@ class ShipImageDatabase:
         query = "SELECT * FROM shipdb WHERE submitted_by=%s"
         return self.fetch_data(query, (user,))
   # done  
+    def get_my_favorite(self, user):
+        query = "SELECT * FROM shipdb WHERE id = ANY (SELECT UNNEST(favorite) FROM favoritedb WHERE name = %s)"
+        return self.fetch_data(query, (user,))
+
+  
     def get_search(self, query_params):
         query_params = str(query_params)
         # print("query_params =", query_params)

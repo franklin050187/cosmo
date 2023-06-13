@@ -43,6 +43,11 @@
                     </a>
                 </li>
                 <li>
+                    <a title="Myfavorite" class="blue-btn register" href="/login?button=myfavorite">
+                        <span>My favorite</span>
+                    </a>
+                </li>
+                <li>
                     <a title="Home" class="blue-btn register" href="/">
                         <span>Home</span>
                     </a>
@@ -65,6 +70,14 @@
                     <p></p>
                     <p class="data" style="font-size: 12px;">Submitted by : {{ image[0][3] }}</p>
 
+                    {% if user == "Guest" %}
+                    <ul><a title="Favorite" class="blue-btn register" href="/login?button=myfavorite"><span>Login to add favorite</span></a></ul>
+                    {% endif %}
+                    {% if fav == 1 %}
+                    <ul><a title="Favorite" class="blue-btn register" href="/rmfavorite/{{ image[0][0] }}"><span>Remove from favorite</span></a></ul>
+                    {% else %}
+                    <ul><a title="Favorite" class="blue-btn register" href="/favorite/{{ image[0][0] }}"><span>Add to favorite</span></a></ul>
+                    {% endif %}
                 </div>
             </div>
             <div class="tabs-container">
