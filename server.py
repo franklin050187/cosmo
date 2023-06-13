@@ -33,6 +33,7 @@ from pricegen import calculate_price
 from urllib.parse import urlencode
 import requests
 from typing import List
+import ast
 
 load_dotenv()
 
@@ -54,21 +55,33 @@ templates = Jinja2Templates(directory="templates")
 #init db as array
 db_manager.init_db()
 
+# get mod list
+modlist = os.getenv('mods_list')
+modlist = ast.literal_eval(modlist)
+
 # ship specific page
 @app.get("/ship/{id}")
-def get_image(id: int, request: Request):
+async def get_image(id: int, request: Request):
     user = request.session.get("discord_user")
+    fav = 0
+    if user :
+        litsid = db_manager.get_my_favorite(user)
+        ids = [item[0] for item in litsid]
+        if id in ids:
+            fav = 1
+            print("DEBUG already in favorites")
     if not user:
         # print("DEBUG not a user home")
         user = "Guest"
     db_manager.download_ship_png(id)
     image_data = db_manager.get_image_data(id)
     url_png = image_data[0][2] # change to send the url instead of the image
-    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png})
+    
+    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png, "modlist": modlist, "fav": fav})
 
 # delete user ship
 @app.get("/delete/{id}")
-def delete_image(id: int, request: Request):
+async def delete_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
     # print(user)
@@ -81,7 +94,7 @@ def delete_image(id: int, request: Request):
 
 # edit page get
 @app.get("/edit/{id}")
-def edit_image(id: int, request: Request):
+async def edit_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
     check = db_manager.edit_ship(id, user)
@@ -89,6 +102,46 @@ def edit_image(id: int, request: Request):
         return RedirectResponse("/")
     # Redirect to the home page after deleting the image
     return templates.TemplateResponse("edit.html", {"request": request, "image": check, "user": user})
+
+# add favorite
+@app.get("/favorite/{id}")
+async def favorite(id: int, request: Request):
+    user = request.session.get("discord_user")
+    # print(user)
+    if not user:
+        # print("DEBUG not a user home")
+        return RedirectResponse("/login")
+    # Delete image information from the database based on the provided ID
+    user = request.session.get("discord_user")
+    db_manager.add_to_favorites(user, id)
+    url = "/ship/"+str(id) # change to send the url instead of the image id
+    return RedirectResponse(url)
+
+@app.get("/rmfavorite/{id}")
+async def rmfavorite(id: int, request: Request):
+    user = request.session.get("discord_user")
+    # print(user)
+    if not user:
+        # print("DEBUG not a user home")
+        return RedirectResponse("/login")
+    # Delete image information from the database based on the provided ID
+    user = request.session.get("discord_user")
+    db_manager.delete_from_favorites(user, id)
+    url = "/ship/"+str(id) # change to send the url instead of the image id
+    return RedirectResponse(url)
+
+    
+@app.get("/myfavorite")
+async def myfavorite(request: Request):
+    user = request.session.get("discord_user")
+    # print(user)
+    if not user:
+        # print("DEBUG not a user home")
+        return RedirectResponse("/login?button=myfavorite")
+        
+    images = db_manager.get_my_favorite(user)
+
+    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 # edit post
 @app.post("/edit/{id}")
@@ -118,6 +171,12 @@ async def start_login(request: Request):
         if not user:
             return client.redirect(request)
         return RedirectResponse("/myships")  # Redirect to the same login route
+    elif button_clicked == "myfavorite":
+        request.session["button_clicked"] = "myfavorite"  # Store button state in the session
+        user = request.session.get("discord_user")
+        if not user:
+            return client.redirect(request)
+        return RedirectResponse("/myfavorite")  # Redirect to the same login route
     else:
         request.session["button_clicked"] = "login"  # Store button state in the session
         return client.redirect("/login")  # Redirect to the same login route
@@ -184,8 +243,8 @@ async def upload(request: Request, files: List[UploadFile] = File(...)):
             # get the tags
             try:
                 extractor = PNGTagExtractor()
-                tags = extractor.extract_tags(url_png)
-                author = extractor.extract_author(url_png)
+                tags, author = extractor.extract_tags(url_png) ####
+                # author = extractor.extract_author(url_png) ####
                 # print("tags = ",tags)
             except Exception as e:
                 print(f"Error extracting tags for file {file.filename}: {str(e)}")
@@ -255,8 +314,8 @@ async def upload(request: Request, file: UploadFile = File(...)):
     # get the tags
     try:
         extractor = PNGTagExtractor()
-        tags = extractor.extract_tags(url_png)
-        author = extractor.extract_author(url_png)
+        tags, author = extractor.extract_tags(url_png) ####
+        # author = extractor.extract_author(url_png) ####
         # print("tags = ",tags)
     except Exception as e:
         error = 'unable to decode file provided, check upload guide below'
@@ -336,24 +395,20 @@ async def home(request: Request):
     if not user:
         # print("DEBUG not a user home")
         user = "Guest"
-
     # tag list
     TAGS = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
-            'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer']
-
+            'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'kitter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer']
     # get the form
     form_input = await request.form()
-    print("form", form_input) # debug
-    # author = form_input['author']
-    # print("author", author)
+    # print("form", form_input) # debug
     # find the form data
     query: str = form_input.get("query").strip()
     authorstrip: str = form_input.get("author").strip()
-    # print("author", authorstrip)
     # split query string
     words = query.lower().split(" ")
-    
     # print("words", words)
+    minstrip: int = form_input.get("min-price").strip()
+    maxstrip: int = form_input.get("max-price").strip()
     # init query
     query_tags = []
     for word in words:
@@ -369,6 +424,8 @@ async def home(request: Request):
                 query_tags.append((tag, value))
     if authorstrip :
         query_tags.append(("author", authorstrip))
+    query_tags.append(("minprice", minstrip))
+    query_tags.append(("maxprice", maxstrip))
     # print("post qt", query_tags) # debug
     # Build the SQL query based on the query tags
     query = "SELECT * FROM images"
@@ -377,63 +434,56 @@ async def home(request: Request):
     for tag, value in query_tags:
         conditions.append(f"{tag} = %s")
         args.append(value)
-
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
-        
-        
     # print("post cond", conditions) 
     # print("post arg", args)
-
     # Construct the query parameters for the search tags
     query_params = {}
     for tag, value in query_tags:
         query_params[tag] = str(value)
-
     # Get the base URL of the "search" endpoint
     base_url = request.url_for("search")
-
     # Construct the redirect URL with query parameters
     redirect_url = f"{base_url}?"
     redirect_url += urlencode(query_params)
     # print("redirect", redirect_url)
-
     # Redirect the user to the search route
     return RedirectResponse(redirect_url, status_code=307)
 
 @app.get("/search")
-def search(request: Request):
+async def search(request: Request):
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
     # Get the query parameters from the request URL
     query_params = request.query_params
     images = db_manager.get_search(query_params)
-    print("query_param_get = ",query_params)
+    # print("query_param_get = ",query_params)
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 @app.post("/search")
-def search(request: Request):
+async def search(request: Request):
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
     # Get the query parameters from the request URL
     query_params = request.query_params
     images = db_manager.get_search(query_params)
-    print("query_param_post = ",query_params)
+    # print("query_param_post = ",query_params)
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 @app.get('/authors')
-def get_authors():
+async def get_authors():
     query_result = db_manager.get_authors()
-    print("query_result = ",query_result)
-    authors = [author for author, in query_result['authors']][2:]
-    print("authors = ",authors)
+    # print("query_result = ",query_result)
+    authors = [author for author, in query_result['authors']]
+    # print("authors = ",authors)
     return {'authors': authors}
 
 # Catch-all endpoint for serving static files or the index page
 @app.get("/{catchall:path}")
-def serve_files(request: Request):
+async def serve_files(request: Request):
     user = request.session.get("discord_user")
     # print(user)
     if not user:

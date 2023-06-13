@@ -117,8 +117,8 @@
                                     </td>
                                     <td>
                                         <ul>
-                                            <input type="checkbox" name="corvette" id="corvette" {% if "corvette" in image_tags_list %}checked{% endif %}>
-                                            <label for="corvette">Corvette</label>
+                                            <input type="checkbox" name="kitter" id="kitter" {% if "kitter" in image_tags_list %}checked{% endif %}>
+                                            <label for="kitter">kitter</label>
                                         </ul>
                                         <ul>
                                             <input type="checkbox" name="campaign_ship" id="campaign_ship" {% if "campaign_ship" in image_tags_list %}checked{% endif %}>
@@ -137,8 +137,8 @@
                                             <label for="diagonal">Diagonal</label>
                                         </ul>
                                         <ul>
-                                            <input type="checkbox" name="flanker" id="flanker" {% if "flanker" in image_tags_list %}checked{% endif %}>
-                                            <label for="flanker">Flanker</label>
+                                            <input type="checkbox" name="avoider" id="avoider" {% if "avoider" in image_tags_list %}checked{% endif %}>
+                                            <label for="avoider">avoider</label>
                                         </ul>
                                         <ul>
                                             <input type="checkbox" name="mixed_weapons" id="mixed_weapons" {% if "mixed_weapons" in image_tags_list %}checked{% endif %}>
@@ -157,8 +157,8 @@
                                             <label for="utility_weapons">Utility Weapons</label>
                                         </ul>
                                         <ul>
-                                            <input type="checkbox" name="transformer" id="transformer" {% if "transformer" in image_tags_list %}checked{% endif %}>
-                                            <label for="transformer">Transformer</label>
+                                            <input type="checkbox" name="rammer" id="rammer" {% if "rammer" in image_tags_list %}checked{% endif %}>
+                                            <label for="rammer">rammer</label>
                                         </ul>
                     </ul>
                     </td>
@@ -178,6 +178,8 @@
                                         <input type="text" name="author" id="author" value="{{ image[6] }}">
                                         <label for="ship_name">Ship name:</label>
                                         <input type="text" name="ship_name" id="ship_name" value="{{ image[5] }}">
+                                        <label for="submitted_by">Submitted by (/!\ use Discord Username):</label>
+                                        <input type="text" name="submitted_by" id="submitted_by" value="{{ image[3] }}">
                                     </ul>
                                 </tr>
                             </td>

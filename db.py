@@ -4,7 +4,8 @@ import os
 import ast
 from dotenv import load_dotenv
 from tagextractor import PNGTagExtractor
-from urllib.parse import unquote, unquote_plus
+from urllib.parse import unquote_plus
+from discordwh import send_message
 # from png_upload import upload_image_to_imgbb
 
 load_dotenv()
@@ -13,6 +14,8 @@ class ShipImageDatabase:
     def __init__(self):
         self.conn = self.connect_to_server()
         self.cursor = self.conn.cursor()
+        self.modlist = os.getenv('mods_list')
+        self.modlist = ast.literal_eval(self.modlist)
 
     def execute_query(self, query, values=None):
         conn = self.connect_to_server()
@@ -24,6 +27,23 @@ class ShipImageDatabase:
         conn.commit()
         cursor.close()
         conn.close()
+    def execute_query_return(self, query, values=None):
+        conn = self.connect_to_server()
+        cursor = conn.cursor()
+        if values is not None:
+            cursor.execute(query, values)
+            inserted_id = cursor.fetchone()[0]
+            print(inserted_id)
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return inserted_id
+        else:
+            cursor.execute(query)
+            conn.commit()
+            cursor.close()
+            conn.close()
+
 
     def fetch_data(self, query, values=None):
         conn = self.connect_to_server()
@@ -52,7 +72,7 @@ class ShipImageDatabase:
     def get_authors(self):
         query = "SELECT DISTINCT author FROM shipdb;"
         authors = self.fetch_data(query)
-        print(authors)
+        # print(authors)
         # authors = [author[0] for author in authors]  # Extracting only the author value
         return {'authors': authors}
 
@@ -76,11 +96,20 @@ class ShipImageDatabase:
             )
         """
         self.execute_query(create_table_query)
+        # add favorite table
+        create_table_query = """
+            CREATE TABLE IF NOT EXISTS favoritedb (
+                id SERIAL PRIMARY KEY,
+                name TEXT,
+                favorite TEXT[]
+            )
+        """
+        self.execute_query(create_table_query)
         
     def delete_ship(self, ship_id, user):
         query = "SELECT submitted_by FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
-        if user != image_data[0][0]:
+        if user != image_data[0][0] and user not in self.modlist:
             return "ko"
         query = "DELETE FROM shipdb WHERE id=%s"
         self.execute_query(query, (ship_id,))
@@ -88,7 +117,9 @@ class ShipImageDatabase:
     def edit_ship(self, ship_id, user):
         query = "SELECT submitted_by FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
-        if user != image_data[0][0]:
+        # print(self.modlist) # ['Poney#5850', '0neye#7330']
+        # print(user) # Poney#5850
+        if user != image_data[0][0] and user not in self.modlist:
             return "ko"
         query = "SELECT * FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
@@ -97,12 +128,12 @@ class ShipImageDatabase:
     def post_edit_ship(self, id, form_data, user):
         query = "SELECT * FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (id,))
-        print("image_data = ", image_data)
+        # print("image_data = ", image_data)
 
-        if user != image_data[0][3]:
+        if user != image_data[0][3] and user not in self.modlist:
             return "ko"
         
-        print("form_data = ", form_data)
+        # print("form_data = ", form_data)
         
         tup_for = []
         if 'thrust_type' in form_data:
@@ -116,7 +147,7 @@ class ShipImageDatabase:
         url_png = image_data[0][2]
         extractor = PNGTagExtractor()
         tags = extractor.extract_tags(url_png)
-        print("tags = ",tags)
+        # print("tags = ",tags)
         if tags : 
             tup_for.extend(tags)
 
@@ -125,11 +156,12 @@ class ShipImageDatabase:
             'description': form_data.get('description', ''),
             'ship_name': form_data.get('ship_name', ''),
             'author': form_data.get('author', ''),
+            'submitted_by': form_data.get('submitted_by', ''),
             'price': int(form_data.get('price', 0)),
             'tags' : tup_for,
             'id' : id
         }
-        print("tup_for = ", tup_for)
+        # print("tup_for = ", tup_for)
         # prepare query
         insert_query = """
             UPDATE shipdb SET
@@ -137,6 +169,7 @@ class ShipImageDatabase:
             ship_name = %s,
             author = %s,
             price = %s,
+            submitted_by = %s,
             tags = %s::text[]
             WHERE id = %s
         """
@@ -147,6 +180,7 @@ class ShipImageDatabase:
             image_data['ship_name'],
             image_data['author'],
             image_data['price'],
+            image_data['submitted_by'],
             image_data['tags'],
             image_data['id'],
         )
@@ -170,19 +204,30 @@ class ShipImageDatabase:
         query = "SELECT * FROM shipdb WHERE submitted_by=%s"
         return self.fetch_data(query, (user,))
   # done  
+    def get_my_favorite(self, user):
+        query = "SELECT * FROM shipdb WHERE id = ANY (SELECT UNNEST(favorite) FROM favoritedb WHERE name = %s)"
+        return self.fetch_data(query, (user,))
+
+  
     def get_search(self, query_params):
         query_params = str(query_params)
-        print("query_params =", query_params)
-        
+        # print("query_params =", query_params)
+
         conditions = []
         not_conditions = []
         author_condition = None
-        
+        min_price_condition = None
+        max_price_condition = None
+
         if query_params:
             for param in query_params.split("&"):
                 key, value = param.split("=")
                 if key == "author":
                     author_condition = unquote_plus(value)
+                elif key == "minprice":
+                    min_price_condition = value
+                elif key == "maxprice":
+                    max_price_condition = value
                 elif value == "1":
                     conditions.append(key)
                 elif value == "0":
@@ -190,29 +235,59 @@ class ShipImageDatabase:
 
         # Build the query dynamically
         if conditions and not_conditions:
-            query = "SELECT * FROM shipdb WHERE tags @> ARRAY{} AND NOT tags @> ARRAY{}".format(
+            query = "SELECT * FROM shipdb WHERE tags @> ARRAY{} AND NOT tags @> ARRAY{}"
+            if min_price_condition and max_price_condition:
+                query += " AND price >= {} AND price <= {}".format(min_price_condition, max_price_condition)
+            elif min_price_condition:
+                query += " AND price >= {}".format(min_price_condition)
+            elif max_price_condition:
+                query += " AND price <= {}".format(max_price_condition)
+            query = query.format(
                 conditions,
                 not_conditions
             )
         elif conditions:
-            query = "SELECT * FROM shipdb WHERE tags @> ARRAY{}".format(conditions)
+            query = "SELECT * FROM shipdb WHERE tags @> ARRAY{}"
+            if min_price_condition and max_price_condition:
+                query += " AND price >= {} AND price <= {}".format(min_price_condition, max_price_condition)
+            elif min_price_condition:
+                query += " AND price >= {}".format(min_price_condition)
+            elif max_price_condition:
+                query += " AND price <= {}".format(max_price_condition)
+            query = query.format(conditions)
         elif not_conditions:
-            query = "SELECT * FROM shipdb WHERE NOT tags @> ARRAY{}".format(not_conditions)
+            query = "SELECT * FROM shipdb WHERE NOT tags @> ARRAY{}"
+            if min_price_condition and max_price_condition:
+                query += " AND price >= {} AND price <= {}".format(min_price_condition, max_price_condition)
+            elif min_price_condition:
+                query += " AND price >= {}".format(min_price_condition)
+            elif max_price_condition:
+                query += " AND price <= {}".format(max_price_condition)
+            query = query.format(not_conditions)
         else:
             query = "SELECT * FROM shipdb"
+            if min_price_condition and max_price_condition:
+                query += " WHERE price >= {} AND price <= {}".format(min_price_condition, max_price_condition)
+            elif min_price_condition:
+                query += " WHERE price >= {}".format(min_price_condition)
+            elif max_price_condition:
+                query += " WHERE price <= {}".format(max_price_condition)
 
         if author_condition:
-            if conditions or not_conditions:
+            if conditions or not_conditions or min_price_condition or max_price_condition:
                 query += " AND author = '{}'".format(author_condition)
             else:
                 query += " WHERE author = '{}'".format(author_condition)
 
-        print("conditions =", conditions)
-        print("not conditions =", not_conditions)
-        print("author condition =", author_condition)
-        print("query =", query)
-        
+        # print("conditions =", conditions)
+        # print("not conditions =", not_conditions)
+        # print("author condition =", author_condition)
+        # print("min price condition =", min_price_condition)
+        # print("max price condition =", max_price_condition)
+        # print("query =", query)
+
         return self.fetch_data(query)
+
 
 
     def update_downloads(self, ship_id):
@@ -227,7 +302,8 @@ class ShipImageDatabase:
         url_png = form_data.get('url_png')
         response = requests.get(url_png)
         image_data = response.content
-        print("form_data = ", form_data)
+        # print("form_data = ", form_data)
+        # print("tags = ", form_data['tags'])
         tup_for = []
         if 'thrust_type' in form_data:
             tup_for.append(form_data['thrust_type'])
@@ -260,7 +336,7 @@ class ShipImageDatabase:
         insert_query = """
             INSERT INTO shipdb
             (name, data, submitted_by, description, ship_name, author, price, tags)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s::text[])
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s::text[]) RETURNING id
         """
         # prepare values
         values = (
@@ -274,4 +350,41 @@ class ShipImageDatabase:
             image_data['tags']
         )
         # execute
-        self.execute_query(insert_query, values)
+        insertedid = self.execute_query_return(insert_query, values)
+        link = "https://cosmo-git-test-franklin050187.vercel.app/ship/"+str(insertedid)
+        # call webhook
+        # send_message(shipurl, shipname, description, image, price, user, author):
+        send_message(link, image_data['name'], image_data['description'],image_data['data'], image_data['price'], image_data['submitted_by'], image_data['author'])
+        
+    def add_to_favorites(self, user, ship_id):
+        query = "SELECT * FROM favoritedb WHERE name = %s"
+        result = self.fetch_data(query, (user,))
+        if not result:
+            query = "INSERT INTO favoritedb (name, favorite) VALUES (%s, ARRAY[%s])"
+            self.execute_query(query, (user, ship_id))
+            print("new line")
+        else:
+            print(result)
+            favorites = result[0][2]
+            if ship_id not in favorites:
+                favorites.append(ship_id)
+                query = "UPDATE favoritedb SET favorite = favorite || ARRAY[%s] WHERE name = %s"
+                self.execute_query(query, (ship_id, user))
+                print("update line")
+            else:
+                print("Already in favorites, skipping update")
+
+    def delete_from_favorites(self, user, ship_id):
+        query = "SELECT * FROM favoritedb WHERE name = %s"
+        result = self.fetch_data(query, (user,))
+        if result:
+            favorites = result[0][2]
+            if ship_id in favorites:
+                favorites.remove(ship_id)
+                if not favorites:
+                    query = "DELETE FROM favoritedb WHERE name = %s"
+                    self.execute_query(query, (user,))
+                else:
+                    query = "UPDATE favoritedb SET favorite = %s WHERE name = %s"
+                    self.execute_query(query, (favorites, user))
+
