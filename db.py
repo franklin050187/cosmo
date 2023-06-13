@@ -78,6 +78,15 @@ class ShipImageDatabase:
             )
         """
         self.execute_query(create_table_query)
+        # add favorite table
+        create_table_query = """
+            CREATE TABLE IF NOT EXISTS favoritedb (
+                id SERIAL PRIMARY KEY,
+                name TEXT,
+                favorite TEXT[]
+            )
+        """
+        self.execute_query(create_table_query)
         
     def delete_ship(self, ship_id, user):
         query = "SELECT submitted_by FROM shipdb WHERE id=%s"
@@ -318,3 +327,36 @@ class ShipImageDatabase:
         )
         # execute
         self.execute_query(insert_query, values)
+        
+    def add_to_favorites(self, user, ship_id):
+        query = "SELECT * FROM favoritedb WHERE name = %s"
+        result = self.fetch_data(query, (user,))
+        if not result:
+            query = "INSERT INTO favoritedb (name, favorite) VALUES (%s, ARRAY[%s])"
+            self.execute_query(query, (user, ship_id))
+            print("new line")
+        else:
+            print(result)
+            favorites = result[0][2]
+            if ship_id not in favorites:
+                favorites.append(ship_id)
+                query = "UPDATE favoritedb SET favorite = favorite || ARRAY[%s] WHERE name = %s"
+                self.execute_query(query, (ship_id, user))
+                print("update line")
+            else:
+                print("Already in favorites, skipping update")
+
+    def delete_from_favorites(self, user, ship_id):
+        query = "SELECT * FROM favoritedb WHERE name = %s"
+        result = self.fetch_data(query, (user,))
+        if result:
+            favorites = result[0][2]
+            if ship_id in favorites:
+                favorites.remove(ship_id)
+                if not favorites:
+                    query = "DELETE FROM favoritedb WHERE name = %s"
+                    self.execute_query(query, (user,))
+                else:
+                    query = "UPDATE favoritedb SET favorite = %s WHERE name = %s"
+                    self.execute_query(query, (favorites, user))
+
