@@ -292,9 +292,9 @@ async def logoff(request: Request):
 
 # Endpoint for uploading files
 @app.post("/upload")
-def upload(request: Request):
+async def upload(request: Request):
     user = request.session.get("discord_user")
-    form_data =  request.form()
+    form_data = await request.form()
     db_manager.upload_image(form_data, user)
     return RedirectResponse(url="/", status_code=303)
 
