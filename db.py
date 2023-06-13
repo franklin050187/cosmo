@@ -54,7 +54,7 @@ class ShipImageDatabase:
     def get_authors(self):
         query = "SELECT DISTINCT author FROM shipdb;"
         authors = self.fetch_data(query)
-        print(authors)
+        # print(authors)
         # authors = [author[0] for author in authors]  # Extracting only the author value
         return {'authors': authors}
 
@@ -82,7 +82,7 @@ class ShipImageDatabase:
     def delete_ship(self, ship_id, user):
         query = "SELECT submitted_by FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
-        if user != image_data[0][0] or user not in self.modlist:
+        if user != image_data[0][0] and user not in self.modlist:
             return "ko"
         query = "DELETE FROM shipdb WHERE id=%s"
         self.execute_query(query, (ship_id,))
@@ -90,7 +90,9 @@ class ShipImageDatabase:
     def edit_ship(self, ship_id, user):
         query = "SELECT submitted_by FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
-        if user != image_data[0][0] or user not in self.modlist:
+        # print(self.modlist) # ['Poney#5850', '0neye#7330']
+        # print(user) # Poney#5850
+        if user != image_data[0][0] and user not in self.modlist:
             return "ko"
         query = "SELECT * FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
@@ -99,12 +101,12 @@ class ShipImageDatabase:
     def post_edit_ship(self, id, form_data, user):
         query = "SELECT * FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (id,))
-        print("image_data = ", image_data)
+        # print("image_data = ", image_data)
 
-        if user != image_data[0][3] or user not in self.modlist:
+        if user != image_data[0][3] and user not in self.modlist:
             return "ko"
         
-        print("form_data = ", form_data)
+        # print("form_data = ", form_data)
         
         tup_for = []
         if 'thrust_type' in form_data:
@@ -118,7 +120,7 @@ class ShipImageDatabase:
         url_png = image_data[0][2]
         extractor = PNGTagExtractor()
         tags = extractor.extract_tags(url_png)
-        print("tags = ",tags)
+        # print("tags = ",tags)
         if tags : 
             tup_for.extend(tags)
 
@@ -132,7 +134,7 @@ class ShipImageDatabase:
             'tags' : tup_for,
             'id' : id
         }
-        print("tup_for = ", tup_for)
+        # print("tup_for = ", tup_for)
         # prepare query
         insert_query = """
             UPDATE shipdb SET
@@ -177,7 +179,7 @@ class ShipImageDatabase:
   # done  
     def get_search(self, query_params):
         query_params = str(query_params)
-        print("query_params =", query_params)
+        # print("query_params =", query_params)
 
         conditions = []
         not_conditions = []
@@ -245,12 +247,12 @@ class ShipImageDatabase:
             else:
                 query += " WHERE author = '{}'".format(author_condition)
 
-        print("conditions =", conditions)
-        print("not conditions =", not_conditions)
-        print("author condition =", author_condition)
-        print("min price condition =", min_price_condition)
-        print("max price condition =", max_price_condition)
-        print("query =", query)
+        # print("conditions =", conditions)
+        # print("not conditions =", not_conditions)
+        # print("author condition =", author_condition)
+        # print("min price condition =", min_price_condition)
+        # print("max price condition =", max_price_condition)
+        # print("query =", query)
 
         return self.fetch_data(query)
 
@@ -268,7 +270,7 @@ class ShipImageDatabase:
         url_png = form_data.get('url_png')
         response = requests.get(url_png)
         image_data = response.content
-        print("form_data = ", form_data)
+        # print("form_data = ", form_data)
         tup_for = []
         if 'thrust_type' in form_data:
             tup_for.append(form_data['thrust_type'])

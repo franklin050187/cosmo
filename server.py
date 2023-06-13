@@ -346,7 +346,7 @@ async def home(request: Request):
             'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'corvette', 'diagonal', 'flanker', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'transformer']
     # get the form
     form_input = await request.form()
-    print("form", form_input) # debug
+    # print("form", form_input) # debug
     # find the form data
     query: str = form_input.get("query").strip()
     authorstrip: str = form_input.get("author").strip()
@@ -405,7 +405,7 @@ async def search(request: Request):
     # Get the query parameters from the request URL
     query_params = request.query_params
     images = db_manager.get_search(query_params)
-    print("query_param_get = ",query_params)
+    # print("query_param_get = ",query_params)
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 @app.post("/search")
@@ -416,15 +416,15 @@ async def search(request: Request):
     # Get the query parameters from the request URL
     query_params = request.query_params
     images = db_manager.get_search(query_params)
-    print("query_param_post = ",query_params)
+    # print("query_param_post = ",query_params)
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 @app.get('/authors')
 async def get_authors():
     query_result = db_manager.get_authors()
-    print("query_result = ",query_result)
+    # print("query_result = ",query_result)
     authors = [author for author, in query_result['authors']]
-    print("authors = ",authors)
+    # print("authors = ",authors)
     return {'authors': authors}
 
 # Catch-all endpoint for serving static files or the index page
