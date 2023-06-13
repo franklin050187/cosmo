@@ -145,10 +145,10 @@ async def myfavorite(request: Request):
 
 # edit post
 @app.post("/edit/{id}")
-async def edit_image(id: int, request: Request):
+def edit_image(id: int, request: Request):
     # Get the user from the session
     user = request.session.get("discord_user")
-    form_data = await request.form()
+    form_data = request.form()
     check = db_manager.post_edit_ship(id, form_data, user)
     if check == "ko":
         return RedirectResponse("/")
@@ -222,11 +222,11 @@ async def upload_page(request: Request):
     return templates.TemplateResponse("massupload.html", {"request": request, "user": user})
 
 @app.post("/inituploadmass")
-async def upload(request: Request, files: List[UploadFile] = File(...)):
+def upload(request: Request, files: List[UploadFile] = File(...)):
     # Read the image file
     for file in files:
         try:
-            contents = await file.read()
+            contents = file.read()
             # Encode the contents as base64
             encoded_data = base64.b64encode(contents).decode("utf-8")
             # push to imagebb to be able to read it (fallback is enabled)
@@ -292,9 +292,9 @@ async def logoff(request: Request):
 
 # Endpoint for uploading files
 @app.post("/upload")
-async def upload(request: Request):
+def upload(request: Request):
     user = request.session.get("discord_user")
-    form_data = await request.form()
+    form_data =  request.form()
     db_manager.upload_image(form_data, user)
     return RedirectResponse(url="/", status_code=303)
 
