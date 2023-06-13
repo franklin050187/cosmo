@@ -13,11 +13,9 @@
 * Drag and drop from the ship page to the game for easy access
 
 # Roadmap
-* In progress : performance overhaul
-* To do : UI fix for mobile view and above 1080p (UI)
-* To do : add download count (backend)
-* To do : add submit date (backend)
-* To do : sort filter by downloads, most recent (UI)
+* In progress : Add favorite page
+* To do : Add UI to favorite a ship
+* To do : add favorite management (backend)
 
 # Hosting 
 * Vercel (backend and DB)
