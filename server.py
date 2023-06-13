@@ -243,8 +243,8 @@ async def upload(request: Request, files: List[UploadFile] = File(...)):
             # get the tags
             try:
                 extractor = PNGTagExtractor()
-                tags = extractor.extract_tags(url_png)
-                author = extractor.extract_author(url_png)
+                tags, author = extractor.extract_tags(url_png) ####
+                # author = extractor.extract_author(url_png) ####
                 # print("tags = ",tags)
             except Exception as e:
                 print(f"Error extracting tags for file {file.filename}: {str(e)}")
@@ -314,8 +314,8 @@ async def upload(request: Request, file: UploadFile = File(...)):
     # get the tags
     try:
         extractor = PNGTagExtractor()
-        tags = extractor.extract_tags(url_png)
-        author = extractor.extract_author(url_png)
+        tags, author = extractor.extract_tags(url_png) ####
+        # author = extractor.extract_author(url_png) ####
         # print("tags = ",tags)
     except Exception as e:
         error = 'unable to decode file provided, check upload guide below'

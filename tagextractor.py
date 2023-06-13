@@ -88,11 +88,11 @@ class PNGTagExtractor:
         
         mapped_output = list(mapped_output)
         
-        return mapped_output
+        return mapped_output, author
     
-    def extract_author(self, png_file):
-        json_data = decode_ship_data(png_file)
-        data = json.loads(json_data)
+    # def extract_author(self, png_file):
+    #     json_data = decode_ship_data(png_file)
+    #     data = json.loads(json_data)
         
-        author = data["Author"]
-        return author
+    #     author = data["Author"]
+    #     return author
