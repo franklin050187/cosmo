@@ -60,7 +60,6 @@
     <main>
         <h1>Upload your ship !</h1>
         <section id="competitive" class="content-container">
-
             <div class="section-description">
                 <h2>Share your ships with the community</h2>
                 <p>Pick tags your ship has in order to help the community to find your creation !</p>
@@ -69,7 +68,6 @@
             </div>
             <div class="tabs-container">
                 <div id="elim-competitive-tab" class="tab active">
-
                     <ul>
                         <h1>Ship Edit</h1>
                         <p>{{ image[1] }}</p>
@@ -101,6 +99,10 @@
                                             <input type="radio" name="thrust_type" id="omni_thrust" value="omni_thrust" {% if "omni_thrust" in image_tags_list %}checked{% endif %}>
                                             <label for="omni_thrust">Omni-Thrust</label>
                                         </div>
+                                        <div>
+                                            <input type="radio" name="thrust_type" id="no_thrust" value="no_thrust" {% if "no_thrust" in image_tags_list %}checked{% endif %}>
+                                            <label for="no_thrust">No thrust</label>
+                                        </div>
                                     </td>
                                     <td>
                                         <div>
@@ -114,7 +116,11 @@
                                         <div>
                                             <input type="radio" name="defense_type" id="shield_defenses" value="shield_defenses" {% if "shield_defenses" in image_tags_list %}checked{% endif %}>
                                             <label for="shield_defenses">Shield Defenses</label>
-                                        </div>                                                                           
+                                        </div>
+                                        <div>
+                                            <input type="radio" name="defense_type" id="no_defenses" value="no_defenses" {% if "no_defenses" in image_tags_list %}checked{% endif %}>
+                                            <label for="no_defenses">No Defenses</label>
+                                        </div>
                                     </td>
                                     <td>
                                         <ul>
@@ -161,44 +167,47 @@
                                             <input type="checkbox" name="rammer" id="rammer" {% if "rammer" in image_tags_list %}checked{% endif %}>
                                             <label for="rammer">rammer</label>
                                         </ul>
-                    </ul>
-                    </td>
-                    </tr>
-                    </table>
-                    <table style="width:100%">
-                        <tr>
-                            <td>
-                                <ul>
-                                    <button type="submit" class="blue-btn register">Valid modification</button>
-                                </ul>
-                            </td>
-                            <td>
-                                <tr>
-                                    <ul>
-                                        <label for="author">Author:</label>
-                                        <input type="text" name="author" id="author" value="{{ image[6] }}">
-                                        <label for="ship_name">Ship name:</label>
-                                        <input type="text" name="ship_name" id="ship_name" value="{{ image[5] }}">
-                                        <label for="submitted_by">Submitted by (/!\ use Discord Username):</label>
-                                        <input type="text" name="submitted_by" id="submitted_by" value="{{ image[3] }}">
-                                    </ul>
+                                        <ul>
+                                            <input type="checkbox" name="orbiter" id="orbiter" {% if "orbiter" in image_tags_list %}checked{% endif %}>
+                                            <label for="orbiter">orbiter</label>
+                                        </ul>
+                                    </td>
                                 </tr>
-                            </td>
-                            <td>
+                            </table>
+                            <table style="width:100%">
                                 <tr>
-                                    <ul>
-                                        <label for="price">Price :</label>
-                                        <input type="text" name="price" id="price" pattern="[0-9]+" required value="{{ image[7] }}">
-                                        <div class="form-group">
-                                            <label for="description">Description:</label>
-                                            <textarea name="description" id="description">{{ image[4] }}</textarea>
-                                        </div>
-                                    </ul>
+                                    <td>
+                                        <ul>
+                                            <button type="submit" class="blue-btn register">Valid modification</button>
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        <tr>
+                                            <ul>
+                                                <label for="author">Author:</label>
+                                                <input type="text" name="author" id="author" value="{{ image[6] }}">
+                                                <label for="ship_name">Ship name:</label>
+                                                <input type="text" name="ship_name" id="ship_name" value="{{ image[5] }}">
+                                                <label for="submitted_by">Submitted by (/!\ use Discord Username):</label>
+                                                <input type="text" name="submitted_by" id="submitted_by" value="{{ image[3] }}">
+                                            </ul>
+                                        </tr>
+                                    </td>
+                                    <td>
+                                        <tr>
+                                            <ul>
+                                                <label for="price">Price :</label>
+                                                <input type="text" name="price" id="price" pattern="[0-9]+" required value="{{ image[7] }}">
+                                                <div class="form-group">
+                                                    <label for="description">Description:</label>
+                                                    <textarea name="description" id="description">{{ image[4] }}</textarea>
+                                                </div>
+                                            </ul>
+                                        </tr>
+                                    </td>
                                 </tr>
-                            </td>
-                        </tr>
-                    </table>
-                    </form>
+                            </table>
+                        </form>
                     </ul>
                 </div>
             </div>

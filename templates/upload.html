@@ -96,6 +96,10 @@
                                             <input type="radio" name="thrust_type" id="omni_thrust" value="omni_thrust">
                                             <label for="omni_thrust">Omni-Thrust</label>
                                         </div>
+                                        <div>
+                                            <input type="radio" name="thrust_type" id="no_thrust" value="no_thrust" {% if "no_thrust" in image_tags_list %}checked{% endif %}>
+                                            <label for="no_thrust">No thrust</label>
+                                        </div>
                                     </td>
                                     <td>
                                         <div>
@@ -109,6 +113,10 @@
                                         <div>
                                             <input type="radio" name="defense_type" id="shield_defenses" value="shield_defenses">
                                             <label for="shield_defenses">Shield Defenses</label>
+                                        </div>
+                                        <div>
+                                            <input type="radio" name="defense_type" id="no_defenses" value="no_defenses" {% if "no_defenses" in image_tags_list %}checked{% endif %}>
+                                            <label for="no_defenses">No Defenses</label>
                                         </div>
                                     </td>
                                     <td>
@@ -155,6 +163,10 @@
                                         <ul>
                                             <input type="checkbox" name="rammer" id="rammer">
                                             <label for="rammer">rammer</label>
+                                        </ul>
+                                        <ul>
+                                            <input type="checkbox" name="orbiter" id="orbiter" {% if "orbiter" in image_tags_list %}checked{% endif %}>
+                                            <label for="orbiter">orbiter</label>
                                         </ul>
                                     </td>
                                 </tr>
