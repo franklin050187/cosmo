@@ -17,6 +17,12 @@
 * Discord webhook
 
 # Roadmap
+* Done add order for search in query param
+* Done change button for tabs to post on /search with order=fav,pop,new (default to new) (need to add fav tab once db updated)
+* Done remove js sort hacky funtion
+* update db schema to add favorite counts (and corresponding updates)
+* set up grid css for better layout
+* update footer
 * To do : UI clean up
 * To do : code clean up
 
@@ -67,7 +73,7 @@ Ping me on Discord : Poney#5850
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-File uploaded to the site are under the Attribution 4.0 International (CC BY 4.0) 
+File uploaded to the site are under the Attribution 4.0 International (CC BY 4.0) unless stated otherwise in the description
   
 You are free to:
 

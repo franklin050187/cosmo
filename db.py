@@ -220,6 +220,7 @@ class ShipImageDatabase:
         author_condition = None
         min_price_condition = None
         max_price_condition = None
+        order_by = None
 
         if query_params:
             for param in query_params.split("&"):
@@ -230,6 +231,8 @@ class ShipImageDatabase:
                     min_price_condition = value
                 elif key == "maxprice":
                     max_price_condition = value
+                elif key == "order":
+                    order_by = value
                 elif value == "1":
                     conditions.append(key)
                 elif value == "0":
@@ -281,12 +284,19 @@ class ShipImageDatabase:
             else:
                 query += " WHERE author = '{}'".format(author_condition)
 
-        # print("conditions =", conditions)
-        # print("not conditions =", not_conditions)
-        # print("author condition =", author_condition)
-        # print("min price condition =", min_price_condition)
-        # print("max price condition =", max_price_condition)
-        # print("query =", query)
+        if order_by == "fav":
+            query += " ORDER BY fav DESC"
+        elif order_by == "pop":
+            query += " ORDER BY downloads DESC"
+        elif order_by == "new":
+            query += " ORDER BY date DESC"
+
+        print("conditions =", conditions)
+        print("not conditions =", not_conditions)
+        print("author condition =", author_condition)
+        print("min price condition =", min_price_condition)
+        print("max price condition =", max_price_condition)
+        print("query =", query)
 
         return self.fetch_data(query)
 

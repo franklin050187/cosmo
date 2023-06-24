@@ -403,10 +403,11 @@ async def home(request: Request):
             'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kitter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'orbiter']
     # get the form
     form_input = await request.form()
-    # print("form", form_input) # debug
+    print("form", form_input) # debug
     # find the form data
     query: str = form_input.get("query").strip()
     authorstrip: str = form_input.get("author").strip()
+    orderstrip: str = form_input.get("order").strip()
     # split query string
     words = query.lower().split(" ")
     # print("words", words)
@@ -427,9 +428,11 @@ async def home(request: Request):
                 query_tags.append((tag, value))
     if authorstrip :
         query_tags.append(("author", authorstrip))
+    if orderstrip :
+        query_tags.append(("order", orderstrip))
     query_tags.append(("minprice", minstrip))
     query_tags.append(("maxprice", maxstrip))
-    # print("post qt", query_tags) # debug
+    print("post qt", query_tags) # debug
     # Build the SQL query based on the query tags
     query = "SELECT * FROM images"
     conditions = []
@@ -462,7 +465,7 @@ async def search(request: Request):
     # Get the query parameters from the request URL
     query_params = request.query_params
     images = db_manager.get_search(query_params)
-    # print("query_param_get = ",query_params)
+    print("query_param_get = ",query_params)
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 @app.post("/search")
