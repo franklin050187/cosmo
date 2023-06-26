@@ -24,7 +24,7 @@
         <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
         <div class="item-right">
             <span class="info-icon" title="Tags"></span>
-            <p class="username">Welcome {{ user }}</p>
+            <p class="username">Welcome {{ user }}  </p>
             {% if user == "Guest" %}
             <a title="Login" class="blue-btn" href="/login?button=login">
                 <span>Login</span>
@@ -50,6 +50,9 @@
         </div>
     </div>
     <div class="item-search">
+        <div class="item-intro">
+        <h2 style="text-align: center;">Share you SHIP DESIGN with the community !</h2>
+        </div>
         <div class="item-author">
             <form action="/" method="post" enctype="multipart/form-data">
                 <label for="authorinput">Search by author:</label>
