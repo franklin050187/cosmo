@@ -23,6 +23,7 @@
     <div class="item-header">
         <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
         <div class="item-right">
+            <span class="info-icon" title="Tags"></span>
             <p class="username">Welcome {{ user }}</p>
             {% if user == "Guest" %}
             <a title="Login" class="blue-btn" href="/login?button=login">
@@ -49,12 +50,6 @@
         </div>
     </div>
     <div class="item-search">
-        <div class="item-intro">
-            <h1>Excelsior Ship Library</h1>
-            <h2>Browse our ship library, share yours with the community!</h2>
-            <p>Search by ship name, author, description or tags.<span class="info-icon" title="Tags"></span></p>
-            <p>Add a - before a tag to add it to the exclusion list.</p>
-        </div>
         <div class="item-author">
             <form action="/" method="post" enctype="multipart/form-data">
                 <label for="authorinput">Search by author:</label>
@@ -120,11 +115,11 @@
     </div>
     <div class="item-footer">
         <img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp">
-        <ul>
-            <li><a title="Source code" href="https://github.com/franklin050187/cosmo">Source code</a></li>
-            <li><a title="Issues" href="https://github.com/franklin050187/cosmo/issues">Issues</a></li>
-            <li><a title="Support us" href="#">Support us</a></li>
-        </ul>
+
+            <a class="blue-btn" title="Source code" href="https://github.com/franklin050187/cosmo">Source code</a>
+            <a class="blue-btn" title="Issues" href="https://github.com/franklin050187/cosmo/issues">Issues</a>
+            <a class="blue-btn" title="Support us" href="#">Support us</a>
+
     </div>
 </body>
 

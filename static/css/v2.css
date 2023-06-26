@@ -3,8 +3,9 @@
     padding: 0;
     display: grid;
     width: 100%;
+    min-height: 100vh;
     grid-template-columns: 1fr 3fr 1fr;
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto 1fr auto;
     grid-template-areas:
       "header header header"
       ". search ."
@@ -36,6 +37,7 @@
     background-color: #021526;
     border: 1px solid #1c598c;
     border-radius: 5px;
+    height: fit-content;
   }
   
   .ship-card img {
@@ -320,5 +322,13 @@ width:100%
   
   .item-footer {
     grid-area: footer;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    backdrop-filter: blur(5px);
+    background: rgba(2, 21, 38, 0.65);
+    background-color: #021526;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
   }
   
