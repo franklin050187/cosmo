@@ -103,8 +103,11 @@
             <span class="selected-tag">{{ tag }}</span> {% endif %} {% endfor %}
             </span>
             <span class="data">
-                                <span>Cost:</span>
-            <span class="data credits"> {{ image[7] }}₡</span></span>
+                <span>Cost:</span>
+                <span class="data credits"> {{ image[7] }}₡</span>
+            </span>
+            <span class="data"><span>Ship Type:</span> {% set tagList = [ 'kitter', 'avoider', 'rammer', 'orbiter', 'campaign_ship', 'elimination_ship', 'domination_ship', 'diagonal', 'splitter' ] %} {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %} {% set image_tags_list = image_tags.split(",") %} {% for tag in image_tags_list %} {% if tag in tagList %}
+            <span class="selected-tag">{{ tag }}</span> {% endif %} {% endfor %}</span>
             <span class="data"><span>Author:</span> {{ image[6] }}</span>
 
             <span class="data" style="font-size: 12px;">
@@ -112,7 +115,9 @@
             </span>
             <span class="data"><span>Popularity:</span> {{ image[8] }}</span>
             <span class="data"><span>Favorites:</span> {{ image[11] }}</span>
-            <span class="data"><span>Date of submission:</span> {{ image[9] }}</span>
+            <span class="data"><span>Date of submission:</span></span>
+                <span class="submission-date">{{ image[9] }}</span>
+            
         </div>
         {% endfor %}
     </div>
@@ -132,6 +137,32 @@
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
 <script>
+// Get all the submission date elements
+var submissionDateElements = document.querySelectorAll('.submission-date');
+
+// Loop through each element
+submissionDateElements.forEach(function(element) {
+  // Get the date string
+  var dateStr = element.textContent;
+
+  // Create a new Date object from the date string
+  var date = new Date(dateStr);
+
+  // Format the date string in a readable format
+  var formattedDate = formatDate(date);
+
+  // Update the submission date element with the formatted date
+  element.textContent = formattedDate;
+});
+
+// Function to format the date
+function formatDate(date) {
+  var options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
+  return date.toLocaleDateString(undefined, options);
+}
+
+
+
     const blurImages = document.querySelectorAll("img.blur-load");
     blurImages.forEach(img => {
         const parentLink = img.parentElement;

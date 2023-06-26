@@ -91,7 +91,7 @@ class ShipImageDatabase:
                 author TEXT,
                 price integer null default 0,
                 downloads integer null default 0,
-                date date null default current_date,
+                date timestampz DEFAULT (now() AT TIME ZONE 'utc'::text),
                 tags TEXT[],
                 fav integer null default 0
             )

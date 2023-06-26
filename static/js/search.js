@@ -62,7 +62,7 @@ $(document).ready(function() {
     // Function to filter the authors based on the typed characters
     function filterAuthors(request, callback) {
       const filteredAuthors = jsonData.authors.filter(function(author) {
-        return author.toLowerCase().startsWith(request.term.toLowerCase());
+        return author.toLowerCase().includes(request.term.toLowerCase());
       });
       callback(filteredAuthors);
     }
