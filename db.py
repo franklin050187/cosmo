@@ -33,7 +33,7 @@ class ShipImageDatabase:
         if values is not None:
             cursor.execute(query, values)
             inserted_id = cursor.fetchone()[0]
-            print(inserted_id)
+            # print(inserted_id)
             conn.commit()
             cursor.close()
             conn.close()
@@ -123,13 +123,14 @@ class ShipImageDatabase:
             return "ko"
         query = "SELECT * FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (ship_id,))
+        # print("edit_ship_image_data[0] = ",image_data[0])
         return image_data[0]
 # done
     def post_edit_ship(self, id, form_data, user):
         query = "SELECT * FROM shipdb WHERE id=%s"
         image_data = self.fetch_data(query, (id,))
         # print("image_data = ", image_data)
-
+        # print("post_edit_ship_form_data = ",form_data)
         if user != image_data[0][3] and user not in self.modlist:
             return "ko"
         
@@ -149,8 +150,7 @@ class ShipImageDatabase:
         tags = extractor.extract_tags(url_png)
         # print("tags = ",tags)
         if tags : 
-            tup_for.extend(tags)
-
+            tup_for.extend(tags[0])
         # prepare data
         image_data = {
             'description': form_data.get('description', ''),
@@ -184,6 +184,8 @@ class ShipImageDatabase:
             image_data['tags'],
             image_data['id'],
         )
+        # print("insert_query = ",insert_query)
+        # print("values = ",values)
         # execute
         self.execute_query(insert_query, values)
 
@@ -218,6 +220,7 @@ class ShipImageDatabase:
         author_condition = None
         min_price_condition = None
         max_price_condition = None
+        order_by = None
 
         if query_params:
             for param in query_params.split("&"):
@@ -228,6 +231,8 @@ class ShipImageDatabase:
                     min_price_condition = value
                 elif key == "maxprice":
                     max_price_condition = value
+                elif key == "order":
+                    order_by = value
                 elif value == "1":
                     conditions.append(key)
                 elif value == "0":
@@ -279,16 +284,21 @@ class ShipImageDatabase:
             else:
                 query += " WHERE author = '{}'".format(author_condition)
 
-        # print("conditions =", conditions)
-        # print("not conditions =", not_conditions)
-        # print("author condition =", author_condition)
-        # print("min price condition =", min_price_condition)
-        # print("max price condition =", max_price_condition)
-        # print("query =", query)
+        if order_by == "fav":
+            query += " ORDER BY fav DESC"
+        elif order_by == "pop":
+            query += " ORDER BY downloads DESC"
+        elif order_by == "new":
+            query += " ORDER BY date DESC"
+
+        print("conditions =", conditions)
+        print("not conditions =", not_conditions)
+        print("author condition =", author_condition)
+        print("min price condition =", min_price_condition)
+        print("max price condition =", max_price_condition)
+        print("query =", query)
 
         return self.fetch_data(query)
-
-
 
     def update_downloads(self, ship_id):
         query = "UPDATE shipdb SET downloads = downloads + 1 WHERE id = %s"
@@ -351,7 +361,7 @@ class ShipImageDatabase:
         )
         # execute
         insertedid = self.execute_query_return(insert_query, values)
-        link = "https://cosmo-git-test-franklin050187.vercel.app/ship/"+str(insertedid)
+        link = "https://cosmo-lilac.vercel.app/ship/"+str(insertedid)
         # call webhook
         # send_message(shipurl, shipname, description, image, price, user, author):
         send_message(link, image_data['name'], image_data['description'],image_data['data'], image_data['price'], image_data['submitted_by'], image_data['author'])
@@ -362,15 +372,15 @@ class ShipImageDatabase:
         if not result:
             query = "INSERT INTO favoritedb (name, favorite) VALUES (%s, ARRAY[%s])"
             self.execute_query(query, (user, ship_id))
-            print("new line")
+            # print("new line")
         else:
-            print(result)
+            # print(result)
             favorites = result[0][2]
             if ship_id not in favorites:
                 favorites.append(ship_id)
                 query = "UPDATE favoritedb SET favorite = favorite || ARRAY[%s] WHERE name = %s"
                 self.execute_query(query, (ship_id, user))
-                print("update line")
+                # print("update line")
             else:
                 print("Already in favorites, skipping update")
 

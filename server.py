@@ -69,7 +69,7 @@ async def get_image(id: int, request: Request):
         ids = [item[0] for item in litsid]
         if id in ids:
             fav = 1
-            print("DEBUG already in favorites")
+            # print("DEBUG already in favorites")
     if not user:
         # print("DEBUG not a user home")
         user = "Guest"
@@ -92,16 +92,7 @@ async def delete_image(id: int, request: Request):
     # Redirect to the home page after deleting the image
     return RedirectResponse("/")
 
-# edit page get
-@app.get("/edit/{id}")
-async def edit_image(id: int, request: Request):
-    # Delete image information from the database based on the provided ID
-    user = request.session.get("discord_user")
-    check = db_manager.edit_ship(id, user)
-    if check == "ko":
-        return RedirectResponse("/")
-    # Redirect to the home page after deleting the image
-    return templates.TemplateResponse("edit.html", {"request": request, "image": check, "user": user})
+
 
 # add favorite
 @app.get("/favorite/{id}")
@@ -142,6 +133,18 @@ async def myfavorite(request: Request):
     images = db_manager.get_my_favorite(user)
 
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+
+# edit page get
+@app.get("/edit/{id}")
+async def edit_image(id: int, request: Request):
+    # Delete image information from the database based on the provided ID
+    user = request.session.get("discord_user")
+    check = db_manager.edit_ship(id, user)
+    # print("get_edit_check = ",check)
+    if check == "ko":
+        return RedirectResponse("/")
+    # Redirect to the home page after deleting the image
+    return templates.TemplateResponse("edit.html", {"request": request, "image": check, "user": user})
 
 # edit post
 @app.post("/edit/{id}")
@@ -222,22 +225,22 @@ async def upload_page(request: Request):
     return templates.TemplateResponse("massupload.html", {"request": request, "user": user})
 
 @app.post("/inituploadmass")
-async def upload(request: Request, files: List[UploadFile] = File(...)):
+def upload(request: Request, files: List[UploadFile] = File(...)):
     # Read the image file
     for file in files:
         try:
-            contents = await file.read()
+            contents = file.read()
             # Encode the contents as base64
             encoded_data = base64.b64encode(contents).decode("utf-8")
             # push to imagebb to be able to read it (fallback is enabled)
             try:
                 url_png = upload_image_to_imgbb(encoded_data)
             except Exception as e:
-                print(f"Error extracting tags for file {file.filename}: {str(e)}")
+                # print(f"Error extracting tags for file {file.filename}: {str(e)}")
                 continue  # Skip the current file and proceed to the next one
 
             if url_png == "ko":
-                print("Uploading error")
+                # print("Uploading error")
                 error = 'upload servers are down, try again later'
                 continue
             # get the tags
@@ -247,7 +250,7 @@ async def upload(request: Request, files: List[UploadFile] = File(...)):
                 # author = extractor.extract_author(url_png) ####
                 # print("tags = ",tags)
             except Exception as e:
-                print(f"Error extracting tags for file {file.filename}: {str(e)}")
+                # print(f"Error extracting tags for file {file.filename}: {str(e)}")
                 continue  # Skip the current file and proceed to the next one
 
             # Modify the file name to use authorized characters for HTML
@@ -278,7 +281,7 @@ async def upload(request: Request, files: List[UploadFile] = File(...)):
 
             db_manager.upload_image(form_data, user)
         except Exception as e:
-            print(f"Error processing file {file.filename}: {str(e)}")
+            # print(f"Error processing file {file.filename}: {str(e)}")
             continue  # Skip the current file and proceed to the next one
         
     # Redirect to the index page
@@ -308,7 +311,7 @@ async def upload(request: Request, file: UploadFile = File(...)):
     # push to imagebb to be able to read it (fallback is enabled)
     url_png = upload_image_to_imgbb(encoded_data)
     if url_png == "ko":
-        print("Uploading error")
+        # print("Uploading error")
         error = 'upload servers are down, try again later'
         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
     # get the tags
@@ -397,13 +400,14 @@ async def home(request: Request):
         user = "Guest"
     # tag list
     TAGS = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
-            'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'kitter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer']
+            'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kitter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'orbiter']
     # get the form
     form_input = await request.form()
-    # print("form", form_input) # debug
+    print("form", form_input) # debug
     # find the form data
     query: str = form_input.get("query").strip()
     authorstrip: str = form_input.get("author").strip()
+    orderstrip: str = form_input.get("order").strip()
     # split query string
     words = query.lower().split(" ")
     # print("words", words)
@@ -424,9 +428,11 @@ async def home(request: Request):
                 query_tags.append((tag, value))
     if authorstrip :
         query_tags.append(("author", authorstrip))
+    if orderstrip :
+        query_tags.append(("order", orderstrip))
     query_tags.append(("minprice", minstrip))
     query_tags.append(("maxprice", maxstrip))
-    # print("post qt", query_tags) # debug
+    print("post qt", query_tags) # debug
     # Build the SQL query based on the query tags
     query = "SELECT * FROM images"
     conditions = []
@@ -459,7 +465,7 @@ async def search(request: Request):
     # Get the query parameters from the request URL
     query_params = request.query_params
     images = db_manager.get_search(query_params)
-    # print("query_param_get = ",query_params)
+    print("query_param_get = ",query_params)
     return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
 
 @app.post("/search")

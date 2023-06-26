@@ -195,11 +195,11 @@ class Ship():
                         value = struct.unpack('<i', value)[0]
                     elif key == 'DefaultAttackRotation':
                         value = struct.unpack('<f', value)[0]
-                        print(self.image_path)
-                        print('DefaultAttackRotation: ', value)
+                        # print(self.image_path)
+                        # print('DefaultAttackRotation: ', value)
                     elif key == 'DefaultAttackRadius':
                         value = struct.unpack('<I', value)[0]
-                        print('DefaultAttackRadius: ', value)
+                        # print('DefaultAttackRadius: ', value)
                     elif key == 'Value' and len(value) == 4:
                         value = struct.unpack('<I', value)[0]
                     elif key in ('Location', 'Cell', "Key") and len(value) == 8:

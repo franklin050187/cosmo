@@ -1,183 +1,127 @@
 <!DOCTYPE html>
 <html lang="es">
-    <div class="site-container">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Demo Excelsior | Cosmoteer</title>
-    <meta name="robots" content="noindex,nofollow">
-    <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/index.css">
-    <script src="/static/js/jquery-3.6.0.min.js"></script>
-    <script src="/static/js/common.js"></script>
-    <script src="/static/js/index.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
 
-</head>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+            <title>Excelsior | Cosmoteer Ship Library</title>
+            <meta name="robots" content="noindex,nofollow">
+            <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
+            <link rel="stylesheet" type="text/css" href="/static/css/interfacezzz.css">
+            <link rel="stylesheet" type="text/css" href="/static/css/indexzzz.css">
+            <link rel="stylesheet" type="text/css" href="/static/css/v2.css">
+            <script src="/static/js/jquery-3.6.0.min.js"></script>
+            <script src="/static/js/common.js"></script>
+            <script src="/static/js/index.js"></script>
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
+            <script defer src="/_vercel/insights/script.js"></script>
 
-<body>
-    <header>
-        <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
-        <ul class="user-container">
-            <p class="username">Welcome {{ user }}</p>
-                <li>
+        </head>
+
+        <body class="site-container">
+            <div class="item-header">
+                <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
+                <div class="item-right">
+                    <p class="username">Welcome {{ user }}</p>
                     {% if user == "Guest" %}
-                    <a title="Login" class="blue-btn register" href="/login?button=login">
+                    <a title="Login" class="blue-btn" href="/login?button=login">
                         <span>Login</span>
                     </a>
                     {% else %}
-                    <a title="Logout" class="blue-btn register" href="/logoff">
+                    <a title="Logout" class="blue-btn" href="/logoff">
                         <span>Log out</span>
                     </a>
                     {% endif %}
-                </li>
-                <li>
-                    <a title="Upload" class="blue-btn register" href="/login?button=upload">
+                    <a title="Upload" class="blue-btn" href="/login?button=upload">
                         <span>Upload</span>
                     </a>
-                </li>
-                <li>
-                    <a title="Myfavorite" class="blue-btn register" href="/login?button=myfavorite">
+                
+                    <a title="Myfavorite" class="blue-btn" href="/login?button=myfavorite">
                         <span>My favorite</span>
                     </a>
-                </li>
-                <li>
-                    <a title="Myships" class="blue-btn register" href="/login?button=myships">
+                    <a title="Myships" class="blue-btn" href="/login?button=myships">
                         <span>My Ships</span>
                     </a>
-                </li>
-                <li>
-                    <a title="Home" class="blue-btn register" href="/">
+                    <a title="Home" class="blue-btn" href="/">
                         <span>Home</span>
                     </a>
-                </li>
-        </ul>
-        
-    </header>
+                </div>
+            </div>
 
-    <main>
-        <h1>Excelsior Ship Library</h1>
-        <section id="competitive" class="content-container">
-            <div class="section-description">
-                <h2>Browse our ship library, share yours with the community !</h2>
-                <div class="search-container">
+            <div class="item-search">
+
+                    <h1>Excelsior Ship Library</h1>
+                    <h2>Browse our ship library, share yours with the community!</h2>
                     <p>Search by ship name, author, description or tags.<span class="info-icon" title="Tags"></span></p>
                     <p>Add a - before a tag to add it to the exclusion list.</p>
                     <form action="/" method="post" enctype="multipart/form-data">
                         <button type="submit" class="blue-btn register" onclick="appendSearchInput()">Search</button>
                         <input type="hidden" name="query" id="final_search_query">
+                        <input type="hidden" name="order" id="order">
                         <label for="authorinput">Search by author:</label>
                         <input type="text" id="authorinput" name="author">
                         <label for="tag-input">Search by tags:</label>
-                        <input type="text" id="tag-input"  placeholder="Type your tags here">
+                        <input type="text" id="tag-input" placeholder="Type your tags here">
                         <label for="price-slider">Price Range:</label>
                         <div id="price-slider"></div>
                         <input type="text" name="min-price" id="min-price" value="750000">
                         <input type="text" name="max-price" id="max-price" value="1500000">
                         <div class="search-container">
-                        <div class="tag-container">
-                        <div id="selected-tags" class="tag-box"></div>
-                        <div id="excluded-tags" class="tag-box"></div>
+                            <div class="tag-container">
+                                <div id="selected-tags" class="tag-box"></div>
+                                <div id="excluded-tags" class="tag-box"></div>
+                            </div>
+                        </div>
                     </form>
-                </div>
+                    <button id="elim-competitive-btn" class="active blue-btn" type="button" onclick="updateOrderParam('new')">Sort by new first</button>
+                    <button id="dom-competitive-btn" class="blue-btn" type="button" onclick="updateOrderParam('pop')">Sort by most popular</button>
 
             </div>
-            <div class="tabs-container">
-                <button id="elim-competitive-btn" class="active blue-btn" type="button">Sort by new first</button>
-                <button id="dom-competitive-btn" class="blue-btn" type="button">Sort by most popular</button>
-                <div id="elim-competitive-tab" class="tab active">
-                    <ul class="ships-list" id="elim-competitive-ship-list">
-                        {% for image in images %}
-                        <li class="ship-card">
-                            <div class="lazy-img-wrapper">
-                                <img class="lazy-img" data-src="{{ image[2] }}" alt="{{ image[5] }}">
-                            </div>
-                            <div class="ship-data">
-                                <span class="data"><span>Ship name:</span> {{ image[5] }}</span>
-                                <span class="data"><span>Ship weapons:</span>
-                                    {% set tagList = [
-                                        'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes',
-                                        'railgun', 'factories', 'disruptors',
-                                        'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense'
-                                    ] %}
-                                    {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %}
-                                    {% set image_tags_list = image_tags.split(",") %}
-                                    {% for tag in image_tags_list %}
-                                        {% if tag in tagList %}
-                                        <span class="selected-tag">{{ tag }}</span>
-                                        {% endif %}
-                                    {% endfor %}
-                                </span>
-                                <span class="data credits"><span>Cost:</span> {{ image[7] }}₡</span>
-                                <span class="data"><span>Author:</span> {{ image[6] }}</span>
-                                <span class="data" style="font-size: 12px;"><span>Submitted by:</span> {{ image[3] }}</span>
-                                <span class="data"><span>Popularity:</span> {{ image[8] }}</span>
-                                <span class="data"><span>Date of submission:</span> {{ image[9] }}</span>
-                            </div>
-                            <div class="actions-container">
-                                <a class="blue-btn" title="See the ship page" href="/ship/{{ image[0] }}"></a>
-                                <button type="button" class="blue-btn download-btn" title="Download this ship" onclick="downloadShip('{{ image[0] }}')"></button>
-                            </div>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    
-                </div>
-                <div id="dom-competitive-tab" class="tab">
-                    <ul class="ships-list" id="dom-competitive-ship-list">
-                        {% for image in images %}
-                        <li class="ship-card">
-                            <div class="lazy-img-wrapper">
-                                <img class="lazy-img" data-src="{{ image[2] }}" alt="{{ image[5] }}">
-                            </div>
-                            <div class="ship-data">
-                                <span class="data"><span>Ship name:</span> {{ image[5] }}</span>
-                                <span class="data"><span>Ship weapons:</span>
-                                    {% set tagList = [
-                                        'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes',
-                                        'railgun', 'factories', 'disruptors',
-                                        'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense'
-                                    ] %}
-                                    {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %}
-                                    {% set image_tags_list = image_tags.split(",") %}
-                                    {% for tag in image_tags_list %}
-                                        {% if tag in tagList %}
-                                        <span class="selected-tag">{{ tag }}</span>
-                                        {% endif %}
-                                    {% endfor %}
-                                </span>
-                                <span class="data credits"><span>Cost:</span> {{ image[7] }}₡</span>
-                                <span class="data"><span>Author:</span> {{ image[6] }}</span>
-                                <span class="data" style="font-size: 12px;"><span>Submitted by:</span> {{ image[3] }}</span>
-                                <span class="data"><span>Popularity:</span> {{ image[8] }}</span>
-                                <span class="data"><span>Date of submission:</span> {{ image[9] }}</span>
-                            </div>
-                            <div class="actions-container">
-                                <a class="blue-btn" title="See the ship page" href="/ship/{{ image[0] }}"></a>
-                                <button type="button" class="blue-btn download-btn" title="Download this ship" onclick="downloadShip('{{ image[0] }}')"></button>
-                            </div>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </section>
-    </main>
 
-    <footer>
-        <div class="footer-content">
-            <img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp">
-            <ul>
-                <li><a title="Cookies policy" href="#">Cookies policy</a></li>
-                <li><a title="Another footer link" href="#">Another footer link</a></li>
-                <li><a title="More footer links" href="#">More footer links</a></li>
-            </ul>
-        </div>
-    </footer>
-</body>
-</div>
+            <div class="item-listing">
+
+                    {% for image in images %}
+                        <div class="ship-card">
+                            <a href="/ship/{{ image[0] }}">
+                                    <img src="{{ image[2] }}" alt="{{ image[5] }}" loading="lazy" class="blur-load" style="background-image: url(https://cnfyupteqa.cloudimg.io/{{ image[2] }}?width=20&blur=10)">
+                            </a>
+                            <span class="data"><span>Ship name:</span> {{ image[5] }}</span>
+                            <span class="data"><span>Ship weapons:</span>
+                                {% set tagList = [
+                                    'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes',
+                                    'railgun', 'factories', 'disruptors',
+                                    'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense'
+                                ] %}
+                                {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %}
+                                {% set image_tags_list = image_tags.split(",") %}
+                                {% for tag in image_tags_list %}
+                                    {% if tag in tagList %}
+                                    <span class="selected-tag">{{ tag }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                            <span class="data">Cost:<span class="data credits"> {{ image[7] }}₡</span></span>
+                            <span class="data"><span>Author:</span> {{ image[6] }}</span>
+                            <span class="data" style="font-size: 12px;"><span>Submitted by:</span> {{ image[3] }}</span>
+                            <span class="data"><span>Popularity:</span> {{ image[8] }}</span>
+                            <span class="data"><span>Date of submission:</span> {{ image[9] }}</span>
+                        </div>
+                    {% endfor %}
+
+            </div>
+            
+
+            <div class="item-footer">
+                <img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp">
+                <ul>
+                    <li><a title="Cookies policy" href="#">Cookies policy</a></li>
+                    <li><a title="Another footer link" href="#">Another footer link</a></li>
+                    <li><a title="More footer links" href="#">More footer links</a></li>
+                </ul>
+            </div>
+
+        </body>
 
 </html>
 
@@ -185,6 +129,43 @@
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
 <script>
+
+    const blurImages = document.querySelectorAll("img.blur-load");
+    blurImages.forEach(img => {
+        const parentLink = img.parentElement;
+    
+        function loaded() {
+            parentLink.classList.add("loaded");
+            img.style.backgroundImage = "none";
+        }
+    
+        if (img.complete) {
+            loaded();
+        } else {
+            img.addEventListener("load", loaded);
+        }
+    });
+    
+    
+
+
+    window.addEventListener('DOMContentLoaded', function() {
+        var urlParams = new URLSearchParams(window.location.search);
+        var order = urlParams.get('order');
+
+        if (order === 'pop') {
+            document.getElementById('dom-competitive-btn').classList.add('active');
+            document.getElementById('dom-competitive-btn').classList.add('blue-btn');
+            document.getElementById('elim-competitive-btn').classList.remove('active');
+            document.getElementById('elim-competitive-btn').classList.add('blue-btn');
+        } else {
+            document.getElementById('dom-competitive-btn').classList.remove('active');
+            document.getElementById('dom-competitive-btn').classList.add('blue-btn');
+            document.getElementById('elim-competitive-btn').classList.add('active');
+            document.getElementById('elim-competitive-btn').classList.add('blue-btn');
+        }
+    });
+
 const lazyImages = document.querySelectorAll('.lazy-img');
 
 const observer = new IntersectionObserver((entries, observer) => {
@@ -201,4 +182,10 @@ const observer = new IntersectionObserver((entries, observer) => {
 lazyImages.forEach((img) => {
   observer.observe(img);
 });
+
+function updateOrderParam(order) {
+    document.getElementById('order').value = order;
+    document.getElementById('final_search_query').value = 'query=' + encodeURIComponent(document.getElementById('tag-input').value);
+    document.getElementById('order').form.submit();
+}
 </script>

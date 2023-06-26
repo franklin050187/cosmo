@@ -26,7 +26,7 @@ def upload_image_to_imgbb(image_base64):
 
         return image_url
     except requests.exceptions.RequestException as e:
-        print("fallback : ", e)
+        # print("fallback : ", e)
         return upload_image_to_cloudinary(image_base64)
 
 def upload_image_to_cloudinary(image_base64):
@@ -53,8 +53,8 @@ def upload_image_to_cloudinary(image_base64):
         json_response = response.json()
         # Extract the URL of the uploaded image
         image_url = json_response["secure_url"]
-        print("Image uploaded successfully. URL:", image_url)
+        # print("Image uploaded successfully. URL:", image_url)
         return image_url
     else:
-        print("Error uploading image:", response.text)
+        # print("Error uploading image:", response.text)
         return "ko"

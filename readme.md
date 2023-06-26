@@ -7,15 +7,25 @@
 # Features 
 * Login via Discord to upload a ship
 * Autotag ship
+* Autoprice 
 * Edit / delete user submitted ships
 * Search by tags, author, description
 * Exclude tags using -tagname
 * Drag and drop from the ship page to the game for easy access
+* Order search results
+* Ability to favorite ships
+* Discord webhook
 
 # Roadmap
-* In progress : Add favorite page
-* To do : Add UI to favorite a ship
-* To do : add favorite management (backend)
+* Done add order for search in query param
+* Done change button for tabs to post on /search with order=fav,pop,new (default to new) (need to add fav tab once db updated)
+* Done remove js sort hacky funtion
+* update db schema to add favorite counts (and corresponding updates)
+* set up grid css for better layout
+* update footer
+* To do : UI clean up
+* To do : code clean up
+
 
 # Hosting 
 * Vercel (backend and DB)
@@ -63,7 +73,7 @@ Ping me on Discord : Poney#5850
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-File uploaded to the site are under the Attribution 4.0 International (CC BY 4.0) 
+File uploaded to the site are under the Attribution 4.0 International (CC BY 4.0) unless stated otherwise in the description
   
 You are free to:
 
