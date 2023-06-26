@@ -105,6 +105,7 @@ async def favorite(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
     db_manager.add_to_favorites(user, id)
+    db_manager.add_fav(id)
     url = "/ship/"+str(id) # change to send the url instead of the image id
     return RedirectResponse(url)
 
@@ -118,6 +119,7 @@ async def rmfavorite(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
     db_manager.delete_from_favorites(user, id)
+    db_manager.remove_fav(id)
     url = "/ship/"+str(id) # change to send the url instead of the image id
     return RedirectResponse(url)
 

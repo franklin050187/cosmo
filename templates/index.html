@@ -76,6 +76,8 @@
                     </form>
                     <button id="elim-competitive-btn" class="active blue-btn" type="button" onclick="updateOrderParam('new')">Sort by new first</button>
                     <button id="dom-competitive-btn" class="blue-btn" type="button" onclick="updateOrderParam('pop')">Sort by most popular</button>
+                    <button id="fav-competitive-btn" class="blue-btn" type="button" onclick="updateOrderParam('fav')">Sort by most favorites</button>
+
 
             </div>
 
@@ -105,6 +107,7 @@
                             <span class="data"><span>Author:</span> {{ image[6] }}</span>
                             <span class="data" style="font-size: 12px;"><span>Submitted by:</span> {{ image[3] }}</span>
                             <span class="data"><span>Popularity:</span> {{ image[8] }}</span>
+                            <span class="data"><span>Favorites:</span> {{ image[11] }}</span>
                             <span class="data"><span>Date of submission:</span> {{ image[9] }}</span>
                         </div>
                     {% endfor %}
@@ -158,11 +161,22 @@
             document.getElementById('dom-competitive-btn').classList.add('blue-btn');
             document.getElementById('elim-competitive-btn').classList.remove('active');
             document.getElementById('elim-competitive-btn').classList.add('blue-btn');
+            document.getElementById('fav-competitive-btn').classList.remove('active');
+            document.getElementById('fav-competitive-btn').classList.add('blue-btn');
+        } else if (order === 'fav') {
+            document.getElementById('dom-competitive-btn').classList.remove('active');
+            document.getElementById('dom-competitive-btn').classList.add('blue-btn');
+            document.getElementById('elim-competitive-btn').classList.remove('active');
+            document.getElementById('elim-competitive-btn').classList.add('blue-btn');
+            document.getElementById('fav-competitive-btn').classList.add('active');
+            document.getElementById('fav-competitive-btn').classList.add('blue-btn');
         } else {
             document.getElementById('dom-competitive-btn').classList.remove('active');
             document.getElementById('dom-competitive-btn').classList.add('blue-btn');
             document.getElementById('elim-competitive-btn').classList.add('active');
             document.getElementById('elim-competitive-btn').classList.add('blue-btn');
+            document.getElementById('fav-competitive-btn').classList.remove('active');
+            document.getElementById('fav-competitive-btn').classList.add('blue-btn');
         }
     });
 

@@ -92,7 +92,8 @@ class ShipImageDatabase:
                 price integer null default 0,
                 downloads integer null default 0,
                 date date null default current_date,
-                tags TEXT[]
+                tags TEXT[],
+                fav integer null default 0
             )
         """
         self.execute_query(create_table_query)
@@ -302,6 +303,14 @@ class ShipImageDatabase:
 
     def update_downloads(self, ship_id):
         query = "UPDATE shipdb SET downloads = downloads + 1 WHERE id = %s"
+        self.execute_query(query, (ship_id,))
+
+    def add_fav(self, ship_id):
+        query = "UPDATE shipdb SET fav = fav + 1 WHERE id = %s"
+        self.execute_query(query, (ship_id,))
+    
+    def remove_fav(self, ship_id):
+        query = "UPDATE shipdb SET fav = fav - 1 WHERE id = %s"
         self.execute_query(query, (ship_id,))
 
     def get_image_data(self, id):
