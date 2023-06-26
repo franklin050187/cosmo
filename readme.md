@@ -20,10 +20,10 @@
 * Done add order for search in query param
 * Done change button for tabs to post on /search with order=fav,pop,new (default to new) (need to add fav tab once db updated)
 * Done remove js sort hacky funtion
-* update db schema to add favorite counts (and corresponding updates)
-* set up grid css for better layout
-* update footer
-* To do : UI clean up
+* Done update db schema to add favorite counts (and corresponding updates)
+* Done set up grid css for better layout
+* Done update footer
+* To do : add pagination if more than 48 ships
 * To do : code clean up
 
 
