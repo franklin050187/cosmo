@@ -200,7 +200,7 @@ class ShipImageDatabase:
             return "Image not found"
 
     def get_index(self):
-        query = "SELECT * FROM shipdb"
+        query = "SELECT * FROM shipdb ORDER BY date DESC"
         return self.fetch_data(query)
 
     def get_my_ships(self, user):
