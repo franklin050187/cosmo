@@ -16,8 +16,8 @@ function downloadShip(imageUrl) {
 
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
-const minPrice = urlParams.get('minprice') || 750000;
-const maxPrice = urlParams.get('maxprice') || 1500000;
+const minPrice = urlParams.get('minprice') || 0;
+const maxPrice = urlParams.get('maxprice') || 5000000;
 
 document.getElementById('min-price').value = minPrice;
 document.getElementById('max-price').value = maxPrice;

@@ -194,7 +194,7 @@ class ShipImageDatabase:
         query = "SELECT data, name FROM shipdb WHERE id = %s"
         result = self.fetch_data(query, (image_id,))
         if result:
-            self.update_downloads(image_id)
+            # self.update_downloads(image_id)
             return result[0]
         else:
             return "Image not found"
@@ -292,12 +292,12 @@ class ShipImageDatabase:
         elif order_by == "new":
             query += " ORDER BY date DESC"
 
-        print("conditions =", conditions)
-        print("not conditions =", not_conditions)
-        print("author condition =", author_condition)
-        print("min price condition =", min_price_condition)
-        print("max price condition =", max_price_condition)
-        print("query =", query)
+        # print("conditions =", conditions)
+        # print("not conditions =", not_conditions)
+        # print("author condition =", author_condition)
+        # print("min price condition =", min_price_condition)
+        # print("max price condition =", max_price_condition)
+        # print("query =", query)
 
         return self.fetch_data(query)
 

@@ -63,6 +63,16 @@ modlist = ast.literal_eval(modlist)
 @app.get("/ship/{id}")
 async def get_image(id: int, request: Request):
     user = request.session.get("discord_user")
+    
+    if not request.session.get("shipidsession"):
+        # print("DEBUG no session")
+        shipidsession = []
+        request.session["shipidsession"] = shipidsession
+    else:
+        # print("DEBUG has session")
+        shipidsession = request.session.get("shipidsession")
+        # print("DEBUG session", shipidsession)
+        
     fav = 0
     if user :
         litsid = db_manager.get_my_favorite(user)
@@ -73,7 +83,12 @@ async def get_image(id: int, request: Request):
     if not user:
         # print("DEBUG not a user home")
         user = "Guest"
-    db_manager.download_ship_png(id)
+    if not id in shipidsession:
+        # print("DEBUG not id in session")
+        request.session["shipidsession"].append(id)
+        db_manager.update_downloads(id)
+        # print("update session", request.session["shipidsession"])
+        
     image_data = db_manager.get_image_data(id)
     url_png = image_data[0][2] # change to send the url instead of the image
     
@@ -91,8 +106,6 @@ async def delete_image(id: int, request: Request):
         return RedirectResponse("/")
     # Redirect to the home page after deleting the image
     return RedirectResponse("/")
-
-
 
 # add favorite
 @app.get("/favorite/{id}")
@@ -227,16 +240,25 @@ async def upload_page(request: Request):
     return templates.TemplateResponse("massupload.html", {"request": request, "user": user})
 
 @app.post("/inituploadmass")
-def upload(request: Request, files: List[UploadFile] = File(...)):
+async def upload(request: Request, files: List[UploadFile] = File(...)):
+    # print("start")
     # Read the image file
     for file in files:
+        # print("file in files", file)
         try:
-            contents = file.read()
+            form_data_mass = await request.form()
+            # print("form_data_mass", form_data_mass)
+            
+            # print("try")
+            contents = await file.read()
+            # print("contents", contents)
             # Encode the contents as base64
             encoded_data = base64.b64encode(contents).decode("utf-8")
             # push to imagebb to be able to read it (fallback is enabled)
             try:
+                # print("try upload")
                 url_png = upload_image_to_imgbb(encoded_data)
+                # print("url_png", url_png)
             except Exception as e:
                 # print(f"Error extracting tags for file {file.filename}: {str(e)}")
                 continue  # Skip the current file and proceed to the next one
@@ -247,10 +269,11 @@ def upload(request: Request, files: List[UploadFile] = File(...)):
                 continue
             # get the tags
             try:
+                # print("extractor")
                 extractor = PNGTagExtractor()
                 tags, author = extractor.extract_tags(url_png) ####
-                # author = extractor.extract_author(url_png) ####
-                # print("tags = ",tags)
+                # print("extractor", tags)
+
             except Exception as e:
                 # print(f"Error extracting tags for file {file.filename}: {str(e)}")
                 continue  # Skip the current file and proceed to the next one
@@ -264,26 +287,36 @@ def upload(request: Request, files: List[UploadFile] = File(...)):
                 shipname = authorized_chars.replace(".png", "")
             if ".ship" in shipname:
                 shipname = shipname.replace(".ship", "")
-
+            # print("price")
             price = calculate_price(url_png)
+            # print("price", price)
             user = request.session.get("discord_user")
             form_data = {
                 'name': authorized_chars,
                 'data': url_png,
                 'submitted_by': user,
-                'description': "BATCH IMPORT: ship needs to be reviewed",
+                'description': form_data_mass["description"],
                 'shipname': shipname,
                 'author': author,
                 'price': price,
                 'tags': tags,
                 'url_png': url_png,
                 'filename' : authorized_chars,
-                'ship_name' : shipname
+                'ship_name' : shipname,
             }
-
+            
+            # for key, value in form_data_mass:
+            #     if key == 'campaign_ship' and value == 'on':
+            #         campaign_ship_value = 'on'
+            # if 'thrust_type' in form_data_mass:
+            #     form_data['thrust_type'] = form_data_mass['thrust_type']
+            # if 'defense_type' in form_data_mass:
+            #     form_data['defense_type'] = form_data_mass['defense_type']
+            # form_data['campaign_ship'] = campaign_ship_value
+            # print("form_data", form_data)
             db_manager.upload_image(form_data, user)
         except Exception as e:
-            # print(f"Error processing file {file.filename}: {str(e)}")
+            print(f"Error processing file {file.filename}: {str(e)}")
             continue  # Skip the current file and proceed to the next one
         
     # Redirect to the index page
@@ -405,7 +438,7 @@ async def home(request: Request):
             'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kitter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'orbiter']
     # get the form
     form_input = await request.form()
-    print("form", form_input) # debug
+    # print("form", form_input) # debug
     # find the form data
     query: str = form_input.get("query").strip()
     authorstrip: str = form_input.get("author").strip()
