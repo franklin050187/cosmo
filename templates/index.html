@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -17,7 +18,9 @@
     <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
     <script defer src="/_vercel/insights/script.js"></script>
 
-</head>
+
+        </head>
+
 
 <body class="site-container">
     <div class="item-header">
@@ -137,6 +140,7 @@
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
 <script>
+
 // Get all the submission date elements
 var submissionDateElements = document.querySelectorAll('.submission-date');
 
@@ -182,6 +186,7 @@ function formatDate(date) {
     
 
 
+
     window.addEventListener('DOMContentLoaded', function() {
         var urlParams = new URLSearchParams(window.location.search);
         var order = urlParams.get('order');
@@ -191,6 +196,7 @@ function formatDate(date) {
             document.getElementById('dom-competitive-btn').classList.add('blue-btn');
             document.getElementById('elim-competitive-btn').classList.remove('active');
             document.getElementById('elim-competitive-btn').classList.add('blue-btn');
+
             document.getElementById('fav-competitive-btn').classList.remove('active');
             document.getElementById('fav-competitive-btn').classList.add('blue-btn');
         } else if (order === 'fav') {
@@ -200,13 +206,16 @@ function formatDate(date) {
             document.getElementById('elim-competitive-btn').classList.add('blue-btn');
             document.getElementById('fav-competitive-btn').classList.add('active');
             document.getElementById('fav-competitive-btn').classList.add('blue-btn');
+
         } else {
             document.getElementById('dom-competitive-btn').classList.remove('active');
             document.getElementById('dom-competitive-btn').classList.add('blue-btn');
             document.getElementById('elim-competitive-btn').classList.add('active');
             document.getElementById('elim-competitive-btn').classList.add('blue-btn');
+
             document.getElementById('fav-competitive-btn').classList.remove('active');
             document.getElementById('fav-competitive-btn').classList.add('blue-btn');
+
         }
     });
 

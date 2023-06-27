@@ -292,6 +292,7 @@ class ShipImageDatabase:
         elif order_by == "new":
             query += " ORDER BY date DESC"
 
+
         # print("conditions =", conditions)
         # print("not conditions =", not_conditions)
         # print("author condition =", author_condition)
@@ -300,6 +301,7 @@ class ShipImageDatabase:
         # print("query =", query)
 
         return self.fetch_data(query)
+
 
     def update_downloads(self, ship_id):
         query = "UPDATE shipdb SET downloads = downloads + 1 WHERE id = %s"

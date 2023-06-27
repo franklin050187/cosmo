@@ -240,18 +240,22 @@ async def upload_page(request: Request):
     return templates.TemplateResponse("massupload.html", {"request": request, "user": user})
 
 @app.post("/inituploadmass")
+
 async def upload(request: Request, files: List[UploadFile] = File(...)):
     # print("start")
+
     # Read the image file
     for file in files:
         # print("file in files", file)
         try:
+
             form_data_mass = await request.form()
             # print("form_data_mass", form_data_mass)
             
             # print("try")
             contents = await file.read()
             # print("contents", contents)
+
             # Encode the contents as base64
             encoded_data = base64.b64encode(contents).decode("utf-8")
             # push to imagebb to be able to read it (fallback is enabled)
@@ -316,7 +320,7 @@ async def upload(request: Request, files: List[UploadFile] = File(...)):
             # print("form_data", form_data)
             db_manager.upload_image(form_data, user)
         except Exception as e:
-            print(f"Error processing file {file.filename}: {str(e)}")
+            # print(f"Error processing file {file.filename}: {str(e)}")
             continue  # Skip the current file and proceed to the next one
         
     # Redirect to the index page
@@ -438,7 +442,7 @@ async def home(request: Request):
             'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kitter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'orbiter']
     # get the form
     form_input = await request.form()
-    # print("form", form_input) # debug
+    print("form", form_input) # debug
     # find the form data
     query: str = form_input.get("query").strip()
     authorstrip: str = form_input.get("author").strip()
