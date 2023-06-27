@@ -91,8 +91,9 @@ class ShipImageDatabase:
                 author TEXT,
                 price integer null default 0,
                 downloads integer null default 0,
-                date date null default current_date,
-                tags TEXT[]
+                date timestampz DEFAULT (now() AT TIME ZONE 'utc'::text),
+                tags TEXT[],
+                fav integer null default 0
             )
         """
         self.execute_query(create_table_query)
@@ -193,13 +194,13 @@ class ShipImageDatabase:
         query = "SELECT data, name FROM shipdb WHERE id = %s"
         result = self.fetch_data(query, (image_id,))
         if result:
-            self.update_downloads(image_id)
+            # self.update_downloads(image_id)
             return result[0]
         else:
             return "Image not found"
 
     def get_index(self):
-        query = "SELECT * FROM shipdb"
+        query = "SELECT * FROM shipdb ORDER BY date DESC"
         return self.fetch_data(query)
 
     def get_my_ships(self, user):
@@ -291,17 +292,27 @@ class ShipImageDatabase:
         elif order_by == "new":
             query += " ORDER BY date DESC"
 
-        print("conditions =", conditions)
-        print("not conditions =", not_conditions)
-        print("author condition =", author_condition)
-        print("min price condition =", min_price_condition)
-        print("max price condition =", max_price_condition)
-        print("query =", query)
+
+        # print("conditions =", conditions)
+        # print("not conditions =", not_conditions)
+        # print("author condition =", author_condition)
+        # print("min price condition =", min_price_condition)
+        # print("max price condition =", max_price_condition)
+        # print("query =", query)
 
         return self.fetch_data(query)
 
+
     def update_downloads(self, ship_id):
         query = "UPDATE shipdb SET downloads = downloads + 1 WHERE id = %s"
+        self.execute_query(query, (ship_id,))
+
+    def add_fav(self, ship_id):
+        query = "UPDATE shipdb SET fav = fav + 1 WHERE id = %s"
+        self.execute_query(query, (ship_id,))
+    
+    def remove_fav(self, ship_id):
+        query = "UPDATE shipdb SET fav = fav - 1 WHERE id = %s"
         self.execute_query(query, (ship_id,))
 
     def get_image_data(self, id):
