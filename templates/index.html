@@ -87,12 +87,13 @@
                 <a title="Reset" class="red-btn" href="/">
                     <span>Reset</span>
                 </a>
-            </form>
+            
         </div>
         <div class="item-order">
-            <button id="elim-competitive-btn" class="active blue-btnfirst" type="button" onclick="updateOrderParam('new')">Sort by new first</button>
-            <button id="dom-competitive-btn" class="blue-btnmiddle" type="button" onclick="updateOrderParam('pop')">Sort by most popular</button>
-            <button id="fav-competitive-btn" class="blue-btnlast" type="button" onclick="updateOrderParam('fav')">Sort by most favorites</button>
+            <button id="elim-competitive-btn" class="active blue-btnfirst" type="submit" onclick="updateOrderParam('new')">Sort by new first</button>
+            <button id="dom-competitive-btn" class="blue-btnmiddle" type="submit" onclick="updateOrderParam('pop')">Sort by most popular</button>
+            <button id="fav-competitive-btn" class="blue-btnlast" type="submit" onclick="updateOrderParam('fav')">Sort by most favorites</button>
+        </form>
         </div>
     </div>
     <div class="item-listing">
@@ -239,8 +240,14 @@ lazyImages.forEach((img) => {
 });
 
 function updateOrderParam(order) {
+    //const orderInput = document.getElementById('order');
+    //const order = orderInput.value;
+    //document.getElementById('order').value = order;
     document.getElementById('order').value = order;
-    document.getElementById('final_search_query').value = 'query=' + encodeURIComponent(document.getElementById('tag-input').value);
-    document.getElementById('order').form.submit();
+    //document.getElementById('final_search_query').value = 'query=' + encodeURIComponent(document.getElementById('tag-input').value);
+    //document.getElementById('order').form.submit();
+    addTag('order', document.getElementById('order').value);
 }
 </script>
+
+ 
