@@ -8,8 +8,6 @@
     <title>Excelsior | Cosmoteer Ship Library</title>
     <meta name="robots" content="noindex,nofollow">
     <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="/static/css/interfacezzz.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/indexzzz.css">
     <link rel="stylesheet" type="text/css" href="/static/css/v2.css">
     <script src="/static/js/jquery-3.6.0.min.js"></script>
     <script src="/static/js/common.js"></script>
@@ -58,15 +56,13 @@
         </div>
         <div class="item-author">
             <form action="/" method="post" enctype="multipart/form-data">
-                <label for="authorinput">Search by author:</label>
-                <input type="text" id="authorinput" name="author">
+                <input type="text" id="authorinput" name="author" placeholder="  Search by author...">
         </div>
         <div class="item-tag">
                 <input type="hidden" name="query" id="final_search_query">
                 <input type="hidden" name="order" id="order">
 
-                <label for="tag-input">Search by tags:</label>
-                <input type="text" id="tag-input" placeholder="Type your tags here">
+                <input type="text" id="tag-input" placeholder='  Search by tags... add "-" to exclude tags'>
                 <div class="search-container">
                     <div class="tag-container">
                         <div id="selected-tags" class="tag-box"></div>
@@ -75,10 +71,16 @@
                 </div>
         </div>
         <div class="item-price">
-                <label for="price-slider">Price Range:</label>
-                <div id="price-slider"></div>
+            <div>
                 <input type="text" name="min-price" id="min-price" value="0">
                 <input type="text" name="max-price" id="max-price" value="5000000">
+            </div>
+                <div id="price-slider">
+
+                </div>
+                <label for="price-slider" style="display: flow-root;margin-bottom: 5px;font-style: italic;">Price Range</label>
+
+                
         </div>
         <div class="item-button">
                 <button type="submit" class="blue-btn register" onclick="appendSearchInput()">Search</button>
@@ -88,9 +90,9 @@
             </form>
         </div>
         <div class="item-order">
-            <button id="elim-competitive-btn" class="active blue-btn" type="button" onclick="updateOrderParam('new')">Sort by new first</button>
-            <button id="dom-competitive-btn" class="blue-btn" type="button" onclick="updateOrderParam('pop')">Sort by most popular</button>
-            <button id="fav-competitive-btn" class="blue-btn" type="button" onclick="updateOrderParam('fav')">Sort by most favorites</button>
+            <button id="elim-competitive-btn" class="active blue-btnfirst" type="button" onclick="updateOrderParam('new')">Sort by new first</button>
+            <button id="dom-competitive-btn" class="blue-btnmiddle" type="button" onclick="updateOrderParam('pop')">Sort by most popular</button>
+            <button id="fav-competitive-btn" class="blue-btnlast" type="button" onclick="updateOrderParam('fav')">Sort by most favorites</button>
         </div>
     </div>
     <div class="item-listing">
@@ -193,28 +195,28 @@ function formatDate(date) {
 
         if (order === 'pop') {
             document.getElementById('dom-competitive-btn').classList.add('active');
-            document.getElementById('dom-competitive-btn').classList.add('blue-btn');
+           // document.getElementById('dom-competitive-btn').classList.add('blue-btn');
             document.getElementById('elim-competitive-btn').classList.remove('active');
-            document.getElementById('elim-competitive-btn').classList.add('blue-btn');
+           // document.getElementById('elim-competitive-btn').classList.add('blue-btn');
 
             document.getElementById('fav-competitive-btn').classList.remove('active');
-            document.getElementById('fav-competitive-btn').classList.add('blue-btn');
+           // document.getElementById('fav-competitive-btn').classList.add('blue-btn');
         } else if (order === 'fav') {
             document.getElementById('dom-competitive-btn').classList.remove('active');
-            document.getElementById('dom-competitive-btn').classList.add('blue-btn');
+           // document.getElementById('dom-competitive-btn').classList.add('blue-btn');
             document.getElementById('elim-competitive-btn').classList.remove('active');
-            document.getElementById('elim-competitive-btn').classList.add('blue-btn');
+           // document.getElementById('elim-competitive-btn').classList.add('blue-btn');
             document.getElementById('fav-competitive-btn').classList.add('active');
-            document.getElementById('fav-competitive-btn').classList.add('blue-btn');
+           // document.getElementById('fav-competitive-btn').classList.add('blue-btn');
 
         } else {
             document.getElementById('dom-competitive-btn').classList.remove('active');
-            document.getElementById('dom-competitive-btn').classList.add('blue-btn');
+          //  document.getElementById('dom-competitive-btn').classList.add('blue-btn');
             document.getElementById('elim-competitive-btn').classList.add('active');
-            document.getElementById('elim-competitive-btn').classList.add('blue-btn');
+          //  document.getElementById('elim-competitive-btn').classList.add('blue-btn');
 
             document.getElementById('fav-competitive-btn').classList.remove('active');
-            document.getElementById('fav-competitive-btn').classList.add('blue-btn');
+           // document.getElementById('fav-competitive-btn').classList.add('blue-btn');
 
         }
     });

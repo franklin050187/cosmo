@@ -114,11 +114,16 @@ window.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   urlParams.forEach((value, key) => {
     if (value === '1') {
-      selectedTags.push(key);
+      if (key !== 'minprice') {
+        selectedTags.push(key);
+      }
     } else if (value === '0') {
-      excludedTags.push(key);
+      if (key !== 'minprice') {
+        excludedTags.push(key);
+      }
     }
   });
+
   updateSelectedTagsDisplay();
   updateExcludedTagsDisplay();
   updateFinalSearchQuery();
