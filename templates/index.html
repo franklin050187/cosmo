@@ -1,131 +1,168 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        <title>Excelsior | Cosmoteer Ship Library</title>
+        <meta name="robots" content="noindex,nofollow">
+        <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
+        <link rel="stylesheet" type="text/css" href="/static/css/v2.css">
+        <script src="/static/js/jquery-3.6.0.min.js"></script>
+        <script src="/static/js/common.js"></script>
+        <script src="/static/js/index.js"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
+        <script defer src="/_vercel/insights/script.js"></script>
+    </head>
+    <body class="site-container">
+        <div class="item-header">
+            <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
+            <div class="item-right">
+                <span class="info-icon" title="Tags"></span>
+                <p class="username">Welcome {{ user }}  </p>
+                {% if user == "Guest" %}
+                <a title="Login" class="blue-btn" href="/login?button=login">
+                    <span>Login</span>
+                </a>
+                {% else %}
+                <a title="Logout" class="blue-btn" href="/logoff">
+                    <span>Log out</span>
+                </a>
+                {% endif %}
+                <a title="Upload" class="blue-btn" href="/login?button=upload">
+                    <span>Upload</span>
+                </a>
 
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Excelsior | Cosmoteer Ship Library</title>
-    <meta name="robots" content="noindex,nofollow">
-    <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="/static/css/v2.css">
-    <script src="/static/js/jquery-3.6.0.min.js"></script>
-    <script src="/static/js/common.js"></script>
-    <script src="/static/js/index.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
-    <script defer src="/_vercel/insights/script.js"></script>
-
-
-        </head>
-
-
-<body class="site-container">
-    <div class="item-header">
-        <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
-        <div class="item-right">
-            <span class="info-icon" title="Tags"></span>
-            <p class="username">Welcome {{ user }}  </p>
-            {% if user == "Guest" %}
-            <a title="Login" class="blue-btn" href="/login?button=login">
-                <span>Login</span>
-            </a>
-            {% else %}
-            <a title="Logout" class="blue-btn" href="/logoff">
-                <span>Log out</span>
-            </a>
-            {% endif %}
-            <a title="Upload" class="blue-btn" href="/login?button=upload">
-                <span>Upload</span>
-            </a>
-
-            <a title="Myfavorite" class="blue-btn" href="/login?button=myfavorite">
-                <span>My favorite</span>
-            </a>
-            <a title="Myships" class="blue-btn" href="/login?button=myships">
-                <span>My Ships</span>
-            </a>
-            <a title="Home" class="blue-btn" href="/">
-                <span>Home</span>
-            </a>
+                <a title="Myfavorite" class="blue-btn" href="/login?button=myfavorite">
+                    <span>My favorite</span>
+                </a>
+                <a title="Myships" class="blue-btn" href="/login?button=myships">
+                    <span>My Ships</span>
+                </a>
+                <a title="Home" class="blue-btn" href="/">
+                    <span>Home</span>
+                </a>
+            </div>
         </div>
-    </div>
-    <div class="item-search">
-        <div class="item-intro">
-        <h2 style="text-align: center;">Share you SHIP DESIGN with the community !</h2>
+        <div class="item-search">
+            <div class="item-intro">
+            <h2 style="text-align: center;">Share you SHIP DESIGN with the community !</h2>
+            </div>
+            <div class="item-author">
+                <form action="/" method="post" enctype="multipart/form-data">
+                    <input type="text" id="authorinput" name="author" placeholder="  Search by author...">
+            </div>
+            <div class="item-tag">
+                    <input type="hidden" name="query" id="final_search_query">
+                    <input type="hidden" name="order" id="order">
+                    <input type="text" id="tag-input" placeholder='  Search by tags... add "-" to exclude tags'>
+                    <div class="search-container">
+                        <div class="tag-container">
+                            <div id="selected-tags" class="tag-box"></div>
+                            <div id="excluded-tags" class="tag-box"></div>
+                        </div>
+                    </div>
+            </div>
+            <div class="item-price">
+                <div>
+                    <input type="text" name="min-price" id="min-price" value="0">
+                    <input type="text" name="max-price" id="max-price" value="5000000">
+                </div>
+                    <div id="price-slider">
+                    </div>
+                    <label for="price-slider" style="display: flow-root;margin-bottom: 5px;font-style: italic;">Price Range</label>
+            </div>
+            <div class="item-button">
+                    <button type="submit" class="blue-btn register" onclick="appendSearchInput()">Search</button>
+                    <a title="Reset" class="red-btn" href="/">
+                        <span>Reset</span>
+                    </a>
+            </div>
+            <div class="item-order">
+                <button id="elim-competitive-btn" class="active blue-btnfirst" onclick="updateOrderParam('new')">Sort by new first</button>
+                <button id="dom-competitive-btn" class="blue-btnmiddle" onclick="updateOrderParam('pop')">Sort by most popular</button>
+                <button id="fav-competitive-btn" class="blue-btnlast" onclick="updateOrderParam('fav')">Sort by most favorites</button>
+            </div>
+            </form>
         </div>
-        <div class="item-author">
-            <form action="/" method="post" enctype="multipart/form-data">
-                <input type="text" id="authorinput" name="author" placeholder="  Search by author...">
-        </div>
-        <div class="item-tag">
-                <input type="hidden" name="query" id="final_search_query">
-                <input type="hidden" name="order" id="order">
-
-                <input type="text" id="tag-input" placeholder='  Search by tags... add "-" to exclude tags'>
-                <div class="search-container">
-                    <div class="tag-container">
-                        <div id="selected-tags" class="tag-box"></div>
-                        <div id="excluded-tags" class="tag-box"></div>
+        <div class="item-listing">
+            {% for image in images %}
+            <div class="ship-card">
+                <div style="display: flex;justify-content: space-between;">
+                    <div>
+                        <i class="stars" title="Popularity"></i>
+                        <span>{{ image[11] }}</span>
+                    </div>
+                    <div>
+                        <i class="likes" title="Favorite"></i>
+                        <span>{{ image[8] }}</span>
                     </div>
                 </div>
-        </div>
-        <div class="item-price">
-            <div>
-                <input type="text" name="min-price" id="min-price" value="0">
-                <input type="text" name="max-price" id="max-price" value="5000000">
-            </div>
-                <div id="price-slider">
-
-                </div>
-                <label for="price-slider" style="display: flow-root;margin-bottom: 5px;font-style: italic;">Price Range</label>
-
-                
-        </div>
-        <div class="item-button">
-                <button type="submit" class="blue-btn register" onclick="appendSearchInput()">Search</button>
-                <a title="Reset" class="red-btn" href="/">
-                    <span>Reset</span>
+                <a href="/ship/{{ image[0] }}">
+                    <img src="{{ image[2] }}" alt="{{ image[5] }}" loading="lazy" class="blur-load" style="background-image: url(https://cnfyupteqa.cloudimg.io/{{ image[2] }}?width=80&blur=5)">
                 </a>
-            
+                <span class="data">{{ image[5] }}</span>
+                <span class="data">{% set tagList = [ 'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'factories', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'kitter', 'avoider', 'rammer', 'orbiter', 'campaign_ship', 'elimination_ship', 'domination_ship', 'diagonal', 'splitter' ] %} {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %} {% set image_tags_list = image_tags.split(",") %} {% for tag in image_tags_list %} {% if tag in tagList %}
+                <span class="selected-tag"> <a href="/search?{{ tag }}=1">{{ tag }}</a></span> {% endif %} {% endfor %}</span>
+                <span class="data"><span>By </span><a href="/search?author={{ image[6] }}"> {{ image[6] }}</a></span>
+                <span class="data"><span class="data credits"> {{ image[7] }}₡</span></span>
+            </div>
+            {% endfor %}
+            <div>
+                {% if images|length == 60 %}
+                <a class="blue-btn" title="Next" onclick="nextPage()">Next</a>
+                {% endif %}
+                <a class="blue-btn" id="previous" title="Previous" onclick="previousPage()">Previous</a>
+            </div>
         </div>
-        <div class="item-order">
-            <button id="elim-competitive-btn" class="active blue-btnfirst" type="submit" onclick="updateOrderParam('new')">Sort by new first</button>
-            <button id="dom-competitive-btn" class="blue-btnmiddle" type="submit" onclick="updateOrderParam('pop')">Sort by most popular</button>
-            <button id="fav-competitive-btn" class="blue-btnlast" type="submit" onclick="updateOrderParam('fav')">Sort by most favorites</button>
-        </form>
+        <div class="item-footer">
+            <img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp">
+                <a class="blue-btn" title="Source code" href="https://github.com/franklin050187/cosmo">Source code</a>
+                <a class="blue-btn" title="Issues" href="https://github.com/franklin050187/cosmo/issues">Issues</a>
+                <a class="blue-btn" title="Support us" href="#">Support us</a>
         </div>
-    </div>
-    <div class="item-listing">
-        {% for image in images %}
-        <div class="ship-card">
-            <a href="/ship/{{ image[0] }}">
-                <img src="{{ image[2] }}" alt="{{ image[5] }}" loading="lazy" class="blur-load" style="background-image: url(https://cnfyupteqa.cloudimg.io/{{ image[2] }}?width=80&blur=5)">
-            </a>
-            <span class="data">{{ image[5] }}</span>
-            <span class="data">{% set tagList = [ 'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'factories', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'kitter', 'avoider', 'rammer', 'orbiter', 'campaign_ship', 'elimination_ship', 'domination_ship', 'diagonal', 'splitter' ] %} {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %} {% set image_tags_list = image_tags.split(",") %} {% for tag in image_tags_list %} {% if tag in tagList %}
-            <span class="selected-tag"> <a href="/search?{{ tag }}=1">{{ tag }}</a></span> {% endif %} {% endfor %}</span>
-            <span class="data"><span>By </span><a href="/search?author={{ image[6] }}"> {{ image[6] }}</a></span>
-            <span class="data"><span class="data credits"> {{ image[7] }}₡</span></span>
-        </div>
-        {% endfor %}
-    </div>
-    <div class="item-footer">
-        <img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp">
-
-            <a class="blue-btn" title="Source code" href="https://github.com/franklin050187/cosmo">Source code</a>
-            <a class="blue-btn" title="Issues" href="https://github.com/franklin050187/cosmo/issues">Issues</a>
-            <a class="blue-btn" title="Support us" href="#">Support us</a>
-
-    </div>
-</body>
-
+    </body>
 </html>
 
 <script src="/static/js/search.js"></script>
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
 <script>
+// next button
+function nextPage() {
+    const currentPage = Number(getParameterValue('page')) || 1;
+    const nextPage = currentPage + 1;
+    const url = new URL(window.location.href);
+    
+    // Check if '/search' is not present in the pathname
+    if (url.pathname === '/' || !url.pathname.includes('/search')) {
+      url.pathname = '/search';
+    }
+  
+    url.searchParams.set('page', nextPage.toString());
+    window.location.href = url.href;
+  }
+
+// previous button
+function previousPage() {
+    const currentPage = Number(getParameterValue('page')) || 1;
+    const previousPage = currentPage - 1;
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', previousPage.toString());
+    window.location.href = url.href;
+  }
+
+// show previous only if page is greater than 1
+function showPrevious() {
+  const currentPage = Number(getParameterValue('page')) || 1;
+  if (currentPage > 1) {
+    document.getElementById('previous').style.display = 'block';
+  } else {
+    document.getElementById('previous').style.display = 'none';
+  }
+}
+
+showPrevious();
 
 // Get all the submission date elements
 var submissionDateElements = document.querySelectorAll('.submission-date');
@@ -168,40 +205,22 @@ function formatDate(date) {
             img.addEventListener("load", loaded);
         }
     });
-    
-    
-
-
 
     window.addEventListener('DOMContentLoaded', function() {
         var urlParams = new URLSearchParams(window.location.search);
         var order = urlParams.get('order');
-
         if (order === 'pop') {
             document.getElementById('dom-competitive-btn').classList.add('active');
-           // document.getElementById('dom-competitive-btn').classList.add('blue-btn');
             document.getElementById('elim-competitive-btn').classList.remove('active');
-           // document.getElementById('elim-competitive-btn').classList.add('blue-btn');
-
             document.getElementById('fav-competitive-btn').classList.remove('active');
-           // document.getElementById('fav-competitive-btn').classList.add('blue-btn');
         } else if (order === 'fav') {
             document.getElementById('dom-competitive-btn').classList.remove('active');
-           // document.getElementById('dom-competitive-btn').classList.add('blue-btn');
             document.getElementById('elim-competitive-btn').classList.remove('active');
-           // document.getElementById('elim-competitive-btn').classList.add('blue-btn');
             document.getElementById('fav-competitive-btn').classList.add('active');
-           // document.getElementById('fav-competitive-btn').classList.add('blue-btn');
-
         } else {
             document.getElementById('dom-competitive-btn').classList.remove('active');
-          //  document.getElementById('dom-competitive-btn').classList.add('blue-btn');
             document.getElementById('elim-competitive-btn').classList.add('active');
-          //  document.getElementById('elim-competitive-btn').classList.add('blue-btn');
-
             document.getElementById('fav-competitive-btn').classList.remove('active');
-           // document.getElementById('fav-competitive-btn').classList.add('blue-btn');
-
         }
     });
 
@@ -223,14 +242,12 @@ lazyImages.forEach((img) => {
 });
 
 function updateOrderParam(order) {
-    //const orderInput = document.getElementById('order');
-    //const order = orderInput.value;
-    //document.getElementById('order').value = order;
     document.getElementById('order').value = order;
-    //document.getElementById('final_search_query').value = 'query=' + encodeURIComponent(document.getElementById('tag-input').value);
-    //document.getElementById('order').form.submit();
     addTag('order', document.getElementById('order').value);
 }
+
+// set order parameter in url
+updateOrderParam(getParameterValue('order'));
 </script>
 
  

@@ -419,3 +419,43 @@ input#authorinput{
   border: 0.5px solid #ccc;
   color: #c2c2c2;
 }
+
+.ship-card .stars {
+  display: inline-block;
+  margin-top: -5px;
+  margin-right: 5px;
+  background-image: url(../img/sprite.webp);
+  background-repeat: no-repeat;
+  background-size: auto 20px;
+  background-position: -62px center;
+  vertical-align: middle;
+  content: '';
+  width: 20px;
+  height: 20px;
+  top: 10px;
+  left: 10px;
+  background-color: transparent;
+  color: #fff;
+  font-size: 18px;
+  line-height: 25px;
+}
+
+.ship-card .likes {
+  display: inline-block;
+  margin-top: -5px;
+  margin-right: 5px;
+  background-image: url(../img/sprite.webp);
+  background-repeat: no-repeat;
+  background-size: auto 20px;
+  background-position: -225px center;
+  vertical-align: middle;
+  content: '';
+  width: 20px;
+  height: 20px;
+  top: 10px;
+  left: 10px;
+  background-color: transparent;
+  color: #fff;
+  font-size: 18px;
+  line-height: 25px;
+}
