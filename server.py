@@ -139,7 +139,14 @@ async def myfavorite(request: Request):
     if not user:
         return RedirectResponse("/login?button=myfavorite")
     images = db_manager.get_my_favorite(user)
-    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    if not request.session.get("brand"):
+        brand = "gen"
+        request.session["brand"] = brand
+    brand = request.session.get("brand")
+    if brand == "exl":
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    else:
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
 
 # edit page get
 @app.get("/edit/{id}")
@@ -298,16 +305,7 @@ async def upload(request: Request, files: List[UploadFile] = File(...)):
                 'filename' : authorized_chars,
                 'ship_name' : shipname,
             }
-            
-            # for key, value in form_data_mass:
-            #     if key == 'campaign_ship' and value == 'on':
-            #         campaign_ship_value = 'on'
-            # if 'thrust_type' in form_data_mass:
-            #     form_data['thrust_type'] = form_data_mass['thrust_type']
-            # if 'defense_type' in form_data_mass:
-            #     form_data['defense_type'] = form_data_mass['defense_type']
-            # form_data['campaign_ship'] = campaign_ship_value
-            # print("form_data", form_data)
+        
             db_manager.upload_image(form_data, user)
         except Exception as e:
             # print(f"Error processing file {file.filename}: {str(e)}")
@@ -398,11 +396,38 @@ async def download_ship(image_id: str):
 
 @app.get("/")
 async def index(request: Request):
+    if not request.session.get("brand"):
+        brand = "gen"
+        request.session["brand"] = brand
+    brand = request.session.get("brand")
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
     images = db_manager.get_index()
-    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    if brand == "exl":
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    else:
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
+    
+
+@app.get("/gen")
+async def index(request: Request):
+    brand = "gen"
+    if not request.session.get("brand"):
+        request.session["brand"] = brand
+    else:
+        request.session["brand"] = brand
+    return RedirectResponse(url="/", status_code=303)
+        
+@app.get("/exl")
+async def index(request: Request):
+    brand = "exl"
+    if not request.session.get("brand"):
+        request.session["brand"] = brand
+    else:
+        request.session["brand"] = brand
+    return RedirectResponse(url="/", status_code=303)
+        
 
 @app.get("/myships")
 async def index(request: Request):
@@ -410,7 +435,14 @@ async def index(request: Request):
     if not user:
         return RedirectResponse("/login?button=myships")
     images = db_manager.get_my_ships(user)
-    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    if not request.session.get("brand"):
+        brand = "gen"
+        request.session["brand"] = brand
+    brand = request.session.get("brand")
+    if brand == "exl":
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    else:
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
 
 # main page + search results
 @app.post("/")
@@ -487,7 +519,14 @@ async def search(request: Request):
     query_params = request.query_params
     images = db_manager.get_search(query_params)
     print("query_param_get = ",query_params)
-    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    if not request.session.get("brand"):
+        brand = "gen"
+        request.session["brand"] = brand
+    brand = request.session.get("brand")
+    if brand == "exl":
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    else:
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
 
 @app.post("/search")
 async def search(request: Request):
@@ -498,7 +537,14 @@ async def search(request: Request):
     query_params = request.query_params
     images = db_manager.get_search(query_params)
     # print("query_param_post = ",query_params)
-    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    if not request.session.get("brand"):
+        brand = "gen"
+        request.session["brand"] = brand
+    brand = request.session.get("brand")
+    if brand == "exl":
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    else:
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
 
 @app.get('/authors')
 async def get_authors():

@@ -3,10 +3,10 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-        <title>Excelsior | Cosmoteer Ship Library</title>
+        <title>General | Cosmoteer Ship Library</title>
         <meta name="robots" content="noindex,nofollow">
         <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
-        <link rel="stylesheet" type="text/css" href="/static/css/v2.css">
+        <link rel="stylesheet" type="text/css" href="/static/css/general.css">
         <script src="/static/js/jquery-3.6.0.min.js"></script>
         <script src="/static/js/common.js"></script>
         <script src="/static/js/index.js"></script>
@@ -16,7 +16,9 @@
     </head>
     <body class="site-container">
         <div class="item-header">
-            <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
+            <a style="text-decoration: none;" title="home" href="/">
+                <span class="logo">Cosmoteer Ship Library</span>
+            </a>
             <div class="item-right">
                 <span class="info-icon" title="Tags"></span>
                 <p class="username">Welcome {{ user }}  </p>
@@ -42,8 +44,8 @@
                 <a title="Home" class="blue-btn" href="/">
                     <span>Home</span>
                 </a>
-                <a title="General library" class="blue-btn" href="/gen">
-                    <span>General library</span>
+                <a title="Excelsior library" class="blue-btn" href="/exl">
+                    <span>Excelsior library</span>
                 </a>
             </div>
         </div>
@@ -76,7 +78,7 @@
                     <label for="price-slider" style="display: flow-root;margin-bottom: 5px;font-style: italic;">Price Range</label>
             </div>
             <div class="item-button">
-                    <button type="submit" class="blue-btn register" onclick="appendSearchInput()">Search</button>
+                    <button type="submit" class="blue-btn" onclick="appendSearchInput()">Search</button>
                     <a title="Reset" class="red-btn" href="/">
                         <span>Reset</span>
                     </a>
