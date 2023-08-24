@@ -49,7 +49,6 @@ client = DiscordOAuthClient(
 # app configuration
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
-#app.mount("/tmp", StaticFiles(directory="tmp"), name="tmp") # mounting tmp crashed the serverless function
 templates = Jinja2Templates(directory="templates")
 
 #init db as array
@@ -63,15 +62,12 @@ modlist = ast.literal_eval(modlist)
 @app.get("/ship/{id}")
 async def get_image(id: int, request: Request):
     user = request.session.get("discord_user")
-    
     if not request.session.get("shipidsession"):
         # print("DEBUG no session")
         shipidsession = []
         request.session["shipidsession"] = shipidsession
     else:
-        # print("DEBUG has session")
         shipidsession = request.session.get("shipidsession")
-        # print("DEBUG session", shipidsession)
         
     fav = 0
     if user :
@@ -140,14 +136,17 @@ async def rmfavorite(id: int, request: Request):
 @app.get("/myfavorite")
 async def myfavorite(request: Request):
     user = request.session.get("discord_user")
-    # print(user)
     if not user:
-        # print("DEBUG not a user home")
         return RedirectResponse("/login?button=myfavorite")
-        
     images = db_manager.get_my_favorite(user)
-
-    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    if not request.session.get("brand"):
+        brand = "gen"
+        request.session["brand"] = brand
+    brand = request.session.get("brand")
+    if brand == "exl":
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    else:
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
 
 # edit page get
 @app.get("/edit/{id}")
@@ -155,7 +154,6 @@ async def edit_image(id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
     check = db_manager.edit_ship(id, user)
-    # print("get_edit_check = ",check)
     if check == "ko":
         return RedirectResponse("/")
     # Redirect to the home page after deleting the image
@@ -240,7 +238,6 @@ async def upload_page(request: Request):
     return templates.TemplateResponse("massupload.html", {"request": request, "user": user})
 
 @app.post("/inituploadmass")
-
 async def upload(request: Request, files: List[UploadFile] = File(...)):
     # print("start")
 
@@ -308,16 +305,7 @@ async def upload(request: Request, files: List[UploadFile] = File(...)):
                 'filename' : authorized_chars,
                 'ship_name' : shipname,
             }
-            
-            # for key, value in form_data_mass:
-            #     if key == 'campaign_ship' and value == 'on':
-            #         campaign_ship_value = 'on'
-            # if 'thrust_type' in form_data_mass:
-            #     form_data['thrust_type'] = form_data_mass['thrust_type']
-            # if 'defense_type' in form_data_mass:
-            #     form_data['defense_type'] = form_data_mass['defense_type']
-            # form_data['campaign_ship'] = campaign_ship_value
-            # print("form_data", form_data)
+        
             db_manager.upload_image(form_data, user)
         except Exception as e:
             # print(f"Error processing file {file.filename}: {str(e)}")
@@ -408,34 +396,59 @@ async def download_ship(image_id: str):
 
 @app.get("/")
 async def index(request: Request):
+    if not request.session.get("brand"):
+        brand = "gen"
+        request.session["brand"] = brand
+    brand = request.session.get("brand")
     user = request.session.get("discord_user")
-    # print(user)
     if not user:
-        # print("DEBUG not a user home")
         user = "Guest"
     images = db_manager.get_index()
+    if brand == "exl":
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    else:
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
+    
 
-    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+@app.get("/gen")
+async def index(request: Request):
+    brand = "gen"
+    if not request.session.get("brand"):
+        request.session["brand"] = brand
+    else:
+        request.session["brand"] = brand
+    return RedirectResponse(url="/", status_code=303)
+        
+@app.get("/exl")
+async def index(request: Request):
+    brand = "exl"
+    if not request.session.get("brand"):
+        request.session["brand"] = brand
+    else:
+        request.session["brand"] = brand
+    return RedirectResponse(url="/", status_code=303)
+        
 
 @app.get("/myships")
 async def index(request: Request):
     user = request.session.get("discord_user")
-    # print(user)
     if not user:
-        # print("DEBUG not a user home")
         return RedirectResponse("/login?button=myships")
-        
     images = db_manager.get_my_ships(user)
-
-    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    if not request.session.get("brand"):
+        brand = "gen"
+        request.session["brand"] = brand
+    brand = request.session.get("brand")
+    if brand == "exl":
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    else:
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
 
 # main page + search results
 @app.post("/")
 async def home(request: Request):
     user = request.session.get("discord_user")
-    # print(user)
     if not user:
-        # print("DEBUG not a user home")
         user = "Guest"
     # tag list
     TAGS = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
@@ -447,7 +460,6 @@ async def home(request: Request):
     query: str = form_input.get("query").strip()
     authorstrip: str = form_input.get("author").strip()
     orderstrip: str = form_input.get("order").strip()
-    # split query string
     words = query.lower().split(" ")
     # print("words", words)
     minstrip: int = form_input.get("min-price").strip()
@@ -469,6 +481,8 @@ async def home(request: Request):
         query_tags.append(("author", authorstrip))
     if orderstrip :
         query_tags.append(("order", orderstrip))
+    if not orderstrip :
+        query_tags.append(("order", "new"))
     query_tags.append(("minprice", minstrip))
     query_tags.append(("maxprice", maxstrip))
     print("post qt", query_tags) # debug
@@ -505,7 +519,14 @@ async def search(request: Request):
     query_params = request.query_params
     images = db_manager.get_search(query_params)
     print("query_param_get = ",query_params)
-    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    if not request.session.get("brand"):
+        brand = "gen"
+        request.session["brand"] = brand
+    brand = request.session.get("brand")
+    if brand == "exl":
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    else:
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
 
 @app.post("/search")
 async def search(request: Request):
@@ -516,7 +537,14 @@ async def search(request: Request):
     query_params = request.query_params
     images = db_manager.get_search(query_params)
     # print("query_param_post = ",query_params)
-    return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    if not request.session.get("brand"):
+        brand = "gen"
+        request.session["brand"] = brand
+    brand = request.session.get("brand")
+    if brand == "exl":
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
+    else:
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
 
 @app.get('/authors')
 async def get_authors():

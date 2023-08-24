@@ -8,15 +8,28 @@
   grid-template-rows:auto auto 1fr auto;
   grid-template-areas:"header header header" ". search ." ". listing ." "footer footer footer";
   /* animation:background-movement 24s linear 0s infinite; */
-  background-attachment:fixed;
-  background-image:url(../img/background.webp),linear-gradient(90deg,#0078bd,#07b3d1,#ada270,#28c098,#0078bd);
+  /* background-attachment:fixed; */
+  /* background-image:url(../img/background.webp),linear-gradient(90deg,#0078bd,#07b3d1,#ada270,#28c098,#0078bd); */
   /* background-image:url(../img/background-alpha-mobile.webp),linear-gradient(90deg,#0078bd,#07b3d1,#ada270,#28c098,#0078bd); */
   background-position:center center,0 0;
   background-repeat:no-repeat,repeat;
   background-size:cover,200% 200%;
   text-decoration:none;
   color:#d3d3d3;
+  background-color: #00305e;
 }
+
+.logo {
+  font-family: "Teko", "Helvetica", "Arial", "sans-serif";
+  font-size: 1.313em;
+  line-height: 1em;
+  color: gainsboro;
+  text-decoration: none;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: .01em;
+}
+
 .item-listing{
   grid-area:listing;
   display:grid;
@@ -144,19 +157,19 @@
   justify-self:left
 }
 .blue-btn{
-  border: 1px solid #1c598c;
-  border-radius: 5px;
-  /* box-shadow: inset 0 0 8px rgba(0,126,255,.35), 0 0 5px rgba(0,126,255,.35); */
-  color: #00d3ff;
-  display: block;
-  float: left;
-  padding: 10px;
-  position: relative;
-  text-decoration: none;
-  transition: background-color 150ms,color 150ms;
-  background: #021526;
-  box-shadow: 0 0 15px rgba(0,0,0,0.3);
-  margin: 1px;
+    /* border: 1px solid #1c598c; */
+    border-radius: 5px;
+    box-shadow: inset 0 0 8px rgba(0,126,255,.35), 0 0 5px rgba(0,126,255,.35);
+    color: gainsboro;
+    display: block;
+    float: left;
+    padding: 10px;
+    position: relative;
+    text-decoration: none;
+    transition: background-color 150ms,color 150ms;
+    background: #00305e;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    margin: 1px;
 }
 .blue-btn:hover{
   background-color:rgba(0,126,255,.2);
@@ -299,7 +312,14 @@
   margin-inline: auto;
 }
 .item-button{
-  grid-area:button
+  display: flex;
+  grid-area: button;
+  background: #021526;
+  justify-content: space-around;
+  align-items: center;
+  border-radius: 5px;
+  margin: auto;
+  padding: 2px;
 }
 .item-order{
   grid-area:order;

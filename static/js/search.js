@@ -163,8 +163,8 @@ function filterTags() {
 
   displayTagSuggestions(matchedTags);
   toggleTableVisibility();
-  console.log(finalSearchQuery.value);
-  console.log(tagInput.value);
+  //console.log(finalSearchQuery.value);
+  //console.log(tagInput.value);
 }
 
 $(tagInput).autocomplete({
@@ -298,7 +298,7 @@ function toggleTableVisibility() {
 function updateFinalSearchQuery() {
   const formattedExcludedTags = excludedTags.map(tag => '-' + tag);
   finalSearchQuery.value = selectedTags.join(' ') + (formattedExcludedTags.length > 0 ? ' ' + formattedExcludedTags.join(' ') : '');
-  console.log(finalSearchQuery.value);
+  //console.log(finalSearchQuery.value);
 }
 
 function appendSearchInput() {

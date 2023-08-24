@@ -44,7 +44,6 @@ class ShipImageDatabase:
             cursor.close()
             conn.close()
 
-
     def fetch_data(self, query, values=None):
         conn = self.connect_to_server()
         cursor = conn.cursor()
@@ -75,8 +74,6 @@ class ShipImageDatabase:
         # print(authors)
         # authors = [author[0] for author in authors]  # Extracting only the author value
         return {'authors': authors}
-
-    
 
     def init_db(self):
         # Define the create table query
@@ -200,7 +197,7 @@ class ShipImageDatabase:
             return "Image not found"
 
     def get_index(self):
-        query = "SELECT * FROM shipdb ORDER BY date DESC"
+        query = "SELECT * FROM shipdb ORDER BY date DESC LIMIT 60"
         return self.fetch_data(query)
 
     def get_my_ships(self, user):
@@ -214,7 +211,6 @@ class ShipImageDatabase:
   
     def get_search(self, query_params):
         query_params = str(query_params)
-        # print("query_params =", query_params)
 
         conditions = []
         not_conditions = []
@@ -222,6 +218,7 @@ class ShipImageDatabase:
         min_price_condition = None
         max_price_condition = None
         order_by = None
+        page = 1
 
         if query_params:
             for param in query_params.split("&"):
@@ -234,10 +231,12 @@ class ShipImageDatabase:
                     max_price_condition = value
                 elif key == "order":
                     order_by = value
-                elif value == "1":
+                elif value == "1" and not key == "page":
                     conditions.append(key)
                 elif value == "0":
                     not_conditions.append(key)
+                elif key == "page":
+                    page = value
 
         # Build the query dynamically
         if conditions and not_conditions:
@@ -292,13 +291,12 @@ class ShipImageDatabase:
         elif order_by == "new":
             query += " ORDER BY date DESC"
 
-
-        # print("conditions =", conditions)
-        # print("not conditions =", not_conditions)
-        # print("author condition =", author_condition)
-        # print("min price condition =", min_price_condition)
-        # print("max price condition =", max_price_condition)
-        # print("query =", query)
+        # Add pagination
+        #page = query_params.get("page", 1)
+        if page:
+            limit = 60
+            offset = (int(page) - 1) * limit
+            query += f" LIMIT {limit} OFFSET {offset}"
 
         return self.fetch_data(query)
 
@@ -408,4 +406,3 @@ class ShipImageDatabase:
                 else:
                     query = "UPDATE favoritedb SET favorite = %s WHERE name = %s"
                     self.execute_query(query, (favorites, user))
-
