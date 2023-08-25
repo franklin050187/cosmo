@@ -208,9 +208,22 @@ async def finish_login(request: Request):
             return RedirectResponse("/login")
 
         request.session["discord_user"] = str(user)
-        desired_id = int(os.getenv('guild_id'))  # Excelsior server
+        desired_id = 546229904488923141  # Excelsior server 546229904488923141 / Cosmoteer 314103695568666625
+        second_id = 314103695568666625
         for guild in guilds:
             if guild.id == desired_id:
+                request.session["discord_server"] = "exl"
+                redirect_url = "/"
+                button_clicked = request.session.pop("button_clicked", None)  # Retrieve button state from the session
+                if button_clicked == "upload":
+                    redirect_url = "/initupload"
+                elif button_clicked == "myships":
+                    redirect_url = "/myships"
+                return RedirectResponse(redirect_url)
+            
+        for guild in guilds: # to ensure higher privilege
+            if guild.id == second_id:
+                request.session["discord_server"] = "gen"
                 redirect_url = "/"
                 button_clicked = request.session.pop("button_clicked", None)  # Retrieve button state from the session
                 if button_clicked == "upload":
@@ -225,9 +238,13 @@ async def finish_login(request: Request):
 @app.get("/initupload", response_class=FileResponse)
 async def upload_page(request: Request):
     user = request.session.get("discord_user")
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
+    # print(request.session.get("discord_server"))
     if not user:
         return RedirectResponse("/login")
-    return templates.TemplateResponse("initupload.html", {"request": request, "user": user})
+    return templates.TemplateResponse("initupload.html", {"request": request, "user": user, "brand": brand})
 
 # Endpoint for displaying the file initupload page
 @app.get("/inituploadmass", response_class=FileResponse)
@@ -363,6 +380,10 @@ async def upload(request: Request, file: UploadFile = File(...)):
     
     price = calculate_price(url_png)
     
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
+    
     data = {
         'name': authorized_chars,
         # 'data': encoded_data,
@@ -370,10 +391,11 @@ async def upload(request: Request, file: UploadFile = File(...)):
         'author' : author,
         'shipname': shipname,
         'price': price,
+        'brand': brand,
     }
     request.session["upload_data"] = data
     # Redirect to the index page
-    return templates.TemplateResponse("upload.html", {"request": request, "data": data, "tags": tags})
+    return templates.TemplateResponse("upload.html", {"request": request, "data": data, "tags": tags, "brand": brand})
 
 @app.get("/download/{image_id}")
 async def download_ship(image_id: str):

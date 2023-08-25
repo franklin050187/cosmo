@@ -12,7 +12,7 @@
         <title>Excelsior | Cosmoteer Ship Library</title>
         <meta name="robots" content="noindex,nofollow">
         <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
-        <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
+        <link rel="stylesheet" type="text/css" {% if "exl" in data.brand %}href="/static/css/interface.css"{% else %}href="/static/css/interfacegen.css"{% endif %}>
         <link rel="stylesheet" type="text/css" href="/static/css/index.css">
         <link rel="stylesheet" type="text/css" href="/static/css/upload.css">
         <script src="/static/js/jquery-3.6.0.min.js"></script>
@@ -22,38 +22,48 @@
     </head>
     <body>
         <header>
-            <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
-            <ul class="user-container">
-                <p class="username">Welcome {{ user }}</p>
-                <li>
+            <div class="item-header">
+                {% if "gen" in data.brand %}
+                <a style="text-decoration: none;" title="home" href="/">
+                    <span class="logo">Cosmoteer Ship Library</span>
+                </a>
+                {% else %}
+                <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
+                {% endif %}
+                <div class="item-right">
+                    <p class="username">Welcome {{ user }}  </p>
                     {% if user == "Guest" %}
-                    <a title="Login" class="blue-btn register" href="/login?button=login">
+                    <a title="Login" class="blue-btn" href="/login?button=login">
                         <span>Login</span>
                     </a>
                     {% else %}
-                    <a title="Logout" class="blue-btn register" href="/logoff">
+                    <a title="Logout" class="blue-btn" href="/logoff">
                         <span>Log out</span>
                     </a>
                     {% endif %}
-                </li>
-                <li>
-                    <a title="Upload" class="blue-btn register" href="/login?button=upload">
+                    <a title="Upload" class="blue-btn" href="/login?button=upload">
                         <span>Upload</span>
                     </a>
-                </li>
-                <li>
-                </li>
-                <li>
-                    <a title="Myships" class="blue-btn register" href="/login?button=myships">
+                    <a title="Myfavorite" class="blue-btn" href="/login?button=myfavorite">
+                        <span>My favorite</span>
+                    </a>
+                    <a title="Myships" class="blue-btn" href="/login?button=myships">
                         <span>My Ships</span>
                     </a>
-                </li>
-                <li>
-                    <a title="Home" class="blue-btn register" href="/">
+                    <a title="Home" class="blue-btn" href="/">
                         <span>Home</span>
                     </a>
-                </li>
-            </ul>
+                    {% if "gen" in brand %}
+                    <a title="Excelsior library" class="blue-btn" href="/exl">
+                     <span>Excelsior library</span>
+                    </a>
+                    {% else %}
+                    <a title="General library" class="blue-btn" href="/gen">
+                        <span>General library</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
         </header>
         <main>
             <h1>Upload your ship !</h1>
@@ -62,8 +72,6 @@
                 <div class="section-description">
                     <h2>Share your ships with the community</h2>
                     <p>Pick tags your ship has in order to help the community to find your creation !</p>
-                    <p>To go back click on the hamburger menu on the top left.</p>
-
                 </div>
                 <div class="tabs-container">
                     <div id="elim-competitive-tab" class="tab active">
@@ -181,6 +189,10 @@
                                 <td>
                                     <tr>
                                         <ul>
+                                            <div {% if "gen" in data.brand %}style="display: none;"{% endif %}>
+                                                <input type="checkbox" name="brand" id="exl" value="exl" {% if "exl" in data.brand %}checked{% endif %}>
+                                                <label for="exl">Upload to Excelsior section</label>
+                                            </div>
                                             <label for="author">Author:</label>
                                             <input type="text" name="author" id="author" value="{{ data.author }}">
                                             <label for="ship_name">Ship name:</label>
@@ -210,13 +222,17 @@
             </section>
         </main>
         <footer>
-            <div class="footer-content">
-                <img loading="lazy" alt="Excelsior logo" src="img/excelsior-logo.webp">
-                <ul>
-                    <li><a title="Cookies policy" href="#">Cookies policy</a></li>
-                    <li><a title="Another footer link" href="#">Another footer link</a></li>
-                    <li><a title="More footer links" href="#">More footer links</a></li>
-                </ul>
+            <div class="item-footer" >
+                {% if "gen" in data.brand %}
+                <a style="text-decoration: none;" title="home" href="/">
+                    <span class="logo">Cosmoteer Ship Library</span>
+                </a>
+                {% else %}
+                <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
+                {% endif %}
+                    <a class="blue-btn" title="Source code" href="https://github.com/franklin050187/cosmo">Source code</a>
+                    <a class="blue-btn" title="Issues" href="https://github.com/franklin050187/cosmo/issues">Issues</a>
+                    <a class="blue-btn" title="Support us" href="#">Support us</a>
             </div>
         </footer>
     </body>
