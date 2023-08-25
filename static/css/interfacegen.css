@@ -19,16 +19,25 @@
     }
     
     body {
-    animation:background-movement 24s linear 0s infinite;
-    background-attachment:fixed;
-    background-image:url(../img/background.webp);
-    background-image:url(../img/background-alpha-mobile.webp),linear-gradient(90deg,#0078bd,#07b3d1,#ada270,#28c098,#0078bd);
-    background-position:center center,0 0;
-    background-repeat:no-repeat,repeat;
-    background-size:cover,200% 200%
+        text-decoration:none;
+        color:#d3d3d3;
+        background-color: #00305e;
     }
     
-    @media(min-width: 1024px) {
+    .item-header {
+        grid-area: header;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-self: auto;
+        backdrop-filter: blur(5px);
+        background: rgba(2,21,38,.65);
+        background-color: rgb(2 21 38);
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    /* @media(min-width: 1024px) {
     body {
     background-image:url(../img/background-alpha.webp),linear-gradient(90deg,#0078bd,#07b3d1,#ada270,#28c098,#0078bd)
     }
@@ -54,7 +63,7 @@
     100% {
     background-position:center center,0 0
     }
-    }
+    } */
     
     body .blue-btn {
     background:linear-gradient(180deg,rgba(30,56,81,0.25) 2%,rgba(18,76,128,0.25) 98%);
@@ -101,51 +110,7 @@
     top:0;
     width:100%
     }
-/* .item-right{
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-    align-items: center;
-}
-
-.item-header{
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-} */
-
-.item-header{
-    grid-area:header;
-    margin:0;
-    display:flex;
-    align-items:center;
-    justify-self:auto;
-    backdrop-filter:blur(5px);
-    background:rgba(2,21,38,.65);
-    background-color: rgb(2 21 38);
-    justify-content:space-between;
-    flex-wrap:wrap
-  }
-  .item-header .item-right{
-    margin:0;
-    display:flex;
-    align-items:center;
-    padding-right:20px;
-    flex-wrap:wrap;
-    justify-content:inherit
-  }
-  .item-header img{
-    justify-self:left
-  }
-
-  .item-footer {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-around;
-
-  }
+    
     body header {
     -webkit-backdrop-filter:blur(5px);
     backdrop-filter:blur(5px);
@@ -607,7 +572,7 @@
     display:block;
     float:left;
     margin-top:50px;
-    /* padding:30px 15px; */
+    padding:30px 15px;
     width:100%
     }
     

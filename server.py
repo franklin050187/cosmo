@@ -84,11 +84,13 @@ async def get_image(id: int, request: Request):
         request.session["shipidsession"].append(id)
         db_manager.update_downloads(id)
         # print("update session", request.session["shipidsession"])
-        
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
     image_data = db_manager.get_image_data(id)
     url_png = image_data[0][2] # change to send the url instead of the image
     
-    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png, "modlist": modlist, "fav": fav})
+    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png, "modlist": modlist, "fav": fav, "brand": brand})
 
 # delete user ship
 @app.get("/delete/{id}")
@@ -208,9 +210,22 @@ async def finish_login(request: Request):
             return RedirectResponse("/login")
 
         request.session["discord_user"] = str(user)
-        desired_id = int(os.getenv('guild_id'))  # Excelsior server
+        desired_id = 546229904488923141  # Excelsior server 546229904488923141 / Cosmoteer 314103695568666625
+        second_id = 314103695568666625
         for guild in guilds:
             if guild.id == desired_id:
+                request.session["discord_server"] = "exl"
+                redirect_url = "/"
+                button_clicked = request.session.pop("button_clicked", None)  # Retrieve button state from the session
+                if button_clicked == "upload":
+                    redirect_url = "/initupload"
+                elif button_clicked == "myships":
+                    redirect_url = "/myships"
+                return RedirectResponse(redirect_url)
+            
+        for guild in guilds: # to ensure higher privilege
+            if guild.id == second_id:
+                request.session["discord_server"] = "gen"
                 redirect_url = "/"
                 button_clicked = request.session.pop("button_clicked", None)  # Retrieve button state from the session
                 if button_clicked == "upload":
@@ -225,9 +240,13 @@ async def finish_login(request: Request):
 @app.get("/initupload", response_class=FileResponse)
 async def upload_page(request: Request):
     user = request.session.get("discord_user")
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
+    # print(request.session.get("discord_server"))
     if not user:
         return RedirectResponse("/login")
-    return templates.TemplateResponse("initupload.html", {"request": request, "user": user})
+    return templates.TemplateResponse("initupload.html", {"request": request, "user": user, "brand": brand})
 
 # Endpoint for displaying the file initupload page
 @app.get("/inituploadmass", response_class=FileResponse)
@@ -363,6 +382,10 @@ async def upload(request: Request, file: UploadFile = File(...)):
     
     price = calculate_price(url_png)
     
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
+    
     data = {
         'name': authorized_chars,
         # 'data': encoded_data,
@@ -370,10 +393,11 @@ async def upload(request: Request, file: UploadFile = File(...)):
         'author' : author,
         'shipname': shipname,
         'price': price,
+        'brand': brand,
     }
     request.session["upload_data"] = data
     # Redirect to the index page
-    return templates.TemplateResponse("upload.html", {"request": request, "data": data, "tags": tags})
+    return templates.TemplateResponse("upload.html", {"request": request, "data": data, "tags": tags, "brand": brand})
 
 @app.get("/download/{image_id}")
 async def download_ship(image_id: str):
@@ -403,10 +427,11 @@ async def index(request: Request):
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
-    images = db_manager.get_index()
     if brand == "exl":
+        images = db_manager.get_index_exl()
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
     else:
+        images = db_manager.get_index()
         return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
     
 
@@ -517,15 +542,17 @@ async def search(request: Request):
         user = "Guest"
     # Get the query parameters from the request URL
     query_params = request.query_params
-    images = db_manager.get_search(query_params)
+    
     print("query_param_get = ",query_params)
     if not request.session.get("brand"):
         brand = "gen"
         request.session["brand"] = brand
     brand = request.session.get("brand")
     if brand == "exl":
+        images = db_manager.get_search_exl(query_params)
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
     else:
+        images = db_manager.get_search(query_params)
         return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
 
 @app.post("/search")
@@ -535,15 +562,17 @@ async def search(request: Request):
         user = "Guest"
     # Get the query parameters from the request URL
     query_params = request.query_params
-    images = db_manager.get_search(query_params)
+
     # print("query_param_post = ",query_params)
     if not request.session.get("brand"):
         brand = "gen"
         request.session["brand"] = brand
     brand = request.session.get("brand")
     if brand == "exl":
+        images = db_manager.get_search_exl(query_params)
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
     else:
+        images = db_manager.get_search(query_params)
         return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
 
 @app.get('/authors')

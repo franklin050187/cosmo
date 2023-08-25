@@ -199,6 +199,10 @@ class ShipImageDatabase:
     def get_index(self):
         query = "SELECT * FROM shipdb ORDER BY date DESC LIMIT 60"
         return self.fetch_data(query)
+    
+    def get_index_exl(self):
+        query = "SELECT * FROM shipdb WHERE brand = 'exl' ORDER BY date DESC LIMIT 60 "
+        return self.fetch_data(query)
 
     def get_my_ships(self, user):
         query = "SELECT * FROM shipdb WHERE submitted_by=%s"
@@ -300,6 +304,98 @@ class ShipImageDatabase:
 
         return self.fetch_data(query)
 
+    def get_search_exl(self, query_params):
+            query_params = str(query_params)
+
+            conditions = []
+            not_conditions = []
+            author_condition = None
+            min_price_condition = None
+            max_price_condition = None
+            order_by = None
+            page = 1
+
+            if query_params:
+                for param in query_params.split("&"):
+                    key, value = param.split("=")
+                    if key == "author":
+                        author_condition = unquote_plus(value)
+                    elif key == "minprice":
+                        min_price_condition = value
+                    elif key == "maxprice":
+                        max_price_condition = value
+                    elif key == "order":
+                        order_by = value
+                    elif value == "1" and not key == "page":
+                        conditions.append(key)
+                    elif value == "0":
+                        not_conditions.append(key)
+                    elif key == "page":
+                        page = value
+
+            # Build the query dynamically
+            if conditions and not_conditions:
+                query = "SELECT * FROM shipdb WHERE tags @> ARRAY{} AND NOT tags @> ARRAY{}"
+                if min_price_condition and max_price_condition:
+                    query += " AND price >= {} AND price <= {}".format(min_price_condition, max_price_condition)
+                elif min_price_condition:
+                    query += " AND price >= {}".format(min_price_condition)
+                elif max_price_condition:
+                    query += " AND price <= {}".format(max_price_condition)
+                query = query.format(
+                    conditions,
+                    not_conditions
+                )
+            elif conditions:
+                query = "SELECT * FROM shipdb WHERE tags @> ARRAY{}"
+                if min_price_condition and max_price_condition:
+                    query += " AND price >= {} AND price <= {}".format(min_price_condition, max_price_condition)
+                elif min_price_condition:
+                    query += " AND price >= {}".format(min_price_condition)
+                elif max_price_condition:
+                    query += " AND price <= {}".format(max_price_condition)
+                query = query.format(conditions)
+            elif not_conditions:
+                query = "SELECT * FROM shipdb WHERE NOT tags @> ARRAY{}"
+                if min_price_condition and max_price_condition:
+                    query += " AND price >= {} AND price <= {}".format(min_price_condition, max_price_condition)
+                elif min_price_condition:
+                    query += " AND price >= {}".format(min_price_condition)
+                elif max_price_condition:
+                    query += " AND price <= {}".format(max_price_condition)
+                query = query.format(not_conditions)
+            else:
+                query = "SELECT * FROM shipdb"
+                if min_price_condition and max_price_condition:
+                    query += " WHERE price >= {} AND price <= {}".format(min_price_condition, max_price_condition)
+                elif min_price_condition:
+                    query += " WHERE price >= {}".format(min_price_condition)
+                elif max_price_condition:
+                    query += " WHERE price <= {}".format(max_price_condition)
+
+            if author_condition:
+                if conditions or not_conditions or min_price_condition or max_price_condition:
+                    query += " AND author = '{}'".format(author_condition)
+                else:
+                    query += " WHERE author = '{}'".format(author_condition)
+
+            query += " AND brand = 'exl'"
+            
+            if order_by == "fav":
+                query += " ORDER BY fav DESC"
+            elif order_by == "pop":
+                query += " ORDER BY downloads DESC"
+            elif order_by == "new":
+                query += " ORDER BY date DESC"
+
+            # Add pagination
+            #page = query_params.get("page", 1)
+            if page:
+                limit = 60
+                offset = (int(page) - 1) * limit
+                query += f" LIMIT {limit} OFFSET {offset}"
+
+            return self.fetch_data(query)
 
     def update_downloads(self, ship_id):
         query = "UPDATE shipdb SET downloads = downloads + 1 WHERE id = %s"
@@ -348,14 +444,15 @@ class ShipImageDatabase:
             'ship_name': form_data.get('ship_name', ''),
             'author': form_data.get('author', ''),
             'price': int(form_data.get('price', 0)),
+            'brand': form_data.get('brand', 'gen'),
             'tags': tup_for  # Use getlist() to get all values of 'tags' as a list
         }
         # print("tup_for = ", tup_for)
         # prepare query
         insert_query = """
             INSERT INTO shipdb
-            (name, data, submitted_by, description, ship_name, author, price, tags)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s::text[]) RETURNING id
+            (name, data, submitted_by, description, ship_name, author, price, brand, tags)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::text[]) RETURNING id
         """
         # prepare values
         values = (
@@ -366,6 +463,7 @@ class ShipImageDatabase:
             image_data['ship_name'],
             image_data['author'],
             image_data['price'],
+            image_data['brand'],
             image_data['tags']
         )
         # execute
