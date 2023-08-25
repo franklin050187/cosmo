@@ -425,10 +425,11 @@ async def index(request: Request):
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
-    images = db_manager.get_index()
     if brand == "exl":
+        images = db_manager.get_index_exl()
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
     else:
+        images = db_manager.get_index()
         return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
     
 
@@ -539,15 +540,17 @@ async def search(request: Request):
         user = "Guest"
     # Get the query parameters from the request URL
     query_params = request.query_params
-    images = db_manager.get_search(query_params)
+    
     print("query_param_get = ",query_params)
     if not request.session.get("brand"):
         brand = "gen"
         request.session["brand"] = brand
     brand = request.session.get("brand")
     if brand == "exl":
+        images = db_manager.get_search_exl(query_params)
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
     else:
+        images = db_manager.get_search(query_params)
         return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
 
 @app.post("/search")
@@ -557,15 +560,17 @@ async def search(request: Request):
         user = "Guest"
     # Get the query parameters from the request URL
     query_params = request.query_params
-    images = db_manager.get_search(query_params)
+
     # print("query_param_post = ",query_params)
     if not request.session.get("brand"):
         brand = "gen"
         request.session["brand"] = brand
     brand = request.session.get("brand")
     if brand == "exl":
+        images = db_manager.get_search_exl(query_params)
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
     else:
+        images = db_manager.get_search(query_params)
         return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
 
 @app.get('/authors')
