@@ -18,10 +18,11 @@ const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
 const minPrice = urlParams.get('minprice') || 0;
 const maxPrice = urlParams.get('maxprice') || 5000000;
+const maxCrew = urlParams.get('max-crew') || 1000;
 
 document.getElementById('min-price').value = minPrice;
 document.getElementById('max-price').value = maxPrice;
-
+document.getElementById('max-crew').value = maxCrew;
 
 $(function() {
   // Initialize the price slider

@@ -221,6 +221,7 @@ class ShipImageDatabase:
         author_condition = None
         min_price_condition = None
         max_price_condition = None
+        max_crew_condition = None
         order_by = None
         page = 1
 
@@ -233,6 +234,8 @@ class ShipImageDatabase:
                     min_price_condition = value
                 elif key == "maxprice":
                     max_price_condition = value
+                elif key == "max-crew":
+                    max_crew_condition = value
                 elif key == "order":
                     order_by = value
                 elif value == "1" and not key == "page":
@@ -283,10 +286,16 @@ class ShipImageDatabase:
                 query += " WHERE price <= {}".format(max_price_condition)
 
         if author_condition:
-            if conditions or not_conditions or min_price_condition or max_price_condition:
+            if conditions or not_conditions or min_price_condition or max_price_condition or max_crew_condition:
                 query += " AND author = '{}'".format(author_condition)
             else:
                 query += " WHERE author = '{}'".format(author_condition)
+                
+        if max_crew_condition:
+            if conditions or not_conditions or min_price_condition or max_price_condition or author_condition:
+                query += " AND crew <= {}".format(max_crew_condition)
+            else:
+                query += " WHERE crew <= {}".format(max_crew_condition)
 
         if order_by == "fav":
             query += " ORDER BY fav DESC"
@@ -301,7 +310,7 @@ class ShipImageDatabase:
             limit = 60
             offset = (int(page) - 1) * limit
             query += f" LIMIT {limit} OFFSET {offset}"
-
+        print(query)
         return self.fetch_data(query)
 
     def get_search_exl(self, query_params):

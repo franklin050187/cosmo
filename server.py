@@ -492,6 +492,7 @@ async def home(request: Request):
     # print("words", words)
     minstrip: int = form_input.get("min-price").strip()
     maxstrip: int = form_input.get("max-price").strip()
+    crewstrip: int = form_input.get("max-crew").strip()
     # init query
     query_tags = []
     for word in words:
@@ -511,6 +512,8 @@ async def home(request: Request):
         query_tags.append(("order", orderstrip))
     if not orderstrip :
         query_tags.append(("order", "new"))
+    if crewstrip :
+        query_tags.append(("max-crew", crewstrip))
     query_tags.append(("minprice", minstrip))
     query_tags.append(("maxprice", maxstrip))
     # print("post qt", query_tags) # debug
