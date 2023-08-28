@@ -376,6 +376,25 @@ input#min-price{
   text-align:center;
   float:left
 }
+
+input#max-crew{
+  box-sizing:border-box;
+  color:#fff;
+  height:30px;
+  width: 100px;
+  color:#fff;
+  margin:5px;
+  background-color: #021526;
+  border:.1rem solid #d1d1d1;
+  border-radius:.4rem;
+  box-shadow:none;
+  box-sizing:inherit;
+  height:.8rem;
+  padding:.6rem 0 .7rem;
+  text-align:center;
+  float:left
+}
+
 #price-slider{
   background-color:#021526;
   display:inline-flex;
@@ -400,6 +419,18 @@ input#max-price{
   float:right
 }
 input#authorinput{
+  color:#fff;
+  margin:5px;
+  background-color: #021526;
+  border:.1rem solid #d1d1d1;
+  border-radius:.4rem;
+  box-shadow:none;
+  box-sizing:inherit;
+  height:.8rem;
+  padding:.6rem 0 .7rem;
+  width:clamp(100px,90%,90%)
+}
+input#desc{
   color:#fff;
   margin:5px;
   background-color: #021526;

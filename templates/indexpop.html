@@ -53,6 +53,7 @@
             <div class="item-author">
                 <form action="/" method="post" enctype="multipart/form-data">
                     <input type="text" id="authorinput" name="author" placeholder="  Search by author...">
+                    <input type="text" id="desc" name="desc" placeholder="  Search by name or description...">
             </div>
             <div class="item-tag">
                     <input type="hidden" name="query" id="final_search_query">
@@ -73,6 +74,10 @@
                     <div id="price-slider">
                     </div>
                     <label for="price-slider" style="display: flow-root;margin-bottom: 5px;font-style: italic;">Price Range</label>
+                <div>
+                    <input type="text" name="max-crew" id="max-crew" value="1000">
+                </div>
+                <label for="max-crew" style="display: flow-root;margin-bottom: 5px;font-style: italic;">Max Crew</label>
             </div>
             <div class="item-button">
                     <button type="submit" class="blue-btn" onclick="appendSearchInput()">Search</button>
@@ -108,6 +113,7 @@
                 <span class="selected-tag"> <a href="/search?{{ tag }}=1">{{ tag }}</a></span> {% endif %} {% endfor %}</span>
                 <span class="data"><span>By </span><a href="/search?author={{ image[6] }}"> {{ image[6] }}</a></span>
                 <span class="data"><span class="data credits"> {{ image[7] }}₡</span></span>
+                <span class="data"><span> {{ image[13] }} 웃</span></span>
             </div>
             {% endfor %}
             <div style="background-color: #021526; margin: auto; padding: 3px;">
