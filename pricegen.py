@@ -170,6 +170,17 @@ def calculate_price(png_url):
         elif item_id == 'cosmoteer.crew_quarters_med':
             crew_quarters_med_price += 3000
 
+# calculate crew number
+    crew = 0
+    # print('crew calculte before', crew)
+    for item in parts:
+        item_id = item['ID']
+        if item_id == 'cosmoteer.crew_quarters_small':
+            crew += 2
+        elif item_id == 'cosmoteer.crew_quarters_med':
+            crew += 6
+            
+    # print('crew calculte after', crew)
     # print(f"Price for cosmoteer.crew_quarters_small: {crew_quarters_small_price}")
     # print(f"Price for cosmoteer.crew_quarters_med: {crew_quarters_med_price}")
 
@@ -191,4 +202,4 @@ def calculate_price(png_url):
     total_price += storage_price
 
     # print(f"Total price: {total_price}")
-    return round_to_k(total_price)
+    return round_to_k(total_price), crew

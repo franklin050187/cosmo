@@ -445,14 +445,16 @@ class ShipImageDatabase:
             'author': form_data.get('author', ''),
             'price': int(form_data.get('price', 0)),
             'brand': form_data.get('brand', 'gen'),
-            'tags': tup_for  # Use getlist() to get all values of 'tags' as a list
+            'crew': int(form_data.get('crew', 0)),
+            'tags': tup_for,  # Use getlist() to get all values of 'tags' as a list
         }
+        # print('crew db= ', image_data['crew'])
         # print("tup_for = ", tup_for)
         # prepare query
         insert_query = """
             INSERT INTO shipdb
-            (name, data, submitted_by, description, ship_name, author, price, brand, tags)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::text[]) RETURNING id
+            (name, data, submitted_by, description, ship_name, author, price, brand, crew, tags)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::text[]) RETURNING id
         """
         # prepare values
         values = (
@@ -464,6 +466,7 @@ class ShipImageDatabase:
             image_data['author'],
             image_data['price'],
             image_data['brand'],
+            image_data['crew'],
             image_data['tags']
         )
         # execute

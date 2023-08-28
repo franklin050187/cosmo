@@ -308,7 +308,7 @@ async def upload(request: Request, files: List[UploadFile] = File(...)):
             if ".ship" in shipname:
                 shipname = shipname.replace(".ship", "")
             # print("price")
-            price = calculate_price(url_png)
+            price, crew = calculate_price(url_png)
             # print("price", price)
             user = request.session.get("discord_user")
             form_data = {
@@ -323,8 +323,9 @@ async def upload(request: Request, files: List[UploadFile] = File(...)):
                 'url_png': url_png,
                 'filename' : authorized_chars,
                 'ship_name' : shipname,
+                'crew' : crew,
             }
-        
+            # print('crew inituploadmass', crew)
             db_manager.upload_image(form_data, user)
         except Exception as e:
             # print(f"Error processing file {file.filename}: {str(e)}")
@@ -380,7 +381,7 @@ async def upload(request: Request, file: UploadFile = File(...)):
     if ".ship" in shipname:
         shipname = shipname.replace(".ship", "")
     
-    price = calculate_price(url_png)
+    price, crew = calculate_price(url_png)
     
     brand = request.session.get("brand")
     if not brand:
@@ -394,10 +395,12 @@ async def upload(request: Request, file: UploadFile = File(...)):
         'shipname': shipname,
         'price': price,
         'brand': brand,
+        'crew': crew,
     }
+    # print('crew initupload', crew)
     request.session["upload_data"] = data
     # Redirect to the index page
-    return templates.TemplateResponse("upload.html", {"request": request, "data": data, "tags": tags, "brand": brand})
+    return templates.TemplateResponse("upload.html", {"request": request, "data": data, "tags": tags, "brand": brand, "crew": crew})
 
 @app.get("/download/{image_id}")
 async def download_ship(image_id: str):
@@ -480,7 +483,7 @@ async def home(request: Request):
             'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kitter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'orbiter', 'campaign_ship', 'elimination_ship', 'domination_ship' ]
     # get the form
     form_input = await request.form()
-    print("form", form_input) # debug
+    # print("form", form_input) # debug
     # find the form data
     query: str = form_input.get("query").strip()
     authorstrip: str = form_input.get("author").strip()
@@ -510,7 +513,7 @@ async def home(request: Request):
         query_tags.append(("order", "new"))
     query_tags.append(("minprice", minstrip))
     query_tags.append(("maxprice", maxstrip))
-    print("post qt", query_tags) # debug
+    # print("post qt", query_tags) # debug
     # Build the SQL query based on the query tags
     query = "SELECT * FROM images"
     conditions = []
@@ -543,7 +546,7 @@ async def search(request: Request):
     # Get the query parameters from the request URL
     query_params = request.query_params
     
-    print("query_param_get = ",query_params)
+    # print("query_param_get = ",query_params)
     if not request.session.get("brand"):
         brand = "gen"
         request.session["brand"] = brand
