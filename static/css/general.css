@@ -430,6 +430,18 @@ input#authorinput{
   padding:.6rem 0 .7rem;
   width:clamp(100px,90%,90%)
 }
+input#desc{
+  color:#fff;
+  margin:5px;
+  background-color: #021526;
+  border:.1rem solid #d1d1d1;
+  border-radius:.4rem;
+  box-shadow:none;
+  box-sizing:inherit;
+  height:.8rem;
+  padding:.6rem 0 .7rem;
+  width:clamp(100px,90%,90%)
+}
 .blur-load{
   background-repeat:no-repeat;
   background-size:cover;

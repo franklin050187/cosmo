@@ -214,11 +214,13 @@ class ShipImageDatabase:
 
   
     def get_search(self, query_params):
+        # print("gen search",query_params)
         query_params = str(query_params)
 
         conditions = []
         not_conditions = []
         author_condition = None
+        desc_condition = None
         min_price_condition = None
         max_price_condition = None
         max_crew_condition = None
@@ -230,6 +232,8 @@ class ShipImageDatabase:
                 key, value = param.split("=")
                 if key == "author":
                     author_condition = unquote_plus(value)
+                elif key == "desc":
+                    desc_condition = unquote_plus(value)
                 elif key == "minprice":
                     min_price_condition = value
                 elif key == "maxprice":
@@ -290,9 +294,15 @@ class ShipImageDatabase:
                 query += " AND author = '{}'".format(author_condition)
             else:
                 query += " WHERE author = '{}'".format(author_condition)
-                
+        
+        if desc_condition:
+            if conditions or not_conditions or min_price_condition or max_price_condition or max_crew_condition:
+                query += " AND description ILIKE '%{}%' OR ship_name ILIKE '%{}%'".format(desc_condition, desc_condition)
+            else:
+                query += " WHERE description ILIKE '%{}%' OR ship_name ILIKE '%{}%'".format(desc_condition, desc_condition)
+        
         if max_crew_condition:
-            if conditions or not_conditions or min_price_condition or max_price_condition or author_condition:
+            if conditions or not_conditions or min_price_condition or max_price_condition or author_condition or desc_condition:
                 query += " AND crew <= {}".format(max_crew_condition)
             else:
                 query += " WHERE crew <= {}".format(max_crew_condition)
@@ -314,11 +324,13 @@ class ShipImageDatabase:
         return self.fetch_data(query)
 
     def get_search_exl(self, query_params):
+            # print("exl search",query_params)
             query_params = str(query_params)
 
             conditions = []
             not_conditions = []
             author_condition = None
+            desc_condition = None
             min_price_condition = None
             max_price_condition = None
             order_by = None
@@ -329,6 +341,8 @@ class ShipImageDatabase:
                     key, value = param.split("=")
                     if key == "author":
                         author_condition = unquote_plus(value)
+                    elif key == "desc":
+                        desc_condition = unquote_plus(value)
                     elif key == "minprice":
                         min_price_condition = value
                     elif key == "maxprice":
@@ -387,6 +401,12 @@ class ShipImageDatabase:
                     query += " AND author = '{}'".format(author_condition)
                 else:
                     query += " WHERE author = '{}'".format(author_condition)
+                    
+            if desc_condition:
+                if conditions or not_conditions or min_price_condition or max_price_condition or author_condition:
+                    query += " AND (description ILIKE '%{}%' OR ship_name ILIKE '%{}%')".format(desc_condition, desc_condition)
+                else:
+                    query += " WHERE (description ILIKE '%{}%' OR ship_name ILIKE '%{}%')".format(desc_condition, desc_condition)
 
             query += " AND brand = 'exl'"
             
@@ -403,7 +423,7 @@ class ShipImageDatabase:
                 limit = 60
                 offset = (int(page) - 1) * limit
                 query += f" LIMIT {limit} OFFSET {offset}"
-
+            # print(query)
             return self.fetch_data(query)
 
     def update_downloads(self, ship_id):
