@@ -141,8 +141,23 @@
         </div>
     </body>
 </html>
-
-
+<script>
+    function downloadShip(imageUrl) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "/download/" + imageUrl, true);
+        xhr.responseType = "blob"; // Set the response type to 'blob' to handle binary data
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            // Create a temporary link element to download the file
+            var link = document.createElement("a");
+            link.href = window.URL.createObjectURL(xhr.response);
+            link.download = xhr.getResponseHeader("Content-Disposition").split("filename=")[1];
+            link.click();
+          }
+        };
+        xhr.send();
+      }
+</script>
 
  
 
