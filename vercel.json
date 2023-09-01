@@ -10,5 +10,10 @@
       "src": "/(.*)",
       "dest": "server.py"
     }
-  ]
+  ],
+  "functions": {
+    "api/**/*.py": {
+      "excludeFiles": "public/**"
+    }
+  }
 }
