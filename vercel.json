@@ -1,9 +1,11 @@
 {
-  "functions": {
-    "api/**/*.py": {
-      "excludeFiles": "public/**"
+  "functions": [
+    {
+      "api/**/*.py": {
+        "excludeFiles": "public/**"
+      }
     }
-  },
+  ],
   "builds": [
     {
       "src": "server.py",
