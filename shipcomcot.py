@@ -1,4 +1,4 @@
-## full credit to https://github.com/lunastrod/cosmoteer-com LunastroD
+## Full credit to https://github.com/lunastrod/cosmoteer-com LunastroD
 
 import cv2
 import numpy as np
