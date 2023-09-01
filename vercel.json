@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/**/*.py": {
+      "excludeFiles": "public/**"
+    }
+  },
   "builds": [
     {
       "src": "server.py",
@@ -10,10 +15,5 @@
       "src": "/(.*)",
       "dest": "server.py"
     }
-  ],
-  "functions": {
-    "api/**/*.py": {
-      "excludeFiles": "public/**"
-    }
-  }
+  ]
 }
