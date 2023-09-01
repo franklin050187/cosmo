@@ -241,6 +241,7 @@ def analyze_ship(ship_url):
     #draw center of thrust of the ship
     ship_orientation = fdir
 
+
     for forient in range(7,-1,-1):
         cot = center_of_thrust_vector(parts, forient) # include array of orientation
         
