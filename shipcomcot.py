@@ -1,3 +1,5 @@
+## full credit to https://github.com/lunastrod/cosmoteer-com LunastroD
+
 import cv2
 import numpy as np
 from cosmoteer_save_tools import decode_ship_data
@@ -271,9 +273,9 @@ def analyze_ship(ship_url):
     
        
     # Display or save the rotated image as needed
-    cv2.imshow("Image", img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.imshow("Image", img)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
     
     # Convert the OpenCV image to a NumPy array
     img_np = np.asarray(img)
@@ -431,5 +433,5 @@ def part_center_of_thrust(part):
         absolute_cots.append((center_of_thrust_x, center_of_thrust_y, orientation))
     return absolute_cots
 
-test = analyze_ship('https://cdn.discordapp.com/attachments/1142102499273224372/1142222754775564359/discord_botship.ship.png')
-print(test)
+# test = analyze_ship('https://cdn.discordapp.com/attachments/1142102499273224372/1142222754775564359/discord_botship.ship.png')
+# print(test)
