@@ -38,6 +38,8 @@ from shipcomcot import analyze_ship
 
 load_dotenv()
 
+print('loading')
+
 db_manager = ShipImageDatabase()
 
 # Discord OAuth2 settings
