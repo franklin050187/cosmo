@@ -6,7 +6,7 @@ from cosmoteer_save_tools import decode_ship_data
 import json
 from png_upload import upload_image_to_imgbb
 import base64
-import math
+
 
 ## variables ##
 parts_data={
