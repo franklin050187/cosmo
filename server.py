@@ -158,8 +158,11 @@ async def edit_image(id: int, request: Request):
     check = db_manager.edit_ship(id, user)
     if check == "ko":
         return RedirectResponse("/")
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
     # Redirect to the home page after deleting the image
-    return templates.TemplateResponse("edit.html", {"request": request, "image": check, "user": user})
+    return templates.TemplateResponse("edit.html", {"request": request, "image": check, "user": user, "brand": brand})
 
 # edit post
 @app.post("/edit/{id}")

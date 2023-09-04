@@ -156,6 +156,7 @@ class ShipImageDatabase:
             'author': form_data.get('author', ''),
             'submitted_by': form_data.get('submitted_by', ''),
             'price': int(form_data.get('price', 0)),
+            'brand': form_data.get('brand', ''),
             'tags' : tup_for,
             'id' : id
         }
@@ -168,6 +169,7 @@ class ShipImageDatabase:
             author = %s,
             price = %s,
             submitted_by = %s,
+            brand = %s,
             tags = %s::text[]
             WHERE id = %s
         """
@@ -179,6 +181,7 @@ class ShipImageDatabase:
             image_data['author'],
             image_data['price'],
             image_data['submitted_by'],
+            image_data['brand'],
             image_data['tags'],
             image_data['id'],
         )

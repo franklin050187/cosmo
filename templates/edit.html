@@ -184,6 +184,10 @@
                                     <td>
                                         <tr>
                                             <ul>
+                                                <div {% if "gen" in brand %}style="display: none;"{% endif %}>
+                                                    <input type="checkbox" name="brand" id="exl" value="exl" {% if "exl" in brand %}checked{% endif %}>
+                                                    <label for="exl">Upload to Excelsior section</label>
+                                                </div>
                                                 <label for="author">Author:</label>
                                                 <input type="text" name="author" id="author" value="{{ image[6] }}">
                                                 <label for="ship_name">Ship name:</label>
