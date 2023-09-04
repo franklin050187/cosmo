@@ -34,10 +34,9 @@ from urllib.parse import urlencode
 import requests
 from typing import List
 import ast
-from cosmoteer_save_tools import decode_ship_data
+from shipcomcot import com
 import json
 
-from shipcomcot import analyze_ship
 
 load_dotenv()
 
@@ -63,24 +62,6 @@ db_manager.init_db()
 # get mod list
 modlist = os.getenv('mods_list')
 modlist = ast.literal_eval(modlist)
-
-# analyze ship
-# this takes an url, get the json and post it to the server
-# @app.get("/analyze")
-# async def analyze_ship(request: Request):
-#     query_params_in = request.query_params
-#     if not query_params_in.get("url"):
-#         print("DEBUG no url")
-#         return RedirectResponse(url="/", status_code=302)
-#     url = query_params_in.get("url")
-#     server_url = "https://cosmo-api-six.vercel.app/analyze"
-#     # server_url = "http://127.0.0.1:8001/analyze" 
-#     json_data = decode_ship_data(url)
-#     response = requests.post(server_url, json=json_data)
-#     responsebody = response.text
-#     data = json.loads(responsebody)
-#     datadata = json.loads(data)
-#     return datadata
 
 
 # ship specific page
@@ -111,24 +92,24 @@ async def get_image(id: int, request: Request):
         # print("update session", request.session["shipidsession"])
     brand = request.session.get("brand")
     if not brand:
-        brand = request.session.get("discord_server")
+        brand = "gen"
+        # brand = request.session.get("discord_server")
     image_data = db_manager.get_image_data(id)
     url_png = image_data[0][2] # change to send the url instead of the image
-    # server_url = "https://cosmo-api-six.vercel.app/analyze"
-    # server_url = "http://127.0.0.1:8001/analyze"
-    json_data = decode_ship_data(url_png)
-    # response = requests.post(server_url, json=json_data)
-    # responsebody = response.text
-    # data = json.loads(responsebody)
-    # datadata = json.loads(data)
-    # print('type json_data', type(json_data))
-    # print("json_data", json_data)
-    # convert json_data to json
-    datajson = json.loads(json_data)
-    # print('type datajson', type(datajson))
-    datadata = await analyze_ship(datajson)
-    print(datadata)
-    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png, "modlist": modlist, "fav": fav, "brand": brand, "datadata": datadata})
+    # Get the query parameters from the request URL
+    datadata = {}
+    query_params = request.query_params
+    isanalyze = query_params.get("analyze")
+    # print(query_params)
+    if isanalyze == '1':
+        datadata = com(url_png)
+        datadata = json.loads(datadata)
+        # print(datadata)
+        return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png, "modlist": modlist, "fav": fav, "brand": brand, "datadata": datadata})
+    else:
+        # datadata = await com(url_png)
+        # print(datadata)
+        return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png, "modlist": modlist, "fav": fav, "brand": brand, "datadata": datadata})
 
 # delete user ship
 @app.get("/delete/{id}")
@@ -660,4 +641,4 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # start server
 if __name__ == '__main__':
-    uvicorn.run(app)
+    uvicorn.run(app, )
