@@ -104,15 +104,12 @@ def calculate_price(png_url):
         storage = data["NewFlexResourceGridTypes"]
     except KeyError:
         storage = None
-    # storage = data["NewFlexResourceGridTypes"]
-
     
     # calculate price for parts
     total_price = 0
 
     for item in parts:
         item_id = item['ID']
-        location = item['Location']
         resources = None
 
         for part in parts_resources:
@@ -180,10 +177,6 @@ def calculate_price(png_url):
         elif item_id == 'cosmoteer.crew_quarters_med':
             crew += 6
             
-    # print('crew calculte after', crew)
-    # print(f"Price for cosmoteer.crew_quarters_small: {crew_quarters_small_price}")
-    # print(f"Price for cosmoteer.crew_quarters_med: {crew_quarters_med_price}")
-
     total_price += crew_quarters_small_price + crew_quarters_med_price
 
     # Calculate the price for storage
@@ -198,8 +191,6 @@ def calculate_price(png_url):
                         max_stack = cost['MaxStackSize']
                         storage_price += resource_price * max_stack
 
-    # print(f"Price for storage: {storage_price}")
     total_price += storage_price
 
-    # print(f"Total price: {total_price}")
     return round_to_k(total_price), crew
