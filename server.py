@@ -583,19 +583,19 @@ async def search(request: Request):
         images = db_manager.get_search(query_params)
         return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
 
-@app.get("/analyze")
-async def analyze(request: Request):
-    # Get the query parameters from the request URL
-    query_params = request.query_params
-    # print("query_param_get = ",query_params)
-    if not query_params['url']:
-            # Create a dictionary with your values
-        data = {
-        "error": "No URL provided",
-        }
-    else:
-        url = query_params['url']
-        return analyze_ship(url)
+# @app.get("/analyze")
+# async def analyze(request: Request):
+#     # Get the query parameters from the request URL
+#     query_params = request.query_params
+#     # print("query_param_get = ",query_params)
+#     if not query_params['url']:
+#             # Create a dictionary with your values
+#         data = {
+#         "error": "No URL provided",
+#         }
+#     else:
+#         url = query_params['url']
+#         return analyze_ship(url)
 
 @app.post("/search")
 async def search(request: Request):
@@ -641,4 +641,4 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # start server
 if __name__ == '__main__':
-    uvicorn.run(app, )
+    uvicorn.run(app)
