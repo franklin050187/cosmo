@@ -86,7 +86,8 @@ async def get_image(id: int, request: Request):
         # print("update session", request.session["shipidsession"])
     brand = request.session.get("brand")
     if not brand:
-        brand = request.session.get("discord_server")
+        brand = "gen"
+        # brand = request.session.get("discord_server")
     image_data = db_manager.get_image_data(id)
     url_png = image_data[0][2] # change to send the url instead of the image
     
