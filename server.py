@@ -34,7 +34,6 @@ from urllib.parse import urlencode
 import requests
 from typing import List
 import ast
-from shipcomcot import com
 import json
 
 
@@ -102,8 +101,12 @@ async def get_image(id: int, request: Request):
     isanalyze = query_params.get("analyze")
     # print(query_params)
     if isanalyze == '1':
-        datadata = com(url_png)
-        datadata = json.loads(datadata)
+        ## make a get request to api server and return json data
+        api_url = "https://cosmo-api-six.vercel.app/analyze?url="+url_png
+        response = requests.get(api_url)
+        # print("response", response)
+        # print("response.text", response.text)
+        datadata = json.loads(response.text)
         # print(datadata)
         return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png, "modlist": modlist, "fav": fav, "brand": brand, "datadata": datadata})
     else:
@@ -582,20 +585,6 @@ async def search(request: Request):
     else:
         images = db_manager.get_search(query_params)
         return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
-
-# @app.get("/analyze")
-# async def analyze(request: Request):
-#     # Get the query parameters from the request URL
-#     query_params = request.query_params
-#     # print("query_param_get = ",query_params)
-#     if not query_params['url']:
-#             # Create a dictionary with your values
-#         data = {
-#         "error": "No URL provided",
-#         }
-#     else:
-#         url = query_params['url']
-#         return analyze_ship(url)
 
 @app.post("/search")
 async def search(request: Request):
