@@ -34,8 +34,12 @@ from urllib.parse import urlencode
 import requests
 from typing import List
 import ast
+import json
+
 
 load_dotenv()
+
+print('loading')
 
 db_manager = ShipImageDatabase()
 
@@ -57,6 +61,7 @@ db_manager.init_db()
 # get mod list
 modlist = os.getenv('mods_list')
 modlist = ast.literal_eval(modlist)
+
 
 # ship specific page
 @app.get("/ship/{id}")
@@ -90,8 +95,24 @@ async def get_image(id: int, request: Request):
         # brand = request.session.get("discord_server")
     image_data = db_manager.get_image_data(id)
     url_png = image_data[0][2] # change to send the url instead of the image
-    
-    return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png, "modlist": modlist, "fav": fav, "brand": brand})
+    # Get the query parameters from the request URL
+    datadata = {}
+    query_params = request.query_params
+    isanalyze = query_params.get("analyze")
+    # print(query_params)
+    if isanalyze == '1':
+        ## make a get request to api server and return json data
+        api_url = "https://cosmo-api-six.vercel.app/analyze?url="+url_png
+        response = requests.get(api_url)
+        # print("response", response)
+        # print("response.text", response.text)
+        datadata = json.loads(response.text)
+        # print(datadata)
+        return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png, "modlist": modlist, "fav": fav, "brand": brand, "datadata": datadata})
+    else:
+        # datadata = await com(url_png)
+        # print(datadata)
+        return templates.TemplateResponse("ship.html", {"request": request, "image": image_data, "user": user, "url_png": url_png, "modlist": modlist, "fav": fav, "brand": brand, "datadata": datadata})
 
 # delete user ship
 @app.get("/delete/{id}")

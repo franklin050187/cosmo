@@ -83,6 +83,11 @@
             background-color: rgb(2 21 38);
         ">
                     <img loading="lazy" src="{{ url_png }}" width="512" height="512">
+                    {% if "url_com" in datadata %}
+                    <img loading="lazy" src="{{datadata.url_com}}" width="512">
+                    {% else %}
+                    <ul><a title="Show stats" class="blue-btn register" href="/ship/{{ image[0][0] }}?analyze=1"><span>Show stats</span></a></ul>
+                    {% endif %}
             </div>
             <div class="author ship-card">
                 <h2>Ship name : {{ image[0][5] }}</h2>
@@ -100,6 +105,13 @@
                 <P class="data"><span>Popularity :</span> {{ image[0][8] }}</P>
                 <P class="data"><span>Date of submission :</span> {{ image[0][9] }}</P>
                 <p></p>
+                {% if "url_com" in datadata %}
+                <P class="data"><span>Mass :</span> {{ datadata.total_mass }}</P>
+                <P class="data"><span>Top speed :</span> {{ datadata.top_speed }}</P>
+                <P class="data"><span>center_of_mass_x :</span> {{ datadata.center_of_mass_x }}</P>
+                <P class="data"><span>center_of_mass_y :</span> {{ datadata.center_of_mass_y }}</P>
+                <p></p>
+                {% endif %}
                 <p class="data" style="font-size: 12px;">Submitted by : {{ image[0][3] }}</p>
                 {% if user == "Guest" %}
                 <ul><a title="Favorite" class="blue-btn register" href="/login?button=myfavorite"><span>Login to add favorite</span></a></ul>
