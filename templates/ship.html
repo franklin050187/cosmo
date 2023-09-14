@@ -107,8 +107,8 @@
                 <P class="data"><span>Date of submission :</span> {{ image[0][9] }}</P>
                 <p></p>
                 {% if "url_com" in datadata %}
-                <P class="data"><span>Mass :</span> {{ datadata.total_mass }}</P>
-                <P class="data"><span>Top speed : </span> {{ datadata.top_speed }}</P>
+                <P class="data"><span>Mass : </span><span class="number" style="color: white;">{{ datadata.total_mass }}</span> t</P>
+                <P class="data"><span>Top speed (flight orientation): </span><span class="number" style="color: white;"> {{ datadata.top_speed }}</span> m/s</P>
                 <P class="data"><span>center_of_mass_x : </span><span class="number" style="color: white;">{{ datadata.center_of_mass_x }}</span></P>
                 <P class="data"><span>center_of_mass_y : </span><span class="number" style="color: white;">{{ datadata.center_of_mass_y }}</span></P>
                 <P class="data"><span>Speed NW : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.NW }}</span></P>
