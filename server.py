@@ -102,7 +102,7 @@ async def get_image(id: int, request: Request):
     # print(query_params)
     if isanalyze == '1':
         ## make a get request to api server and return json data
-        api_url = "https://cosmo-api-six.vercel.app/analyze?url="+url_png
+        api_url = "https://cosmo-api-six.vercel.app/analyze?url="+url_png+"&analyze=1"
         response = requests.get(api_url)
         # print("response", response)
         # print("response.text", response.text)
