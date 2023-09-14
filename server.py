@@ -35,6 +35,7 @@ import requests
 from typing import List
 import ast
 import json
+from urllib.parse import quote
 
 
 load_dotenv()
@@ -427,6 +428,7 @@ async def upload(request: Request, file: UploadFile = File(...)):
     # Redirect to the index page
     return templates.TemplateResponse("upload.html", {"request": request, "data": data, "tags": tags, "brand": brand, "crew": crew})
 
+
 @app.get("/download/{image_id}")
 async def download_ship(image_id: str):
     # Logic to retrieve the file path and filename based on the image_id
@@ -438,13 +440,21 @@ async def download_ship(image_id: str):
         if response.status_code == 200:
             # Set the appropriate content type based on the response headers
             content_type = response.headers.get("content-type", "application/octet-stream")
-            # Return the image content as bytes
-            return Response(content=response.content, media_type=content_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+            
+            # Encode the filename with UTF-8 and quote special characters
+            encoded_filename = quote(filename.encode("utf-8"))
+            
+            # Use the 'filename*' parameter to specify UTF-8 encoding
+            headers = {"Content-Disposition": f'attachment; filename={encoded_filename}'}
+            
+            # Return the image content as bytes with the encoded filename
+            return Response(content=response.content, media_type=content_type, headers=headers)
         else:
             return "Failed to fetch the image from the URL"
     else:
         # Handle the case when the image_id is not found
         return "Image not found"
+
 
 @app.get("/")
 async def index(request: Request):
