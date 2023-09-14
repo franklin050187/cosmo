@@ -96,7 +96,7 @@
                 <p>WARNING : This ship is from the Excelsior library, it requires piloting skills.</p>
                 {% endif %}
                 <p>Author : {{ image[0][6] }}</p>
-                <p>Ship description : {{ image[0][4] }}</p>
+                <p>Ship description : {{ image[0][4] | safe}}</p>
                 <p></p>
                 <p><span class="data credits"><span>Cost:</span> {{ image[0][7] }}₡</span>
                 </p>
