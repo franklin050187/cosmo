@@ -7,6 +7,8 @@ from tagextractor import PNGTagExtractor
 from urllib.parse import unquote_plus
 from discordwh import send_message
 # from png_upload import upload_image_to_imgbb
+import cleansavetool
+import json
 
 load_dotenv()
 
@@ -411,7 +413,11 @@ class ShipImageDatabase:
                 else:
                     query += " WHERE (description ILIKE '%{}%' OR ship_name ILIKE '%{}%')".format(desc_condition, desc_condition)
 
-            query += " AND brand = 'exl'"
+            if conditions:
+                query += " AND brand = 'exl'"
+            else :
+                query += " WHERE brand = 'exl'"
+                
             
             if order_by == "fav":
                 query += " ORDER BY fav DESC"
@@ -507,6 +513,7 @@ class ShipImageDatabase:
         # call webhook
         # send_message(shipurl, shipname, description, image, price, user, author):
         send_message(link, image_data['name'], image_data['description'],image_data['data'], image_data['price'], image_data['submitted_by'], image_data['author'])
+        self.insert_json(image_data['data'], insertedid, image_data['name'])
         
     def add_to_favorites(self, user, ship_id):
         query = "SELECT * FROM favoritedb WHERE name = %s"
@@ -539,3 +546,17 @@ class ShipImageDatabase:
                 else:
                     query = "UPDATE favoritedb SET favorite = %s WHERE name = %s"
                     self.execute_query(query, (favorites, user))
+
+    def insert_json(self, url, id, name):
+        url = str(url)
+        data = cleansavetool.Ship(url).data
+        id = int(id)
+        name = str(name)
+        json_data = json.dumps(data)
+        query = "INSERT INTO jsondb (shipjson, shipid, shipname) VALUES (%s, %s, %s)"
+        self.execute_query(query, (json_data, id, name))
+        
+# ShipImageDatabase().insert_json("https://i.ibb.co/GngXVPw/6e9d161530fb.png", "767", "Dark_Spire_B")
+# ShipImageDatabase().insert_json("https://i.ibb.co/3s4mzhR/59f5b6970960.png", "761", "Mammatus")
+# ShipImageDatabase().insert_json("https://i.ibb.co/wJ1stsy/c8ef6ab6c88e.png", "752", "Art_of_Blade")
+
