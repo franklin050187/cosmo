@@ -413,7 +413,7 @@ class ShipImageDatabase:
                 else:
                     query += " WHERE (description ILIKE '%{}%' OR ship_name ILIKE '%{}%')".format(desc_condition, desc_condition)
 
-            if conditions:
+            if conditions or not_conditions or min_price_condition or max_price_condition or author_condition or desc_condition:
                 query += " AND brand = 'exl'"
             else :
                 query += " WHERE brand = 'exl'"
