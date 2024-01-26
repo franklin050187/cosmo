@@ -131,7 +131,7 @@
 </html>
 
 <script defer src="/static/js/search.js"></script>
-<link defer rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<link rel="preload" rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
 <script>
 // next button
@@ -254,6 +254,7 @@ function updateOrderParam(order) {
 
 // set order parameter in url
 updateOrderParam(getParameterValue('order'));
+showPrevious();
 </script>
 
  
