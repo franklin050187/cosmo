@@ -67,7 +67,7 @@ modlist = ast.literal_eval(modlist)
 
 @app.get('/robots.txt', response_class=PlainTextResponse)
 def robots():
-    data = """User-agent: *\nDisallow: /"""
+    data = """User-agent: *\nDisallow: \nCrawl-delay: 5"""
     return data
     
 # ship specific page
