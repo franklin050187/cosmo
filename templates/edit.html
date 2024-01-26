@@ -20,6 +20,73 @@
     <script src="/static/js/common.js"></script>
     <script src="/static/js/index.js"></script>
     <script defer src="/_vercel/insights/script.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/36.0.1/classic/ckeditor.js"></script>
+    <style>
+        /* Style the CKEditor input area */
+        .ck{
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: darkblue;
+            color: white;
+        }
+        .ck-content        {
+
+            border-radius: 4px;
+            padding: 10px;
+            background-color: darkblue;
+            color: white;
+        } 
+        .ck-editor__editable{
+
+            border-radius: 4px;
+            padding: 10px;
+            background-color: darkblue;
+            color: white;
+        } 
+        .ck.ck-editor__main>.ck-editor__editable:not(.ck-focused){
+
+            border-radius: 4px;
+            padding: 10px;
+            background-color: darkblue;
+            color: white;
+        } 
+        .ck.ck-editor__main>.ck-editor__editable.ck-focused{
+
+            border-radius: 4px;
+            padding: 10px;
+            background-color: darkblue;
+            color: white;
+        } 
+        .ck-editor__editable_inline{
+
+            border-radius: 4px;
+            padding: 10px;
+            background-color: darkblue;
+            color: white;
+        } 
+        .ck-blurred{
+
+            border-radius: 4px;
+            padding: 10px;
+            background-color: darkblue;
+            color: white;
+        }
+        .ck-editor__editable{
+            border-radius: 4px;
+            padding: 10px;
+            background-color: darkblue;
+            color: white;
+
+        }
+        .ck.ck-editor__main p {
+            border-radius: 4px;
+            padding: 10px;
+            background-color: darkblue;
+            color: white;
+
+        }
+    </style>
 </head>
 
 <body>
@@ -184,6 +251,10 @@
                                     <td>
                                         <tr>
                                             <ul>
+                                                <div {% if "gen" in brand %}style="display: none;"{% endif %}>
+                                                    <input type="checkbox" name="brand" id="exl" value="exl" {% if "exl" in brand %}checked{% endif %}>
+                                                    <label for="exl">Upload to Excelsior section</label>
+                                                </div>
                                                 <label for="author">Author:</label>
                                                 <input type="text" name="author" id="author" value="{{ image[6] }}">
                                                 <label for="ship_name">Ship name:</label>
@@ -233,5 +304,11 @@
     function redirectToHomePage() {
          window.location.href = "/";
        }
+
+        ClassicEditor
+            .create(document.querySelector('#description'))
+            .catch(error => {
+                console.error(error);
+            });
 
 </script>

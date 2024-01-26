@@ -35,6 +35,7 @@ import requests
 from typing import List
 import ast
 import json
+from urllib.parse import quote
 
 
 load_dotenv()
@@ -102,7 +103,7 @@ async def get_image(id: int, request: Request):
     # print(query_params)
     if isanalyze == '1':
         ## make a get request to api server and return json data
-        api_url = "https://cosmo-api-six.vercel.app/analyze?url="+url_png
+        api_url = "https://cosmo-api-six.vercel.app/analyze?url="+url_png+"&analyze=1"
         response = requests.get(api_url)
         # print("response", response)
         # print("response.text", response.text)
@@ -180,8 +181,11 @@ async def edit_image(id: int, request: Request):
     check = db_manager.edit_ship(id, user)
     if check == "ko":
         return RedirectResponse("/")
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
     # Redirect to the home page after deleting the image
-    return templates.TemplateResponse("edit.html", {"request": request, "image": check, "user": user})
+    return templates.TemplateResponse("edit.html", {"request": request, "image": check, "user": user, "brand": brand})
 
 # edit post
 @app.post("/edit/{id}")
@@ -424,6 +428,7 @@ async def upload(request: Request, file: UploadFile = File(...)):
     # Redirect to the index page
     return templates.TemplateResponse("upload.html", {"request": request, "data": data, "tags": tags, "brand": brand, "crew": crew})
 
+
 @app.get("/download/{image_id}")
 async def download_ship(image_id: str):
     # Logic to retrieve the file path and filename based on the image_id
@@ -435,13 +440,21 @@ async def download_ship(image_id: str):
         if response.status_code == 200:
             # Set the appropriate content type based on the response headers
             content_type = response.headers.get("content-type", "application/octet-stream")
-            # Return the image content as bytes
-            return Response(content=response.content, media_type=content_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+            
+            # Encode the filename with UTF-8 and quote special characters
+            encoded_filename = quote(filename.encode("utf-8"))
+            
+            # Use the 'filename*' parameter to specify UTF-8 encoding
+            headers = {"Content-Disposition": f'attachment; filename={encoded_filename}'}
+            
+            # Return the image content as bytes with the encoded filename
+            return Response(content=response.content, media_type=content_type, headers=headers)
         else:
             return "Failed to fetch the image from the URL"
     else:
         # Handle the case when the image_id is not found
         return "Image not found"
+
 
 @app.get("/")
 async def index(request: Request):
@@ -501,7 +514,7 @@ async def home(request: Request):
     if not user:
         user = "Guest"
     # tag list
-    TAGS = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers',
+    TAGS = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'chaingun',
             'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kitter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'orbiter', 'campaign_ship', 'builtin', 'elimination_ship', 'domination_ship' ]
     # get the form
     form_input = await request.form()

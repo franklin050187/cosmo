@@ -85,6 +85,7 @@
                     <img loading="lazy" src="{{ url_png }}" width="512" height="512">
                     {% if "url_com" in datadata %}
                     <img loading="lazy" src="{{datadata.url_com}}" width="512">
+                    <img loading="lazy" src="{{datadata.analysis.url_analysis}}" width="512">
                     {% else %}
                     <ul><a title="Show stats" class="blue-btn register" href="/ship/{{ image[0][0] }}?analyze=1"><span>Show stats</span></a></ul>
                     {% endif %}
@@ -95,7 +96,7 @@
                 <p>WARNING : This ship is from the Excelsior library, it requires piloting skills.</p>
                 {% endif %}
                 <p>Author : {{ image[0][6] }}</p>
-                <p>Ship description : {{ image[0][4] }}</p>
+                <p>Ship description : {{ image[0][4] | safe}}</p>
                 <p></p>
                 <p><span class="data credits"><span>Cost:</span> {{ image[0][7] }}₡</span>
                 </p>
@@ -106,10 +107,26 @@
                 <P class="data"><span>Date of submission :</span> {{ image[0][9] }}</P>
                 <p></p>
                 {% if "url_com" in datadata %}
-                <P class="data"><span>Mass :</span> {{ datadata.total_mass }}</P>
-                <P class="data"><span>Top speed :</span> {{ datadata.top_speed }}</P>
-                <P class="data"><span>center_of_mass_x :</span> {{ datadata.center_of_mass_x }}</P>
-                <P class="data"><span>center_of_mass_y :</span> {{ datadata.center_of_mass_y }}</P>
+                <P class="data"><span>Mass : </span><span class="number" style="color: white;">{{ datadata.total_mass }}</span> t</P>
+                <P class="data"><span>Top speed (flight orientation): </span><span class="number" style="color: white;"> {{ datadata.top_speed }}</span> m/s</P>
+                <P class="data"><span>center_of_mass_x : </span><span class="number" style="color: white;">{{ datadata.center_of_mass_x }}</span></P>
+                <P class="data"><span>center_of_mass_y : </span><span class="number" style="color: white;">{{ datadata.center_of_mass_y }}</span></P>
+                <P class="data"><span>Speed NW : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.NW }}</span></P>
+                <P class="data"><span>Speed NE : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.NE }}</span></P>
+                <P class="data"><span>Speed SW : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.SW }}</span></P>
+                <P class="data"><span>Speed SE : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.SE }}</span></P>
+                <P class="data"><span>Speed S : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.S }}</span></P>
+                <P class="data"><span>Speed N : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.N }}</span></P>
+                <P class="data"><span>Speed E : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.E }}</span></P>
+                <P class="data"><span>Speed W : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.W }}</span></P>
+                <P class="data"><span>Price for crew: </span><span class="number" style="color: white;">{{ datadata.analysis.price_crew.percent * 100 }}</span><span>% | {{ datadata.analysis.price_crew.price }} ₡</span></P>
+                <P class="data"><span>Price for weapons: </span><span class="number" style="color: white;">{{ datadata.analysis.price_weapons.percent * 100 }}</span><span>% | {{ datadata.analysis.price_weapons.price }} ₡</span></P>
+                <P class="data"><span>Price for armor: </span><span class="number" style="color: white;">{{ datadata.analysis.price_armor.percent * 100 }}</span><span>% | {{ datadata.analysis.price_armor.price }} ₡</span></P>
+                <P class="data"><span>Price for movement: </span><span class="number" style="color: white;">{{ datadata.analysis.price_mouvement.percent * 100 }}</span><span>% | {{ datadata.analysis.price_mouvement.price }} ₡</span></P>
+                <P class="data"><span>Price for power: </span><span class="number" style="color: white;">{{ datadata.analysis.price_power.percent * 100 }}</span><span>% | {{ datadata.analysis.price_power.price }} ₡</span></P>
+                <P class="data"><span>Price for shield: </span><span class="number" style="color: white;">{{ datadata.analysis.price_shield.percent * 100 }}</span><span>% | {{ datadata.analysis.price_shield.price }} ₡</span></P>
+                <P class="data"><span>Price for storage: </span><span class="number" style="color: white;">{{ datadata.analysis.price_storage.percent * 100 }}</span><span>% | {{ datadata.analysis.price_storage.price }} ₡</span></P>
+                <P class="data"><span>Price for utility: </span><span class="number" style="color: white;">{{ datadata.analysis.price_utility.percent * 100 }}</span><span>% | {{ datadata.analysis.price_utility.price }} ₡</span></P>
                 <p></p>
                 {% endif %}
                 <p class="data" style="font-size: 12px;">Submitted by : {{ image[0][3] }}</p>
@@ -129,6 +146,7 @@
                             <li style="list-style: none;"><span class="selected-tag">{{ tag }}</span></li>
                             {% endfor %}
                     </span>
+                    
                     <ul><a title="Edit" class="blue-btn register" onclick="downloadShip('{{ image[0][0] }}')"><span>Download</span></a></ul>
                     {% if user == image[0][3] or user in modlist %}
                     <ul><a title="Edit" class="blue-btn register" href="/edit/{{ image[0][0] }}"><span>Edit</span></a></ul>
@@ -153,8 +171,41 @@
         </div>
     </body>
 </html>
+<script>
+    function downloadShip(imageUrl) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "/download/" + imageUrl, true);
+        xhr.responseType = "blob"; // Set the response type to 'blob' to handle binary data
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            // Create a temporary link element to download the file
+            var link = document.createElement("a");
+            link.href = window.URL.createObjectURL(xhr.response);
+            link.download = xhr.getResponseHeader("Content-Disposition").split("filename=")[1];
+            link.click();
+          }
+        };
+        xhr.send();
+      }
 
+    // Get all the submission number elements
+    var numberElements = document.querySelectorAll('.number');
 
+    // Loop through each element
+    numberElements.forEach(function(element) {
+    // Get the number string
+    var decimalnumber = element.textContent;
+
+    // convert to float decimal number
+    var number = parseFloat(decimalnumber);
+
+    // show only 2 decimal places
+    var formattedNumber = number.toFixed(2);
+
+    // Update the submission date element with the formatted date
+    element.textContent = formattedNumber;
+    });
+</script>
 
  
 
