@@ -36,6 +36,8 @@ from typing import List
 import ast
 import json
 from urllib.parse import quote
+from fastapi.responses import PlainTextResponse
+
 
 
 load_dotenv()
@@ -63,7 +65,11 @@ db_manager.init_db()
 modlist = os.getenv('mods_list')
 modlist = ast.literal_eval(modlist)
 
-
+@app.get('/robots.txt', response_class=PlainTextResponse)
+def robots():
+    data = """User-agent: *\nDisallow: \nCrawl-delay: 5"""
+    return data
+    
 # ship specific page
 @app.get("/ship/{id}")
 async def get_image(id: int, request: Request):
