@@ -221,7 +221,6 @@ class ShipImageDatabase:
     def get_search(self, query_params):
         # print("gen search",query_params)
         query_params = str(query_params)
-
         conditions = []
         not_conditions = []
         author_condition = None
@@ -229,6 +228,7 @@ class ShipImageDatabase:
         min_price_condition = None
         max_price_condition = None
         max_crew_condition = None
+        fulltext = None
         order_by = None
         page = 1
 
@@ -253,6 +253,8 @@ class ShipImageDatabase:
                     not_conditions.append(key)
                 elif key == "page":
                     page = value
+                elif key == "fulltext":
+                    fulltext = unquote_plus(value)
 
         # Build the query dynamically
         if conditions and not_conditions:
@@ -312,6 +314,15 @@ class ShipImageDatabase:
             else:
                 query += " WHERE crew <= {}".format(max_crew_condition)
 
+        if fulltext:
+            if conditions or not_conditions or min_price_condition or max_price_condition or author_condition or desc_condition or max_crew_condition:
+                # query for tags @> ARRAY['{text}%']
+                """  exists ( select 1 from unnest(tags) as tag where tag like 'ion%' )"""
+                query += " AND exists ( select 1 from unnest(tags) as tag where tag like '{}%' )".format(fulltext)
+            else:
+                query += " WHERE exists ( select 1 from unnest(tags) as tag where tag like '{}%' )".format(fulltext)
+
+        
         if order_by == "fav":
             query += " ORDER BY fav DESC"
         elif order_by == "pop":

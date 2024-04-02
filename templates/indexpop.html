@@ -110,7 +110,7 @@
                     <img ci-src="{{ image[2] }}" alt="{{ image[5] }}">
                 </a>
                 <span class="data">{{ image[5] }}</span>
-                <span class="data">{% set tagList = [ 'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'factories', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'kitter', 'avoider', 'rammer', 'orbiter', 'campaign_ship', 'elimination_ship', 'domination_ship', 'diagonal', 'splitter', 'chaingun' ] %} {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %} {% set image_tags_list = image_tags.split(",") %} {% for tag in image_tags_list %} {% if tag in tagList %}
+                <span class="data">{% set tagList = [ 'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'factories', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'kiter', 'avoider', 'rammer', 'orbiter', 'campaign_ship', 'elimination_ship', 'domination_ship', 'diagonal', 'splitter', 'chaingun' ] %} {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %} {% set image_tags_list = image_tags.split(",") %} {% for tag in image_tags_list %} {% if tag in tagList %}
                 <span class="selected-tag"> <a href="/search?{{ tag }}=1">{{ tag }}</a></span> {% endif %} {% endfor %}</span>
                 <span class="data"><span>By </span><a href="/search?author={{ image[6] }}"> {{ image[6] }}</a></span>
                 <span class="data"><span class="data credits"> {{ image[7] }}₡</span></span>

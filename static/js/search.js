@@ -97,7 +97,7 @@ function selectAuthor() {
   addTag('author', author);
 }  
 
-const tagList = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust','no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kitter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'domination_ship', 'elimination_ship', 'orbiter', 'campaign_ship', 'builtin', 'chaingun']; // Predefined list of tags
+const tagList = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust','no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kiter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'domination_ship', 'elimination_ship', 'orbiter', 'campaign_ship', 'builtin', 'chaingun']; // Predefined list of tags
 const infoIcon = document.querySelector('.info-icon');
 infoIcon.setAttribute('data-tags', tagList.join('\n'));
 
@@ -109,6 +109,7 @@ const finalSearchQuery = document.getElementById('final_search_query');
 let matchedTags = [];
 let selectedTags = [];
 let excludedTags = [];
+let fulltext = '';
 
 // Extract tags from URL parameters on page load
 window.addEventListener('DOMContentLoaded', () => {
@@ -164,9 +165,18 @@ function filterTags() {
 
   displayTagSuggestions(matchedTags);
   toggleTableVisibility();
-  //console.log(finalSearchQuery.value);
-  //console.log(tagInput.value);
+  console.log(finalSearchQuery.value);
+
+  // remove fulltext= from finalSearchQuery.value
+  const fulltextRegex = /\bfulltext=[^ ]*/g;
+  finalSearchQuery.value = finalSearchQuery.value.replace(fulltextRegex, '');
+
+  // add tagInput.value to finalSearchQuery.value as parameter "fulltext="
+  if (tagInput.value !== '') {
+    finalSearchQuery.value += ' ' + 'fulltext=' + tagInput.value;
+  }
 }
+
 
 $(tagInput).autocomplete({
   source: function (request, response) {
@@ -297,12 +307,20 @@ function toggleTableVisibility() {
 }
 
 function updateFinalSearchQuery() {
+  console.log("updateFinalSearchQuery");
   const formattedExcludedTags = excludedTags.map(tag => '-' + tag);
+  console.log(finalSearchQuery.value);
   finalSearchQuery.value = selectedTags.join(' ') + (formattedExcludedTags.length > 0 ? ' ' + formattedExcludedTags.join(' ') : '');
-  //console.log(finalSearchQuery.value);
+  // add tagInput.value to selectedTags as parameter "fulltext=" if tagInput.value is not empty
+  if (tagInput.value !== '') {
+    finalSearchQuery.value += ' ' + 'fulltext=' + tagInput.value;
+    tagInput.value = '';
+  }
+  console.log(finalSearchQuery.value);
 }
 
 function appendSearchInput() {
+
 
 }
 

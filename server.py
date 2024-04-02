@@ -517,11 +517,12 @@ async def index(request: Request):
 @app.post("/")
 async def home(request: Request):
     user = request.session.get("discord_user")
+    fulltext = None
     if not user:
         user = "Guest"
     # tag list
     TAGS = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'chaingun',
-            'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kitter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'orbiter', 'campaign_ship', 'builtin', 'elimination_ship', 'domination_ship' ]
+            'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kiter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'orbiter', 'campaign_ship', 'builtin', 'elimination_ship', 'domination_ship' ]
     # get the form
     form_input = await request.form()
     # print("form", form_input) # debug
@@ -543,11 +544,16 @@ async def home(request: Request):
             value = 0
             if tag in TAGS:
                 query_tags.append((tag, value))
+        elif word.startswith('fulltext='):
+            fulltext = word[9:]
         else:
             tag = word
             value = 1
             if tag in TAGS:
                 query_tags.append((tag, value))
+    if fulltext :
+        print("fulltext", fulltext)
+        query_tags.append(("fulltext", fulltext))
     if authorstrip :
         query_tags.append(("author", authorstrip))
     if descstrip :
@@ -560,6 +566,8 @@ async def home(request: Request):
         query_tags.append(("max-crew", crewstrip))
     query_tags.append(("minprice", minstrip))
     query_tags.append(("maxprice", maxstrip))
+
+    
     # print("post qt", query_tags) # debug
     # Build the SQL query based on the query tags
     query = "SELECT * FROM images"
