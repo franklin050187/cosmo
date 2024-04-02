@@ -5,8 +5,8 @@
   width:100%;
   min-height:100vh;
   grid-template-columns:1fr 3fr 1fr;
-  grid-template-rows:auto auto 1fr auto;
-  grid-template-areas:"header header header" ". search ." ". listing ." "footer footer footer";
+  grid-template-rows:auto auto 1fr auto auto;
+  grid-template-areas:"header header header" ". search ." ". listing ." ". pagination ." "footer footer footer";
   /* animation:background-movement 24s linear 0s infinite; */
   /* background-attachment:fixed; */
   /* background-image:url(../img/background.webp),linear-gradient(90deg,#0078bd,#07b3d1,#ada270,#28c098,#0078bd); */
@@ -50,6 +50,7 @@
   /* grid-template-rows: repeat(4, 1fr);
   grid-auto-rows: 0; /* Hide any overflowing items 
   overflow: hidden; Hide any overflowing content */
+  margin-bottom: 1px;
 }
 .ship-card img{
   width:100%
@@ -467,6 +468,20 @@ input#desc{
   justify-content:space-evenly;
   flex-wrap:wrap
 }
+
+.item-pagination{
+  grid-area:pagination;
+  margin:0;
+  align-items:center;
+  backdrop-filter:blur(5px);
+  background:rgba(2,21,38,.65);
+  background-color: rgb(2 21 38);
+  flex-wrap:wrap;
+  display: flex;
+  justify-content: space-around;
+}
+
+
 .ui-menu-item {
   background-color: #021526;
   border: 0.5px solid #ccc;

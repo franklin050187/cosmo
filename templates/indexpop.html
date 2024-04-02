@@ -9,6 +9,7 @@
         <link rel="stylesheet" type="text/css" href="/static/css/general.css">
         <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script defer src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
+        <script defer src="/static/js/search.js"></script>
         <link rel="stylesheet" href="https://cdn.scaleflex.it/plugins/js-cloudimage-responsive/latest/js-cloudimage-responsive.min.css?vh=a076ef&func=proxy"></link>
     </head>
     <body class="site-container">
@@ -116,11 +117,16 @@
                 <span class="data"><span>Crew : {{ image[13] }}</span></span>
             </div>
             {% endfor %}
-            <div style="background-color: #021526; margin: auto; padding: 3px;">
+        </div>
+        <div class="item-pagination" id="pagination">
+            <div style="background-color: #021526; padding: 3px; display: flex;">
+                <a class="blue-btn" style="display: none;" id="previous" title="Previous" onclick="previousPage()">Previous</a>
+            </div>
+
+            <div style="background-color: #021526; padding: 3px; display: flex;"></div>
                 {% if images|length == 60 %}
                 <a class="blue-btn" title="Next" onclick="nextPage()">Next</a>
                 {% endif %}
-                <a class="blue-btn" id="previous" title="Previous" onclick="previousPage()">Previous</a>
             </div>
         </div>
         <div class="item-footer">
@@ -136,14 +142,14 @@
 <script>
     window.lazySizesConfig = window.lazySizesConfig || {};
     window.lazySizesConfig.init = false;
-    </script>
-    <script src="https://cdn.scaleflex.it/filerobot/js-cloudimage-responsive/lazysizes.min.js"></script>
+</script>
+<script src="https://cdn.scaleflex.it/filerobot/js-cloudimage-responsive/lazysizes.min.js"></script>
 
     <!-- Add js-cloudimage-responsiv library -->
-    <script src="https://cdn.scaleflex.it/plugins/js-cloudimage-responsive/4.8.4/js-cloudimage-responsive.min.js"></script>
+<script src="https://cdn.scaleflex.it/plugins/js-cloudimage-responsive/4.8.4/js-cloudimage-responsive.min.js"></script>
 
     <!-- Initialize cloudimage responsive -->
-    <script>
+<script>
     const ciResponsive = new window.CIResponsive({
         token: 'cnfyupteqa',
         apiVersion: null,
@@ -153,10 +159,18 @@
     window.lazySizes.init();
 </script>
 
-<script defer src="/static/js/search.js"></script>
+
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
-<script>
+<script defer>
+
+function getParameterValue(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    var value = urlParams.get(param);
+    return value;
+    console.log(value);
+}
+
 // next button
 function nextPage() {
     const currentPage = Number(getParameterValue('page')) || 1;
@@ -181,17 +195,17 @@ function previousPage() {
     window.location.href = url.href;
   }
 
-// show previous only if page is greater than 1
-function showPrevious() {
-  const currentPage = Number(getParameterValue('page')) || 1;
-  if (currentPage > 1) {
-    document.getElementById('previous').style.display = 'block';
+function showPreviousButton() {
+  const page = Number(getParameterValue('page')) || 1;
+  const previousButton = document.getElementById('previous');
+  if (page > 1) {
+    previousButton.style.display = 'block';
   } else {
-    document.getElementById('previous').style.display = 'none';
+    previousButton.style.display = 'none';
   }
 }
 
-showPrevious();
+
 
 // Get all the submission date elements
 var submissionDateElements = document.querySelectorAll('.submission-date');
@@ -272,12 +286,15 @@ lazyImages.forEach((img) => {
 
 function updateOrderParam(order) {
     document.getElementById('order').value = order;
-    addTag('order', document.getElementById('order').value);
+    // find order tag in url, change it to selected value and navigate
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('order', order);
 }
 
-// set order parameter in url
+
+
 updateOrderParam(getParameterValue('order'));
-showPrevious();
+showPreviousButton();
 </script>
 
  
