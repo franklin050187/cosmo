@@ -221,7 +221,6 @@ class ShipImageDatabase:
     def get_search(self, query_params):
         # print("gen search",query_params)
         query_params = str(query_params)
-
         conditions = []
         not_conditions = []
         author_condition = None
@@ -229,6 +228,7 @@ class ShipImageDatabase:
         min_price_condition = None
         max_price_condition = None
         max_crew_condition = None
+        fulltext = None
         order_by = None
         page = 1
 
@@ -253,6 +253,8 @@ class ShipImageDatabase:
                     not_conditions.append(key)
                 elif key == "page":
                     page = value
+                elif key == "fulltext":
+                    fulltext = unquote_plus(value)
 
         # Build the query dynamically
         if conditions and not_conditions:
@@ -312,6 +314,15 @@ class ShipImageDatabase:
             else:
                 query += " WHERE crew <= {}".format(max_crew_condition)
 
+        if fulltext:
+            if conditions or not_conditions or min_price_condition or max_price_condition or author_condition or desc_condition or max_crew_condition:
+                # query for tags @> ARRAY['{text}%']
+                """  exists ( select 1 from unnest(tags) as tag where tag like 'ion%' )"""
+                query += " AND exists ( select 1 from unnest(tags) as tag where tag like '{}%' )".format(fulltext)
+            else:
+                query += " WHERE exists ( select 1 from unnest(tags) as tag where tag like '{}%' )".format(fulltext)
+
+        
         if order_by == "fav":
             query += " ORDER BY fav DESC"
         elif order_by == "pop":
@@ -514,7 +525,65 @@ class ShipImageDatabase:
         # send_message(shipurl, shipname, description, image, price, user, author):
         send_message(link, image_data['name'], image_data['description'],image_data['data'], image_data['price'], image_data['submitted_by'], image_data['author'])
         self.insert_json(image_data['data'], insertedid, image_data['name'])
-        
+
+    def upload_update(self, data):
+
+    # data = {
+    #     'id': id,
+    #     'url_png': url_png,
+    #     'price': price,
+    #     'crew': crew,
+    #     'tags': tags,
+    # }
+
+        url_png = data.get('url_png')
+        price = data.get('price', 0)
+        crew = data.get('crew', 0)
+        tags = data.get('tags', [])
+        id = data.get('id')
+        # print("tags = ", tags)
+        # print("id = ", id)
+
+        # here we keep some data from the db
+        # prepare data
+        image_data = {
+            'data': url_png,  # change to store URL of the image instead of the base64 image
+            'price': data.get('price', 0),
+            'crew': int(data.get('crew', 0)),
+            'tags': tags,  # Use getlist() to get all values of 'tags' as a list
+        }
+        # print("image_data = ", image_data)
+        # print('crew db= ', image_data['crew'])
+        # print("tup_for = ", tup_for)
+        # prepare query
+        # query must be a SET instead of INSERT
+        insert_query = """
+            UPDATE shipdb
+            SET
+            data = %s,
+            price = %s,
+            crew = %s,
+            tags = %s::text[]
+            WHERE id = %s
+        """
+        # prepare values
+        values = (
+            image_data['data'],
+            image_data['price'],
+            image_data['crew'],
+            image_data['tags'],
+            data['id']
+        )
+        # execute
+        # print("values = ", values)
+        # print("insert_query = ", insert_query)
+        self.execute_query(insert_query, values)
+        # link = "https://cosmo-lilac.vercel.app/ship/"+str(id)
+        # call webhook
+        # send_message(shipurl, shipname, description, image, price, user, author):
+        # send_message(link, image_data['name'], image_data['description'],image_data['data'], image_data['price'], image_data['submitted_by'], image_data['author'])
+        # self.insert_json(image_data['data'], insertedid, image_data['name'])
+
     def add_to_favorites(self, user, ship_id):
         query = "SELECT * FROM favoritedb WHERE name = %s"
         result = self.fetch_data(query, (user,))

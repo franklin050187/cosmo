@@ -66,18 +66,20 @@
          </div>
      </header>
       <main>
-         <h1>Upload your ship !</h1>
+         <h1>Replace ship image</h1>
          <section id="competitive" class="content-container">
             <div class="section-description">
-               <h2>Share your ships with the community</h2>
+               <h2>Warning : all tags manually set will be overwritten !</h2>
                <p>All ships posted are under the CC BY 4.0 unless stated otherwise in the description</p>
             </div>
             <div class="tabs-container">
                <div id="elim-competitive-tab" class="tab active">
-                  
                   <ul>
-                     <h1>Ship Upload</h1>
-                     <form action="/initupload" method="post" enctype="multipart/form-data">
+                     <!-- <p>{{ image[0] }}</p> -->
+                     <h1>Ship Update</h1>
+                     <p>Current image :</p>
+                     <img src="{{ image[2] }}" width="512" height="512">
+                     <form action="/update/{{ image[0] }}" method="post" enctype="multipart/form-data">
                         <ul>
                            <input type="file" name="file" accept=".png" required>
                            <button type="submit" class="blue-btn register" >Next</button>

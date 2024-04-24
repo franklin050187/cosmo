@@ -190,6 +190,7 @@ async def edit_image(id: int, request: Request):
     brand = request.session.get("brand")
     if not brand:
         brand = request.session.get("discord_server")
+    print(check)
     # Redirect to the home page after deleting the image
     return templates.TemplateResponse("edit.html", {"request": request, "image": check, "user": user, "brand": brand})
 
@@ -204,6 +205,76 @@ async def edit_image(id: int, request: Request):
         return RedirectResponse("/")
     return RedirectResponse(url="/", status_code=303)
 
+# update image
+# idea : add button on webpage to update image
+# this button redirects to /update/{id} base on the current id
+# then show initupload like page
+# add warning stating that tags will be removed
+# upload the image
+# update tags
+# redirect to /edit/{id} once done
+@app.get("/update/{id}")
+async def update_image(id: int, request: Request):
+    # Delete image information from the database based on the provided ID
+    user = request.session.get("discord_user")
+    check = db_manager.edit_ship(id, user)
+    if check == "ko":
+        return RedirectResponse("/") # this should be an "you dont have the rights" page
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
+    if not user: # just in case, should never happen
+        return RedirectResponse("/login")
+    return templates.TemplateResponse("update.html", {"request": request, "image": check, "user": user, "brand": brand})
+
+@app.post("/update/{id}")
+async def upload_update(id: int, request: Request, file: UploadFile = File(...)):
+    user = request.session.get("discord_user")
+    check = db_manager.edit_ship(id, user)
+    if check == "ko":
+        return RedirectResponse("/") # this should be an "you dont have the rights" page
+    # Read the image file
+    contents = await file.read()
+    # Encode the contents as base64
+    encoded_data = base64.b64encode(contents).decode("utf-8")
+    # push to imagebb to be able to read it (fallback is enabled)
+    url_png = upload_image_to_imgbb(encoded_data)
+    if url_png == "ko":
+        error = 'upload servers are down, try again later'
+        return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
+    # get the tags
+    try:
+        extractor = PNGTagExtractor()
+        tags, author = extractor.extract_tags(url_png) ####
+    except Exception as e:
+        error = 'unable to decode file provided, check upload guide below'
+        return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
+        
+    # Modify the file name to use authorized characters for HTML
+    file_name = file.filename
+    authorized_chars = re.sub(r'[^\w\-_.]', '_', file_name)
+
+    shipname = authorized_chars
+    if ".png" in shipname:
+        shipname = authorized_chars.replace(".png", "")
+    if ".ship" in shipname:
+        shipname = shipname.replace(".ship", "")
+    
+    price, crew = calculate_price(url_png)
+    
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
+    
+    data = {
+        'id': id,
+        'url_png': url_png,
+        'price': price,
+        'crew': crew,
+        'tags': tags,
+    }
+    db_manager.upload_update(data)
+    return RedirectResponse(url="/edit/"+str(id), status_code=303) # Redirect to /edit/{id}", status_code=303)
 # init login
 @app.route('/login')
 async def start_login(request: Request):
@@ -517,11 +588,12 @@ async def index(request: Request):
 @app.post("/")
 async def home(request: Request):
     user = request.session.get("discord_user")
+    fulltext = None
     if not user:
         user = "Guest"
     # tag list
     TAGS = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'chaingun',
-            'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kitter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'orbiter', 'campaign_ship', 'builtin', 'elimination_ship', 'domination_ship' ]
+            'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kiter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'orbiter', 'campaign_ship', 'builtin', 'elimination_ship', 'domination_ship' ]
     # get the form
     form_input = await request.form()
     # print("form", form_input) # debug
@@ -543,11 +615,16 @@ async def home(request: Request):
             value = 0
             if tag in TAGS:
                 query_tags.append((tag, value))
+        elif word.startswith('fulltext='):
+            fulltext = word[9:]
         else:
             tag = word
             value = 1
             if tag in TAGS:
                 query_tags.append((tag, value))
+    if fulltext :
+        print("fulltext", fulltext)
+        query_tags.append(("fulltext", fulltext))
     if authorstrip :
         query_tags.append(("author", authorstrip))
     if descstrip :
@@ -560,6 +637,8 @@ async def home(request: Request):
         query_tags.append(("max-crew", crewstrip))
     query_tags.append(("minprice", minstrip))
     query_tags.append(("maxprice", maxstrip))
+
+    
     # print("post qt", query_tags) # debug
     # Build the SQL query based on the query tags
     query = "SELECT * FROM images"
