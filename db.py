@@ -525,7 +525,65 @@ class ShipImageDatabase:
         # send_message(shipurl, shipname, description, image, price, user, author):
         send_message(link, image_data['name'], image_data['description'],image_data['data'], image_data['price'], image_data['submitted_by'], image_data['author'])
         self.insert_json(image_data['data'], insertedid, image_data['name'])
-        
+
+    def upload_update(self, data):
+
+    # data = {
+    #     'id': id,
+    #     'url_png': url_png,
+    #     'price': price,
+    #     'crew': crew,
+    #     'tags': tags,
+    # }
+
+        url_png = data.get('url_png')
+        price = data.get('price', 0)
+        crew = data.get('crew', 0)
+        tags = data.get('tags', [])
+        id = data.get('id')
+        # print("tags = ", tags)
+        # print("id = ", id)
+
+        # here we keep some data from the db
+        # prepare data
+        image_data = {
+            'data': url_png,  # change to store URL of the image instead of the base64 image
+            'price': data.get('price', 0),
+            'crew': int(data.get('crew', 0)),
+            'tags': tags,  # Use getlist() to get all values of 'tags' as a list
+        }
+        # print("image_data = ", image_data)
+        # print('crew db= ', image_data['crew'])
+        # print("tup_for = ", tup_for)
+        # prepare query
+        # query must be a SET instead of INSERT
+        insert_query = """
+            UPDATE shipdb
+            SET
+            data = %s,
+            price = %s,
+            crew = %s,
+            tags = %s::text[]
+            WHERE id = %s
+        """
+        # prepare values
+        values = (
+            image_data['data'],
+            image_data['price'],
+            image_data['crew'],
+            image_data['tags'],
+            data['id']
+        )
+        # execute
+        # print("values = ", values)
+        # print("insert_query = ", insert_query)
+        self.execute_query(insert_query, values)
+        # link = "https://cosmo-lilac.vercel.app/ship/"+str(id)
+        # call webhook
+        # send_message(shipurl, shipname, description, image, price, user, author):
+        # send_message(link, image_data['name'], image_data['description'],image_data['data'], image_data['price'], image_data['submitted_by'], image_data['author'])
+        # self.insert_json(image_data['data'], insertedid, image_data['name'])
+
     def add_to_favorites(self, user, ship_id):
         query = "SELECT * FROM favoritedb WHERE name = %s"
         result = self.fetch_data(query, (user,))
