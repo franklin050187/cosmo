@@ -38,11 +38,15 @@ class PNGTagExtractor:
             'cosmoteer.reactor_med': 'medium_reactor',
             'cosmoteer.sensor_array': 'sensor',
             'cosmoteer.hyperdrive_small': 'small_hyperdrive',
+            'cosmoteer.hyperdrive_large': 'large_hyperdrive',
             'cosmoteer.reactor_small': 'small_reactor',
             'cosmoteer.shield_gen_small': 'small_shield',
             'cosmoteer.tractor_beam_emitter': 'tractor_beams',
             'cosmoteer.hyperdrive_beacon': 'hyperdrive_relay',
             'cosmoteer.chaingun': 'chaingun',
+            'cosmoteer.thruster_rocket_battery': 'rocket_thruster',
+            'cosmoteer.thruster_rocket_extender': 'rocket_thruster',
+            'cosmoteer.thruster_rocket_nozzle': 'rocket_thruster'
         }
         
         self.missile_mapping = {
