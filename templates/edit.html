@@ -141,6 +141,9 @@
                 <div id="elim-competitive-tab" class="tab active">
                     <ul>
                         <h1>Ship Edit</h1>
+                        <a title="Replace image" class="blue-btn register" href="/update/{{ image[0] }}">
+                            <span>Replace image</span>
+                        </a>
                         <p>{{ image[1] }}</p>
                         {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %}
                         {% set image_tags_list = image_tags.split(",") %}

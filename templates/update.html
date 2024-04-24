@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+
+<html lang="es">
+   <head>
+    <script>
+        !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+        posthog.init('phc_K77EUohajEup7Xj92C4lZUUjbVEh2x1nAhQYTdZ2xJL',{api_host:'https://e.abla.io'})
+      </script>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Excelsior | Cosmoteer Ship Library</title>
+      <meta name="robots" content="noindex,nofollow">
+      <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
+      <link rel="stylesheet" type="text/css" {% if "exl" in brand %}href="/static/css/interface.css"{% else %}href="/static/css/interfacegen.css"{% endif %}>
+      <link rel="stylesheet" type="text/css" href="/static/css/index.css">
+      <link rel="stylesheet" type="text/css" href="/static/css/upload.css">
+      <script src="/static/js/jquery-3.6.0.min.js"></script>
+      <script src="/static/js/common.js"></script>
+      <script src="/static/js/index.js"></script>
+      <script defer src="/_vercel/insights/script.js"></script>
+  </head>
+   <body>
+      <header>
+         <div class="item-header">
+             {% if "gen" in brand %}
+             <a style="text-decoration: none;" title="home" href="/">
+                 <span class="logo">Cosmoteer Ship Library</span>
+             </a>
+             {% else %}
+             <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
+             {% endif %}
+             <div class="item-right">
+                 <p class="username">Welcome {{ user }}  </p>
+                 {% if user == "Guest" %}
+                 <a title="Login" class="blue-btn" href="/login?button=login">
+                     <span>Login</span>
+                 </a>
+                 {% else %}
+                 <a title="Logout" class="blue-btn" href="/logoff">
+                     <span>Log out</span>
+                 </a>
+                 {% endif %}
+                 <a title="Upload" class="blue-btn" href="/login?button=upload">
+                     <span>Upload</span>
+                 </a>
+                 <a title="Myfavorite" class="blue-btn" href="/login?button=myfavorite">
+                     <span>My favorite</span>
+                 </a>
+                 <a title="Myships" class="blue-btn" href="/login?button=myships">
+                     <span>My Ships</span>
+                 </a>
+                 <a title="Home" class="blue-btn" href="/">
+                     <span>Home</span>
+                 </a>
+
+                 {% if "gen" in brand %}
+                 <a title="Excelsior library" class="blue-btn" href="/exl">
+                  <span>Excelsior library</span>
+                 </a>
+                 {% else %}
+                 <a title="General library" class="blue-btn" href="/gen">
+                     <span>General library</span>
+                 </a>
+                 {% endif %}
+             </div>
+         </div>
+     </header>
+      <main>
+         <h1>Replace ship image</h1>
+         <section id="competitive" class="content-container">
+            <div class="section-description">
+               <h2>Warning : all tags manually set will be overwritten !</h2>
+               <p>All ships posted are under the CC BY 4.0 unless stated otherwise in the description</p>
+            </div>
+            <div class="tabs-container">
+               <div id="elim-competitive-tab" class="tab active">
+                  <ul>
+                     <!-- <p>{{ image[0] }}</p> -->
+                     <h1>Ship Update</h1>
+                     <p>Current image :</p>
+                     <img src="{{ image[2] }}" width="512" height="512">
+                     <form action="/update/{{ image[0] }}" method="post" enctype="multipart/form-data">
+                        <ul>
+                           <input type="file" name="file" accept=".png" required>
+                           <button type="submit" class="blue-btn register" >Next</button>
+                        </ul>
+                     </form>  
+                  </ul>
+               </div>
+            </div>
+         </section>
+      </main>
+      <footer style="
+      margin-top: 208px;
+  ">
+         <div class="item-footer" >
+            {% if "gen" in brand %}
+            <a style="text-decoration: none;" title="home" href="/">
+                <span class="logo">Cosmoteer Ship Library</span>
+            </a>
+            {% else %}
+            <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
+            {% endif %}
+                 <a class="blue-btn" title="Source code" href="https://github.com/franklin050187/cosmo">Source code</a>
+                 <a class="blue-btn" title="Issues" href="https://github.com/franklin050187/cosmo/issues">Issues</a>
+                 <a class="blue-btn" title="Support us" href="#">Support us</a>
+         </div>
+     </footer>
+   </body>
+</html>
+<script>
+   function redirectToHomePage() {
+     window.location.href = "/";
+   }
+ </script>
