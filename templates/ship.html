@@ -151,7 +151,7 @@
                             {% endfor %}
                     </span>
                     
-                    <ul><a title="Edit" class="blue-btn register" onclick="downloadShip('{{ image[0][0] }}')"><span>Download</span></a></ul>
+                    <ul><a title="Download" class="blue-btn register" onclick="downloadShip('{{ image[0][0] }}')"><span>Download</span></a></ul>
                     {% if user == image[0][3] or user in modlist %}
                     <ul><a title="Edit" class="blue-btn register" href="/edit/{{ image[0][0] }}"><span>Edit</span></a></ul>
                     <ul><a title="Delete" class="red-btn register" href="/delete/{{ image[0][0] }}"><span>Delete</span></a></ul>

@@ -99,6 +99,7 @@
             </div>
             </form>
         </div>
+
         <div class="item-listing">
             {% for image in images %}
             <div class="ship-card">
@@ -128,7 +129,24 @@
             <div style="background-color: #021526; padding: 3px; display: flex;">
                 <a class="blue-btn" style="display: none;" id="previous" title="Previous" onclick="previousPage()">Previous</a>
             </div>
-
+            {% set page_query = request.url.query.split('page=') %}
+            {% set pagenumber = page_query[1] if page_query|length == 2 else '1' %}
+            <div id="page-buttons">
+                {% for i in range(1, maxpage + 1) %}
+                    {% set newpage = i|string %}
+                    {% set newquery = request.url.query %}
+                    {% if page_query|length != 1 %}
+                        {% set newquery = newquery.replace('page=' + pagenumber, 'page=' + newpage) %}
+                    {% else %}
+                        {% set newquery = newquery + '&page=' + newpage %}
+                    {% endif %}
+                    {% if newpage == pagenumber %}
+                    <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}" style="font-weight: bold;font-size: x-large;" >{{newpage}}</a>
+                    {% else %}
+                    <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}" href="{{request.url.path}}?{{newquery}}">{{newpage}}</a>
+                    {% endif %}
+                {% endfor %}
+            </div>
             <div style="background-color: #021526; padding: 3px; display: flex;"></div>
                 {% if images|length == 60 %}
                 <a class="blue-btn" title="Next" onclick="nextPage()">Next</a>
