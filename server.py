@@ -37,6 +37,7 @@ import ast
 import json
 from urllib.parse import quote
 from fastapi.responses import PlainTextResponse
+import math
 
 
 
@@ -547,7 +548,11 @@ async def index(request: Request):
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
     else:
         images = db_manager.get_index()
-        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
+        rows = db_manager.get_pages()
+        # pages is number of row / 60 int up
+        pages = math.ceil(rows[0][0] / 60)
+        # print(pages)
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages})
     
 
 @app.get("/gen")
@@ -682,7 +687,10 @@ async def search(request: Request):
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
     else:
         images = db_manager.get_search(query_params)
-        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
+        rows = db_manager.get_pages_search(query_params)
+        # pages is number of row / 60 int up
+        pages = math.ceil(rows[0][0] / 60)
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages})
 
 @app.post("/search")
 async def search(request: Request):
@@ -702,7 +710,10 @@ async def search(request: Request):
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
     else:
         images = db_manager.get_search(query_params)
-        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
+        rows = db_manager.get_pages_search(query_params)
+        # pages is number of row / 60 int up
+        pages = math.ceil(rows[0][0] / 60)
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages})
 
 @app.get('/authors')
 async def get_authors():
