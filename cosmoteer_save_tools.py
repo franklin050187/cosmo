@@ -141,6 +141,9 @@ class Ship():
             length |= (byte & 0x7F) << (i * 7)
             if byte & 0x80 == 0:
                 break
+            if i>2:
+                # print("Warning: string length is too long")
+                break
             i += 1
 
         data = file.read(length)
@@ -216,7 +219,7 @@ class Ship():
                         value = (c1, c2, c3, c4)
                     else:
                         print('Unhandled key with binary value:', {key: value})
-
+                        continue
                 d[key] = value
             return d
         elif _type == OBNodeType.Link.value:
