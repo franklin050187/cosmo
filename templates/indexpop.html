@@ -135,6 +135,10 @@
                 {% for i in range(1, maxpage + 1) %}
                     {% set newpage = i|string %}
                     {% set newquery = request.url.query %}
+                    {% set newpath = request.url.path %}
+                    {% if newpath != '/search' %}
+                        {% set newpath = '/search' %}
+                    {% endif %}
                     {% if page_query|length != 1 %}
                         {% set newquery = newquery.replace('page=' + pagenumber, 'page=' + newpage) %}
                     {% else %}
@@ -143,7 +147,7 @@
                     {% if newpage == pagenumber %}
                     <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}" style="font-weight: bold;font-size: x-large;" >{{newpage}}</a>
                     {% else %}
-                    <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}" href="{{request.url.path}}?{{newquery}}">{{newpage}}</a>
+                    <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}" href="{{newpath}}?{{newquery}}">{{newpage}}</a>
                     {% endif %}
                 {% endfor %}
             </div>
