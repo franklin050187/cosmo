@@ -5,10 +5,10 @@ FROM python:3.9
 WORKDIR /app
 
 # Download the project source code from GitHub
-ADD https://github.com/franklin050187/cosmo/archive/refs/heads/master.zip /app
+ADD https://github.com/franklin050187/cosmo/archive/refs/heads/docker.zip /app
 
 # Unzip the downloaded file
-RUN unzip master.zip && rm master.zip && mv cosmo-master cosmo
+RUN unzip docker.zip && rm docker.zip && mv cosmo-docker cosmo
 
 # Change the working directory to the project directory
 WORKDIR /app/cosmo
