@@ -55,14 +55,14 @@
         </div>
         <div class="item-search">
             <div class="item-intro">
-            <h2 style="text-align: center;">Share your ship designs with the community !</h2>
+                <h2 style="text-align: center;">Share your ship designs with the community !</h2>
             </div>
-            <div class="item-author">
-                <form action="/" method="post" enctype="multipart/form-data">
+                <div class="item-author">
+            <form action="https://{{ request.headers['Host'] }}/" method="post" enctype="multipart/form-data">
                     <input type="text" id="authorinput" name="author" placeholder="  Search by author...">
                     <input type="text" id="desc" name="desc" placeholder="  Search by name or description...">
-            </div>
-            <div class="item-tag">
+                </div>
+                <div class="item-tag">
                     <input type="hidden" name="query" id="final_search_query">
                     <input type="hidden" name="order" id="order">
                     <input type="text" id="tag-input" placeholder='  Search by tags... add "-" to exclude tags'>
@@ -72,31 +72,30 @@
                             <div id="excluded-tags" class="tag-box"></div>
                         </div>
                     </div>
-            </div>
-            <div class="item-price">
-                <div>
-                    <input type="text" name="min-price" id="min-price" value="0">
-                    <input type="text" name="max-price" id="max-price" value="5000000">
                 </div>
-                    <div id="price-slider">
+                <div class="item-price">
+                    <div>
+                        <input type="text" name="min-price" id="min-price" value="0">
+                        <input type="text" name="max-price" id="max-price" value="5000000">
                     </div>
-                    <label for="price-slider" style="display: flow-root;margin-bottom: 5px;font-style: italic;">Price Range</label>
-                <div>
-                    <input type="text" name="max-crew" id="max-crew" value="1000">
+                        <div id="price-slider"></div>
+                        <label for="price-slider" style="display: flow-root;margin-bottom: 5px;font-style: italic;">Price Range</label>
+                    <div>
+                        <input type="text" name="max-crew" id="max-crew" value="1000">
+                    </div>
+                    <label for="max-crew" style="display: flow-root;margin-bottom: 5px;font-style: italic;">Max Crew</label>
                 </div>
-                <label for="max-crew" style="display: flow-root;margin-bottom: 5px;font-style: italic;">Max Crew</label>
-            </div>
-            <div class="item-button">
+                <div class="item-button">
                     <button type="submit" class="blue-btn" onclick="appendSearchInput()">Search</button>
                     <a title="Reset" class="red-btn" href="/">
                         <span>Reset</span>
                     </a>
-            </div>
-            <div class="item-order">
-                <button id="elim-competitive-btn" class="active blue-btnfirst" onclick="updateOrderParam('new')">Sort by new first</button>
-                <button id="dom-competitive-btn" class="blue-btnmiddle" onclick="updateOrderParam('pop')">Sort by most popular</button>
-                <button id="fav-competitive-btn" class="blue-btnlast" onclick="updateOrderParam('fav')">Sort by most favorites</button>
-            </div>
+                </div>
+                <div class="item-order">
+                    <button id="elim-competitive-btn" class="active blue-btnfirst" onclick="updateOrderParam('new')">Sort by new first</button>
+                    <button id="dom-competitive-btn" class="blue-btnmiddle" onclick="updateOrderParam('pop')">Sort by most popular</button>
+                    <button id="fav-competitive-btn" class="blue-btnlast" onclick="updateOrderParam('fav')">Sort by most favorites</button>
+                </div>
             </form>
         </div>
 
