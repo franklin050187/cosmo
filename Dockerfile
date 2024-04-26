@@ -1,0 +1,26 @@
+# Use official Python image as the base image
+FROM python:3.9
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Download the project source code from GitHub
+ADD https://github.com/franklin050187/cosmo/archive/refs/heads/master.zip /app
+
+# Unzip the downloaded file
+RUN unzip master.zip && rm master.zip && mv cosmo-master cosmo
+
+# Change the working directory to the project directory
+WORKDIR /app/cosmo
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the .env file to the working directory
+COPY .env .
+
+# Expose port 8000
+EXPOSE 8000
+
+# Command to start the server
+CMD ["python", "server.py"]
