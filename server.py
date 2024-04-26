@@ -106,7 +106,7 @@ async def get_image(id: int, request: Request):
     # Get the query parameters from the request URL
     datadata = {}
     query_params = request.query_params
-    isanalyze = query_params.get("analyze")
+    isanalyze = query_params.get("analyze") 
     # print(query_params)
     if isanalyze == '1':
         ## make a get request to api server and return json data
