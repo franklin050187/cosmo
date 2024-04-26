@@ -51,6 +51,7 @@ db_manager = ShipImageDatabase()
 client_id = os.getenv('discord_id')
 client_secret = os.getenv('discord_secret')
 redirect_uri = os.getenv('discord_redirect')
+api_uri = os.getenv('api_uri')
 client = DiscordOAuthClient(
     client_id, client_secret, redirect_uri, ("identify", "guilds"))
 
@@ -110,7 +111,7 @@ async def get_image(id: int, request: Request):
     # print(query_params)
     if isanalyze == '1':
         ## make a get request to api server and return json data
-        api_url = "https://cosmo-api-six.vercel.app/analyze?url="+url_png+"&analyze=1"
+        api_url = api_uri+"/analyze?url="+url_png+"&analyze=1"
         response = requests.get(api_url)
         # print("response", response)
         # print("response.text", response.text)
