@@ -744,9 +744,9 @@ async def serve_files(request: Request):
 trusted_hosts = [trusted_host]
 
 # Middleware to ensure HTTPS and upgrade requests
-app.add_middleware(
-    TrustedHostMiddleware, allowed_hosts=trusted_hosts
-)
+# app.add_middleware(
+#     TrustedHostMiddleware, allowed_hosts=trusted_hosts
+# )
 
 app.add_middleware(
     HTTPSRedirectMiddleware
