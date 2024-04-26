@@ -594,6 +594,7 @@ async def index(request: Request):
 async def home(request: Request):
     user = request.session.get("discord_user")
     fulltext = None
+    ftauthor = None
     if not user:
         user = "Guest"
     # tag list
@@ -622,14 +623,18 @@ async def home(request: Request):
                 query_tags.append((tag, value))
         elif word.startswith('fulltext='):
             fulltext = word[9:]
+        elif word.startswith('ftauthor='):
+            ftauthor = word[9:]
         else:
             tag = word
             value = 1
             if tag in TAGS:
                 query_tags.append((tag, value))
     if fulltext :
-        print("fulltext", fulltext)
+        # print("fulltext", fulltext)
         query_tags.append(("fulltext", fulltext))
+    if ftauthor :
+        query_tags.append(("ftauthor", ftauthor))
     if authorstrip :
         query_tags.append(("author", authorstrip))
     if descstrip :

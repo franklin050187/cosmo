@@ -110,6 +110,7 @@ let matchedTags = [];
 let selectedTags = [];
 let excludedTags = [];
 let fulltext = '';
+let ftauthor = '';
 
 // Extract tags from URL parameters on page load
 window.addEventListener('DOMContentLoaded', () => {
@@ -174,6 +175,15 @@ function filterTags() {
   // add tagInput.value to finalSearchQuery.value as parameter "fulltext="
   if (tagInput.value !== '') {
     finalSearchQuery.value += ' ' + 'fulltext=' + tagInput.value;
+  }
+
+  // remove ftauthor= from finalSearchQuery.value
+  const ftauthorRegex = /\bftauthor=[^ ]*/g;
+  finalSearchQuery.value = finalSearchQuery.value.replace(ftauthorRegex, '');
+
+  // add tagInput.value to finalSearchQuery.value as parameter "ftauthor="
+  if (authorInput.value !== '') {
+    finalSearchQuery.value += ' ' + 'ftauthor=' + authorInput.value;
   }
 }
 
@@ -315,6 +325,11 @@ function updateFinalSearchQuery() {
   if (tagInput.value !== '') {
     finalSearchQuery.value += ' ' + 'fulltext=' + tagInput.value;
     tagInput.value = '';
+  }
+  // add ftauthor to selectedTags as parameter "author=" if ftauthor is not empty
+  if (authorInput.value !== '') {
+    finalSearchQuery.value += ' ' + 'ftauthor=' + authorInput.value;
+    authorInput.value = '';
   }
   console.log(finalSearchQuery.value);
 }
