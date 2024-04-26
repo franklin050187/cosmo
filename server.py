@@ -739,7 +739,7 @@ async def serve_files(request: Request):
         user = "Guest"
     return RedirectResponse(url="/", status_code=303)
 
-app.add_middleware(HTTPSRedirectMiddleware)
+# app.add_middleware(HTTPSRedirectMiddleware)
 
 # session settings
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('secret_session'))
