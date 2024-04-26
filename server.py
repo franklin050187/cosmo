@@ -38,7 +38,8 @@ import json
 from urllib.parse import quote
 from fastapi.responses import PlainTextResponse
 import math
-
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 
 load_dotenv()
@@ -52,6 +53,7 @@ client_id = os.getenv('discord_id')
 client_secret = os.getenv('discord_secret')
 redirect_uri = os.getenv('discord_redirect')
 api_uri = os.getenv('api_uri')
+trusted_host = os.getenv('trusted_host')
 client = DiscordOAuthClient(
     client_id, client_secret, redirect_uri, ("identify", "guilds"))
 
@@ -671,8 +673,6 @@ async def home(request: Request):
     # Construct the redirect URL with query parameters
     redirect_url = f"{base_url}?"
     redirect_url += urlencode(query_params)
-    # print("redirect", redirect_url)
-    # Redirect the user to the search route
     return RedirectResponse(redirect_url, status_code=307)
 
 @app.get("/search")
@@ -738,6 +738,19 @@ async def serve_files(request: Request):
         # print("DEBUG not a user home")
         user = "Guest"
     return RedirectResponse(url="/", status_code=303)
+
+
+# List of trusted hosts
+trusted_hosts = [trusted_host]
+
+# Middleware to ensure HTTPS and upgrade requests
+app.add_middleware(
+    TrustedHostMiddleware, allowed_hosts=trusted_hosts
+)
+
+app.add_middleware(
+    HTTPSRedirectMiddleware
+)
 
 # session settings
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('secret_session'))
