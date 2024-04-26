@@ -739,18 +739,7 @@ async def serve_files(request: Request):
         user = "Guest"
     return RedirectResponse(url="/", status_code=303)
 
-
-# List of trusted hosts
-trusted_hosts = [trusted_host]
-
-# Middleware to ensure HTTPS and upgrade requests
-# app.add_middleware(
-#     TrustedHostMiddleware, allowed_hosts=trusted_hosts
-# )
-
-app.add_middleware(
-    HTTPSRedirectMiddleware
-)
+app.add_middleware(HTTPSRedirectMiddleware)
 
 # session settings
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('secret_session'))
@@ -758,4 +747,4 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # start server
 if __name__ == '__main__':
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, proxy_headers=True)
