@@ -181,7 +181,7 @@ async def myfavorite(request: Request):
     if brand == "exl":
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
     else:
-        rows = db_manager.get_my_favorite_count(user)
+        rows = db_manager.get_my_favorite_pages(user)
         # pages is number of row / 60 int up
         pages = math.ceil(rows[0][0] / 60)
         return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages})
