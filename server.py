@@ -178,7 +178,10 @@ async def myfavorite(request: Request):
     if brand == "exl":
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
     else:
-        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
+        rows = db_manager.get_my_favorite_pages(user)
+        # pages is number of row / 60 int up
+        pages = math.ceil(rows[0][0] / 60)
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages})
 
 # edit page get
 @app.get("/edit/{id}")
@@ -587,7 +590,10 @@ async def index(request: Request):
     if brand == "exl":
         return templates.TemplateResponse("index.html", {"request": request, "images": images, "user": user})
     else:
-        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user})
+        rows = db_manager.get_my_ships_pages(user)
+        # pages is number of row / 60 int up
+        pages = math.ceil(rows[0][0] / 60)
+        return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages})
 
 # main page + search results
 @app.post("/")
@@ -698,7 +704,7 @@ async def search(request: Request):
         return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages})
 
 @app.post("/search")
-async def search(request: Request):
+async def search_post(request: Request):
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
