@@ -218,11 +218,17 @@ class ShipImageDatabase:
     def get_my_ships(self, user):
         query = "SELECT * FROM shipdb WHERE submitted_by=%s"
         return self.fetch_data(query, (user,))
+    def get_my_ships_pages(self, user):
+        query = "SELECT COUNT(*) FROM shipdb WHERE submitted_by=%s"
+        return self.fetch_data(query, (user,))
   # done  
     def get_my_favorite(self, user):
         query = "SELECT * FROM shipdb WHERE id = ANY (SELECT UNNEST(favorite) FROM favoritedb WHERE name = %s)"
         return self.fetch_data(query, (user,))
-
+        
+    def get_my_favorite_pages(self, user):
+        query = "SELECT COUNT(*) FROM shipdb WHERE id = ANY (SELECT UNNEST(favorite) FROM favoritedb WHERE name = %s)"
+        return self.fetch_data(query, (user,))
   
     def get_search(self, query_params):
         # print("gen search",query_params)
