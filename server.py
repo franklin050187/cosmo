@@ -40,7 +40,8 @@ from fastapi.responses import PlainTextResponse
 import math
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
-
+import time
+from sitemap import generate_sitemap
 
 load_dotenv()
 
@@ -73,7 +74,13 @@ modlist = ast.literal_eval(modlist)
 def robots():
     data = """User-agent: *\nDisallow: \nCrawl-delay: 5"""
     return data
-    
+
+# generate dynamic sitemap.xml
+@app.get("/sitemap.xml")
+async def get_sitemap():
+    sitemap = generate_sitemap()
+    return sitemap
+
 # ship specific page
 @app.get("/ship/{id}")
 async def get_image(id: int, request: Request):

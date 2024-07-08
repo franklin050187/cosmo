@@ -72,11 +72,24 @@ class ShipImageDatabase:
         self.conn.close()
         
     def get_authors(self):
+        """
+        Retrieves a list of distinct authors from the ship database.
+
+        :return: A dictionary containing the list of authors.
+        """
         query = "SELECT DISTINCT author FROM shipdb;"
         authors = self.fetch_data(query)
         # print(authors)
         # authors = [author[0] for author in authors]  # Extracting only the author value
         return {'authors': authors}
+    
+    # get all unique tags from the ship database
+    def get_tags(self):
+        # tags are tags TEXT[]
+        query = "SELECT DISTINCT unnest(tags) AS tag FROM shipdb;"
+        tagsdict = self.fetch_data(query)
+        # print(tagsdict)
+        return tagsdict
 
     def init_db(self):
         # Define the create table query
