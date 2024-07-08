@@ -88,7 +88,7 @@ async def get_sitemap():
         # not writable access, serve static file
         print(e)
     
-    return FileResponse("sitemap.xml", media_type="application/xml")
+    return FileResponse("static/sitemap.xml", media_type="application/xml")
 
 # ship specific page
 @app.get("/ship/{id}")
