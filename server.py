@@ -78,8 +78,17 @@ def robots():
 # generate dynamic sitemap.xml
 @app.get("/sitemap.xml")
 async def get_sitemap():
-    sitemap = generate_sitemap()
-    return Response(content=sitemap, media_type="application/xml")
+    # sitemap = generate_sitemap()
+    # return Response(content=sitemap, media_type="application/xml")
+    # serve file from static folder
+    try : 
+        with open('static/sitemap.xml', 'w') as f:
+            f.write(generate_sitemap())
+    except Exception as e:
+        # not writable access, serve static file
+        print(e)
+    
+    return FileResponse("sitemap.xml", media_type="application/xml")
 
 # ship specific page
 @app.get("/ship/{id}")
