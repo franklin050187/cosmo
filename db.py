@@ -64,7 +64,7 @@ class ShipImageDatabase:
                                 host=os.getenv('POSTGRES_HOST'),
                                 user=os.getenv('POSTGRES_USER'),
                                 password=os.getenv('POSTGRES_PASSWORD'),
-                                port=5432)
+                                port=6543)
         return conn
 
     def close_connection(self):
