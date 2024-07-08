@@ -79,7 +79,7 @@ def robots():
 @app.get("/sitemap.xml")
 async def get_sitemap():
     sitemap = generate_sitemap()
-    return sitemap
+    return Response(content=sitemap, media_type="application/xml")
 
 # ship specific page
 @app.get("/ship/{id}")

@@ -1,35 +1,47 @@
+"""Sitemap generation for the website."""
 import time
-from db import ShipImageDatabase
 from urllib.parse import quote
+
+from db import ShipImageDatabase
 
 db_manager = ShipImageDatabase()
 
 def generate_sitemap():
+    """
+    Generate the sitemap XML for the website including main page, authors, and tags.
+    """
     authors = db_manager.get_authors()['authors']
     tags = db_manager.get_tags()
     current_time = time.strftime("%Y-%m-%dT%H:%M:%S+01:00", time.gmtime())
 
-    sitemap = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-    sitemap += '\n'.join([
-        '<url><loc>https://cosmoship.duckdns.org/</loc><lastmod>{}</lastmod><priority>1.0</priority></url>'.format(current_time)
-    ])
+    sitemap = ['<?xml version="1.0" encoding="UTF-8"?>']
+    sitemap.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
 
+    # Main page
+    sitemap.append('<url>')
+    sitemap.append('<loc>https://cosmoship.duckdns.org/</loc>')
+    sitemap.append(f'<lastmod>{current_time}</lastmod>')
+    sitemap.append('<priority>1.0</priority>')
+    sitemap.append('</url>')
+
+    # Authors
     for author in authors:
-        # clean author data
-        author = author[0]
-        # encode author data for url
-        author = quote(author)
-        # print("author", author)
+        author = quote(author[0])
+        sitemap.append('<url>')
+        sitemap.append(f'<loc>https://cosmoship.duckdns.org/search?author={author}</loc>')
+        sitemap.append(f'<lastmod>{current_time}</lastmod>')
+        sitemap.append('<priority>1.0</priority>')
+        sitemap.append('</url>')
 
-        sitemap += '\n<url><loc>https://cosmoship.duckdns.org/search?author={}</loc><lastmod>{}</lastmod><priority>1.0</priority></url>'.format(author, current_time)
+    # Tags
     for tag in tags:
-        tag = tag[0]
-        tag = quote(tag)
-        # print("tag", tag)
-        sitemap += '\n<url><loc>https://cosmoship.duckdns.org/search?{}=1</loc><lastmod>{}</lastmod><priority>1.0</priority></url>'.format(tag, current_time)
+        tag = quote(tag[0])
+        sitemap.append('<url>')
+        sitemap.append(f'<loc>https://cosmoship.duckdns.org/search?{tag}=1</loc>')
+        sitemap.append(f'<lastmod>{current_time}</lastmod>')
+        sitemap.append('<priority>1.0</priority>')
+        sitemap.append('</url>')
 
-    sitemap += '\n</urlset>'
+    sitemap.append('</urlset>')
 
-    return sitemap
-    
-    
+    return '\n'.join(sitemap)
