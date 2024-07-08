@@ -16,9 +16,6 @@ WORKDIR /app/cosmo
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the .env file to the working directory
-COPY .env .
-
 # Expose port 8000
 EXPOSE 8000
 
