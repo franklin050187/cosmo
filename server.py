@@ -1,3 +1,9 @@
+"""
+This file is the main file of the server.
+"""
+
+# TODO : fix edit ship messing up tags
+
 # Copyright 2023 Poney!
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
@@ -12,35 +18,35 @@
 # FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import os
+import ast
 import base64
-from dotenv import load_dotenv
-
-import uvicorn
+import json
+import math
+import os
 import re
-from fastapi import FastAPI, Request, File, UploadFile, Response
-from fastapi.responses import FileResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from typing import List
+# from pricegen import calculate_price
+from urllib.parse import quote, urlencode
+
+import requests
+import uvicorn
+from dotenv import load_dotenv
+from fastapi import FastAPI, File, Response, UploadFile # Request,
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
-from png_upload import upload_image_to_imgbb
-from tagextractor import PNGTagExtractor
+
+# from tagextractor import PNGTagExtractor
+from api_engine import extract_tags_v2
 from db import ShipImageDatabase
-from fastapi.middleware.gzip import GZipMiddleware
-from pricegen import calculate_price
-from urllib.parse import urlencode
-import requests
-from typing import List
-import ast
-import json
-from urllib.parse import quote
-from fastapi.responses import PlainTextResponse
-import math
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
-import time
+from png_upload import upload_image_to_imgbb
+# import time
 from sitemap import generate_sitemap
 
 load_dotenv()
@@ -72,22 +78,37 @@ modlist = ast.literal_eval(modlist)
 
 @app.get('/robots.txt', response_class=PlainTextResponse)
 def robots():
+    """
+    Returns a plain text response containing the robots.txt file content.
+
+    This function is a route handler for the '/robots.txt' endpoint. 
+    It returns a response with the content of the robots.txt file. 
+    The content is a string that specifies the rules for web crawlers.
+
+    Returns:
+        PlainTextResponse: The response object containing the robots.txt file content.
+    """
     data = """User-agent: *\nDisallow: \nCrawl-delay: 5"""
     return data
 
 # generate dynamic sitemap.xml
 @app.get("/sitemap.xml")
 async def get_sitemap():
+    """
+    A function that generates the sitemap.xml file by writing the output of generate_sitemap() to 'static/sitemap.xml'.
+    If an exception occurs during the file write operation, it serves the static file. 
+    Returns a FileResponse object for the sitemap.xml file.
+    """
     # sitemap = generate_sitemap()
     # return Response(content=sitemap, media_type="application/xml")
     # serve file from static folder
-    try : 
-        with open('static/sitemap.xml', 'w') as f:
+    try :
+        with open('static/sitemap.xml', 'w', encoding='utf-8') as f:
             f.write(generate_sitemap())
     except Exception as e:
         # not writable access, serve static file
         print(e)
-    
+
     return FileResponse("static/sitemap.xml", media_type="application/xml")
 
 # ship specific page
@@ -203,11 +224,11 @@ async def myfavorite(request: Request):
         return templates.TemplateResponse("indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages})
 
 # edit page get
-@app.get("/edit/{id}")
-async def edit_image(id: int, request: Request):
+@app.get("/edit/{ship_id}")
+async def edit_image(ship_id: int, request: Request):
     # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
-    check = db_manager.edit_ship(id, user)
+    check = db_manager.edit_ship(ship_id, user)
     if check == "ko":
         return RedirectResponse("/")
     brand = request.session.get("brand")
@@ -218,12 +239,12 @@ async def edit_image(id: int, request: Request):
     return templates.TemplateResponse("edit.html", {"request": request, "image": check, "user": user, "brand": brand})
 
 # edit post
-@app.post("/edit/{id}")
-async def edit_image(id: int, request: Request):
+@app.post("/edit/{ship_id}")
+async def edit_image_post(ship_id: int, request: Request):
     # Get the user from the session
     user = request.session.get("discord_user")
     form_data = await request.form()
-    check = db_manager.post_edit_ship(id, form_data, user)
+    check = db_manager.post_edit_ship(ship_id, form_data, user)
     if check == "ko":
         return RedirectResponse("/")
     return RedirectResponse(url="/", status_code=303)
@@ -267,8 +288,9 @@ async def upload_update(id: int, request: Request, file: UploadFile = File(...))
         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
     # get the tags
     try:
-        extractor = PNGTagExtractor()
-        tags, author = extractor.extract_tags(url_png) ####
+        # extractor = PNGTagExtractor()
+        # tags, author = extractor.extract_tags(url_png) ####
+        tags, author, crew, price = extract_tags_v2(url_png)
     except Exception as e:
         error = 'unable to decode file provided, check upload guide below'
         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
@@ -283,7 +305,7 @@ async def upload_update(id: int, request: Request, file: UploadFile = File(...))
     if ".ship" in shipname:
         shipname = shipname.replace(".ship", "")
     
-    price, crew = calculate_price(url_png)
+    # price, crew = calculate_price(url_png)
     
     brand = request.session.get("brand")
     if not brand:
@@ -376,7 +398,7 @@ async def upload_page(request: Request):
 
 # Endpoint for displaying the file initupload page
 @app.get("/inituploadmass", response_class=FileResponse)
-async def upload_page(request: Request):
+async def upload_page_mass(request: Request):
     user = request.session.get("discord_user")
     if not user:
         return RedirectResponse("/login")
@@ -416,8 +438,9 @@ async def upload(request: Request, files: List[UploadFile] = File(...)):
             # get the tags
             try:
                 # print("extractor")
-                extractor = PNGTagExtractor()
-                tags, author = extractor.extract_tags(url_png) ####
+                # extractor = PNGTagExtractor()
+                # tags, author = extractor.extract_tags(url_png) ####
+                tags, author, crew, price = extract_tags_v2(url_png)
                 # print("extractor", tags)
 
             except Exception as e:
@@ -434,7 +457,7 @@ async def upload(request: Request, files: List[UploadFile] = File(...)):
             if ".ship" in shipname:
                 shipname = shipname.replace(".ship", "")
             # print("price")
-            price, crew = calculate_price(url_png)
+            # price, crew = calculate_price(url_png)
             # print("price", price)
             user = request.session.get("discord_user")
             form_data = {
@@ -468,7 +491,7 @@ async def logoff(request: Request):
 
 # Endpoint for uploading files
 @app.post("/upload")
-async def upload(request: Request):
+async def upload_post(request: Request):
     user = request.session.get("discord_user")
     form_data = await request.form()
     db_manager.upload_image(form_data, user)
@@ -476,7 +499,7 @@ async def upload(request: Request):
 
 # Endpoint for checking file and getting tags
 @app.post("/initupload")
-async def upload(request: Request, file: UploadFile = File(...)):
+async def init_upload(request: Request, file: UploadFile = File(...)):
     # Read the image file
     contents = await file.read()
     # Encode the contents as base64
@@ -489,8 +512,9 @@ async def upload(request: Request, file: UploadFile = File(...)):
         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
     # get the tags
     try:
-        extractor = PNGTagExtractor()
-        tags, author = extractor.extract_tags(url_png) ####
+        # extractor = PNGTagExtractor()
+        # tags, author = extractor.extract_tags(url_png) ####
+        tags, author, crew, price = extract_tags_v2(url_png)
         # author = extractor.extract_author(url_png) ####
         # print("tags = ",tags)
     except Exception as e:
@@ -507,7 +531,7 @@ async def upload(request: Request, file: UploadFile = File(...)):
     if ".ship" in shipname:
         shipname = shipname.replace(".ship", "")
     
-    price, crew = calculate_price(url_png)
+    # price, crew = calculate_price(url_png)
     
     brand = request.session.get("brand")
     if not brand:
@@ -536,7 +560,7 @@ async def download_ship(image_id: str):
     if result:
         image_url, filename = result
         # Fetch the image content from the URL
-        response = requests.get(image_url)
+        response = requests.get(image_url, timeout=30)
         if response.status_code == 200:
             # Set the appropriate content type based on the response headers
             content_type = response.headers.get("content-type", "application/octet-stream")
@@ -578,7 +602,7 @@ async def index(request: Request):
     
 
 @app.get("/gen")
-async def index(request: Request):
+async def index_gen(request: Request):
     brand = "gen"
     if not request.session.get("brand"):
         request.session["brand"] = brand
@@ -587,7 +611,7 @@ async def index(request: Request):
     return RedirectResponse(url="/", status_code=303)
         
 @app.get("/exl")
-async def index(request: Request):
+async def index_exl(request: Request):
     brand = "exl"
     if not request.session.get("brand"):
         request.session["brand"] = brand
@@ -597,7 +621,7 @@ async def index(request: Request):
         
 
 @app.get("/myships")
-async def index(request: Request):
+async def index_myships(request: Request):
     user = request.session.get("discord_user")
     if not user:
         return RedirectResponse("/login?button=myships")
@@ -773,4 +797,11 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # start server
 if __name__ == '__main__':
-    uvicorn.run(app, host="0.0.0.0", port=8000, proxy_headers=True, forwarded_allow_ips="*")
+    uvicorn.run(
+        "server:app",
+        host="0.0.0.0",
+        port=8000,
+        workers=5,
+        proxy_headers=True,
+        forwarded_allow_ips="*"
+    )
