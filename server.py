@@ -18,10 +18,15 @@ from dotenv import load_dotenv
 
 import uvicorn
 import re
-from fastapi import FastAPI, Request, File, UploadFile, Response
-from fastapi.responses import FileResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
+from fastapi import UploadFile, FastAPI, File
+# from fastapi.responses import FileResponse, RedirectResponse
+from starlette.responses import FileResponse, RedirectResponse, Response
+# from fastapi.templating import Jinja2Templates
+# from fastapi.staticfiles import StaticFiles
+from starlette.applications import Starlette
+from starlette.routing import Route, Mount
+from starlette.templating import Jinja2Templates
+from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette_discord.client import DiscordOAuthClient
@@ -29,6 +34,8 @@ from png_upload import upload_image_to_imgbb
 # from tagextractor import PNGTagExtractor
 from db import ShipImageDatabase
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 # from pricegen import calculate_price
 from urllib.parse import urlencode
 import requests
@@ -773,7 +780,8 @@ async def serve_files(request: Request):
 # session settings
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('secret_session'))
 app.add_middleware(GZipMiddleware, minimum_size=1000)
-
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+app.add_middleware(HTTPSRedirectMiddleware)
 # start server
 if __name__ == '__main__':
     uvicorn.run(app, host="0.0.0.0", port=8000, proxy_headers=True, forwarded_allow_ips="*")
