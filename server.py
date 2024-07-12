@@ -788,9 +788,9 @@ async def serve_files(request: Request):
         user = "Guest"
     return RedirectResponse(url="/", status_code=303)
 
-# app.add_middleware(
-#     TrustedHostMiddleware, allowed_hosts=["*"]
-# )
+app.add_middleware(
+    TrustedHostMiddleware, allowed_hosts=["*"]
+)
 
 # app.add_middleware(HTTPSRedirectMiddleware)
 
@@ -800,4 +800,4 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # start server
 if __name__ == '__main__':
-    uvicorn.run("server:app", host='0.0.0.0', port=8000)
+    uvicorn.run("server:app", host='0.0.0.0', port=8000, forwarded_allow_ips="*")
