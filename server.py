@@ -38,8 +38,7 @@ import json
 from urllib.parse import quote
 from fastapi.responses import PlainTextResponse
 import math
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+
 from sitemap import generate_sitemap
 
 from api_engine import extract_tags_v2
@@ -55,11 +54,10 @@ db_manager = ShipImageDatabase()
 client_id = os.getenv('discord_id')
 client_secret = os.getenv('discord_secret')
 redirect_uri = os.getenv('discord_redirect')
-api_uri = os.getenv('api_uri')
-trusted_host = os.getenv('trusted_host')
 client = DiscordOAuthClient(
     client_id, client_secret, redirect_uri, ("identify", "guilds"))
-
+api_uri = os.getenv('api_uri')
+trusted_host = os.getenv('trusted_host')
 # app configuration
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -77,7 +75,7 @@ def robots():
     data = """User-agent: *\nDisallow: \nCrawl-delay: 5"""
     return data
 
-# generate dynamic sitemap.xml
+
 @app.get("/sitemap.xml")
 async def get_sitemap():
     """
@@ -96,6 +94,7 @@ async def get_sitemap():
         print(e)
 
     return FileResponse("static/sitemap.xml", media_type="application/xml")
+
 
 
 # ship specific page
@@ -133,11 +132,11 @@ async def get_image(id: int, request: Request):
     # Get the query parameters from the request URL
     datadata = {}
     query_params = request.query_params
-    isanalyze = query_params.get("analyze") 
+    isanalyze = query_params.get("analyze")
     # print(query_params)
     if isanalyze == '1':
         ## make a get request to api server and return json data
-        api_url = api_uri+"/analyze?url="+url_png+"&analyze=1"
+        api_url = "https://cosmo-api-six.vercel.app/analyze?url="+url_png+"&analyze=1"
         response = requests.get(api_url)
         # print("response", response)
         # print("response.text", response.text)
@@ -227,7 +226,7 @@ async def edit_image(id: int, request: Request):
 
 # edit post
 @app.post("/edit/{id}")
-async def edit_image_post(id: int, request: Request):
+async def edit_image(id: int, request: Request):
     # Get the user from the session
     user = request.session.get("discord_user")
     form_data = await request.form()
@@ -276,6 +275,7 @@ async def upload_update(id: int, request: Request, file: UploadFile = File(...))
     # get the tags
     try:
         tags, author, crew, price = extract_tags_v2(url_png)
+
     except Exception as e:
         error = 'unable to decode file provided, check upload guide below'
         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
@@ -383,7 +383,7 @@ async def upload_page(request: Request):
 
 # Endpoint for displaying the file initupload page
 @app.get("/inituploadmass", response_class=FileResponse)
-async def upload_page_mass(request: Request):
+async def upload_page(request: Request):
     user = request.session.get("discord_user")
     if not user:
         return RedirectResponse("/login")
@@ -440,7 +440,7 @@ async def upload(request: Request, files: List[UploadFile] = File(...)):
             if ".ship" in shipname:
                 shipname = shipname.replace(".ship", "")
             # print("price")
-            tags, author, crew, price = extract_tags_v2(url_png)
+            # price, crew = calculate_price(url_png)
             # print("price", price)
             user = request.session.get("discord_user")
             form_data = {
@@ -474,7 +474,7 @@ async def logoff(request: Request):
 
 # Endpoint for uploading files
 @app.post("/upload")
-async def upload_post(request: Request):
+async def upload(request: Request):
     user = request.session.get("discord_user")
     form_data = await request.form()
     db_manager.upload_image(form_data, user)
@@ -482,7 +482,7 @@ async def upload_post(request: Request):
 
 # Endpoint for checking file and getting tags
 @app.post("/initupload")
-async def upload_init(request: Request, file: UploadFile = File(...)):
+async def upload(request: Request, file: UploadFile = File(...)):
     # Read the image file
     contents = await file.read()
     # Encode the contents as base64
@@ -496,6 +496,7 @@ async def upload_init(request: Request, file: UploadFile = File(...)):
     # get the tags
     try:
         tags, author, crew, price = extract_tags_v2(url_png)
+
         # author = extractor.extract_author(url_png) ####
         # print("tags = ",tags)
     except Exception as e:
@@ -512,7 +513,8 @@ async def upload_init(request: Request, file: UploadFile = File(...)):
     if ".ship" in shipname:
         shipname = shipname.replace(".ship", "")
     
-    # tags, author, crew, price = extract_tags_v2(url_png)
+
+
     
     brand = request.session.get("brand")
     if not brand:
@@ -583,7 +585,7 @@ async def index(request: Request):
     
 
 @app.get("/gen")
-async def index_gen(request: Request):
+async def index(request: Request):
     brand = "gen"
     if not request.session.get("brand"):
         request.session["brand"] = brand
@@ -592,7 +594,7 @@ async def index_gen(request: Request):
     return RedirectResponse(url="/", status_code=303)
         
 @app.get("/exl")
-async def index_exl(request: Request):
+async def index(request: Request):
     brand = "exl"
     if not request.session.get("brand"):
         request.session["brand"] = brand
@@ -602,7 +604,7 @@ async def index_exl(request: Request):
         
 
 @app.get("/myships")
-async def index_ship(request: Request):
+async def index(request: Request):
     user = request.session.get("discord_user")
     if not user:
         return RedirectResponse("/login?button=myships")
@@ -700,6 +702,8 @@ async def home(request: Request):
     # Construct the redirect URL with query parameters
     redirect_url = f"{base_url}?"
     redirect_url += urlencode(query_params)
+    # print("redirect", redirect_url)
+    # Redirect the user to the search route
     return RedirectResponse(redirect_url, status_code=307)
 
 @app.get("/search")
@@ -766,16 +770,10 @@ async def serve_files(request: Request):
         user = "Guest"
     return RedirectResponse(url="/", status_code=303)
 
-app.add_middleware(
-    TrustedHostMiddleware, allowed_hosts=["*"]
-)
-
-# app.add_middleware(HTTPSRedirectMiddleware)
-
 # session settings
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('secret_session'))
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # start server
 if __name__ == '__main__':
-    uvicorn.run(app, host="0.0.0.0", port=8000, proxy_headers=True, forwarded_allow_ips="*")
+    uvicorn.run(app)
