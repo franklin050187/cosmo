@@ -789,7 +789,7 @@ app.add_middleware(
     TrustedHostMiddleware, allowed_hosts=["*"]
 )
 
-app.add_middleware(HTTPSRedirectMiddleware)
+# app.add_middleware(HTTPSRedirectMiddleware)
 
 # session settings
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('secret_session'))
@@ -801,6 +801,7 @@ if __name__ == '__main__':
         "server:app",
         host="0.0.0.0",
         port=8000,
+        workers=5,
         proxy_headers=True,
         forwarded_allow_ips="*"
     )
