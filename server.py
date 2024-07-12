@@ -789,7 +789,7 @@ app.add_middleware(
     TrustedHostMiddleware, allowed_hosts=["*"]
 )
 
-# app.add_middleware(HTTPSRedirectMiddleware)
+app.add_middleware(HTTPSRedirectMiddleware)
 
 # session settings
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('secret_session'))
