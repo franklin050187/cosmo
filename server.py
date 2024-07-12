@@ -716,6 +716,9 @@ async def home(request: Request):
         query_params[tag] = str(value)
     # Get the base URL of the "search" endpoint
     base_url = request.url_for("search")
+    print("base_url", base_url)
+    base_url = request.url_for("search").replace("http://", "https://")
+    print("base_url mod", base_url)
     # Construct the redirect URL with query parameters
     redirect_url = f"{base_url}?"
     redirect_url += urlencode(query_params)
@@ -785,9 +788,9 @@ async def serve_files(request: Request):
         user = "Guest"
     return RedirectResponse(url="/", status_code=303)
 
-app.add_middleware(
-    TrustedHostMiddleware, allowed_hosts=["*"]
-)
+# app.add_middleware(
+#     TrustedHostMiddleware, allowed_hosts=["*"]
+# )
 
 # app.add_middleware(HTTPSRedirectMiddleware)
 
@@ -797,4 +800,4 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # start server
 if __name__ == '__main__':
-    uvicorn.run("server:app", host='0.0.0.0', port=8000, workers=5)
+    uvicorn.run("server:app", host='0.0.0.0', port=8000)
