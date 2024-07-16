@@ -7,34 +7,16 @@
         posthog.init('phc_K77EUohajEup7Xj92C4lZUUjbVEh2x1nAhQYTdZ2xJL', { api_host: 'https://e.abla.io' })
     </script>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>General | Cosmoteer Ship Library</title>
-    <meta name="robots" content="noindex,nofollow">
+    <meta name="viewport" content="width=device-width">
+    <title>General | Cosmoteer Ship Library | Tags</title>
+    <meta name="robots" content="all">
     <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
     <link rel="stylesheet" type="text/css" {% if "exl" in brand %}href="/static/css/v2.css" {% else
         %}href="/static/css/general.css" {% endif %}>
-    <!-- <script defer src="/_vercel/insights/script.js"></script> -->
-    <script src="/static/js/ship.js"></script>
 </head>
-<style>
-    .spinner {
-        border: 4px solid rgba(0, 0, 0, 0.1);
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        border-left-color: #09f;
-        animation: spin 1s linear infinite;
-        display: inline-block;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-</style>
 
 <body class="site-container">
+
     {% if "exl" in brand %}
     <div class="item-header">
         <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
@@ -103,74 +85,37 @@
         </div>
     </div>
     {% endif %}
-    <div class="item-search">
-        <div class="intro" style="
-            background-color: rgb(2 21 38);
-        ">
-            <img loading="lazy" src="{{ url_png }}" width="512" height="512">
-            <div id="conditional-content">
-                {% if "url_com" in datadata %}
-                <img loading="lazy" src="{{datadata.url_com}}" width="512">
-                <img loading="lazy" src="{{datadata.analysis.url_analysis}}" width="512">
-                {% else %}
-                <ul>
-                    <a title="Show stats" class="blue-btn register" id="fetch-button"
-                        onclick="fetchData('{{ url_png }}')">
-                        <span>Show stats</span>
-                    </a>
-                </ul>
-                {% endif %}
-            </div>
-        </div>
-        <div class="author ship-card">
-            <h2>Ship name : {{ image[0][5] }}</h2>
-            {% if "exl" in image[0][12] and "gen" in brand %}
-            <p>WARNING : This ship is from the Excelsior library, it requires piloting skills.</p>
-            {% endif %}
-            <p>Author : {{ image[0][6] }}</p>
-            <p>Ship description : {{ image[0][4] | safe}}</p>
-            <p></p>
-            <p><span class="data credits"><span>Cost:</span> {{ image[0][7] }}₡</span>
-            </p>
-            <p>
-                <span class="data"><span>Crew : {{ image[0][13] }} 웃</span></span>
-            </p>
-            <P class="data"><span>Popularity :</span> {{ image[0][8] }}</P>
-            <P class="data"><span>Date of submission :</span> {{ image[0][9] }}</P>
-            <p></p>
-            <p id="output"></p>
-            <p class="data" style="font-size: 12px;">Submitted by : {{ image[0][3] }}</p>
-            {% if user == "Guest" %}
-            <ul><a title="Favorite" class="blue-btn register" href="/login?button=myfavorite"><span>Login to add
-                        favorite</span></a></ul>
-            {% endif %} {% if fav == 1 %}
-            <ul><a title="Favorite" class="blue-btn register" href="/rmfavorite/{{ image[0][0] }}"><span>Remove from
-                        favorite</span></a></ul>
-            {% else %}
-            <ul><a title="Favorite" class="blue-btn register" href="/favorite/{{ image[0][0] }}"><span>Add to
-                        favorite</span></a></ul>
-            {% endif %}
-        </div>
-        <div class="tag ship-card">
-            <ul class="ships-list">
-                <span class="data">
-                    <span>Ship tags:</span>
-                    {% set image_tags = image[0][10] | replace("[", "") | replace("]", "") | replace("'", "") |
-                    replace(" ", "") %} {% set image_tags_list = image_tags.split(",") %} {% for tag in image_tags_list
-                    %}
-                    <li style="list-style: none;"><span class="selected-tag">{{ tag }}</span></li>
-                    {% endfor %}
-                </span>
 
-                <ul><a title="Download" class="blue-btn register"
-                        onclick="downloadShip('{{ image[0][0] }}')"><span>Download</span></a></ul>
-                {% if user == image[0][3] or user in modlist %}
-                <ul><a title="Edit" class="blue-btn register" href="/edit/{{ image[0][0] }}"><span>Edit</span></a></ul>
-                <ul><a title="Delete" class="red-btn register" href="/delete/{{ image[0][0] }}"><span>Delete</span></a>
-                </ul>
-                {% endif %}
-            </ul>
+    <div class="item-search">
+        <div></div>
+        <div>
+            <h1 style="width: max-content;">Cosmoteer: Starship Architect & Commander <br>
+                Tags, weapons and parts</h1>
         </div>
+        <div></div>
+        <div class="intro" style="background-color: rgb(2 21 38); width: 0px;" ></div>
+        <div class="author ship-card">
+            <h2>Energy Weapons</h2>
+            <h3><a href="https://cosmoship.duckdns.org/search?laser=1">Laser Blaster</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?heavy_laser=1">Heavy Laser Blaster</a>
+            <h3><a href="https://cosmoship.duckdns.org/search?point_defense=1">Point Defense System</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?disruptors=1">Disruptor</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?ion_beam=1">Ion Beam Emitter</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?ion_prism=1">Ion Beam Prism</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?mining_laser=1">Mining Laser</a></h3>
+            <h2>Projectile Weapons</h2>
+            <h3><a href="https://cosmoship.duckdns.org/search?cannon=1">Cannon</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?large_cannon=1">Large Cannon</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?deck_cannon=1">Deck Cannon</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?emp_missiles=1">EMP Missiles</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?he_missiles=1">High-Explosive Missiles</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?nukes=1">Nukes</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?mines=1">Mines</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?railgun=1">RailGun</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?chaingun=1">Chaingun</a></h3>
+            <h3><a href="https://cosmoship.duckdns.org/search?flak_battery=1">Flak Battery</a></h3>
+        </div>
+        <div style="width: 0px;"></div>
     </div>
     <div class="item-listing">
     </div>
@@ -189,3 +134,5 @@
 </body>
 
 </html>
+<script>
+</script>

@@ -166,7 +166,7 @@ function filterTags() {
 
   displayTagSuggestions(matchedTags);
   toggleTableVisibility();
-  console.log(finalSearchQuery.value);
+  // console.log(finalSearchQuery.value);
 
   // remove fulltext= from finalSearchQuery.value
   const fulltextRegex = /\bfulltext=[^ ]*/g;
@@ -177,14 +177,6 @@ function filterTags() {
     finalSearchQuery.value += ' ' + 'fulltext=' + tagInput.value;
   }
 
-  // remove ftauthor= from finalSearchQuery.value
-  const ftauthorRegex = /\bftauthor=[^ ]*/g;
-  finalSearchQuery.value = finalSearchQuery.value.replace(ftauthorRegex, '');
-
-  // add tagInput.value to finalSearchQuery.value as parameter "ftauthor="
-  if (authorInput.value !== '') {
-    finalSearchQuery.value += ' ' + 'ftauthor=' + authorInput.value;
-  }
 }
 
 
@@ -317,21 +309,17 @@ function toggleTableVisibility() {
 }
 
 function updateFinalSearchQuery() {
-  console.log("updateFinalSearchQuery");
+  // console.log("updateFinalSearchQuery");
   const formattedExcludedTags = excludedTags.map(tag => '-' + tag);
-  console.log(finalSearchQuery.value);
+  // console.log(finalSearchQuery.value);
   finalSearchQuery.value = selectedTags.join(' ') + (formattedExcludedTags.length > 0 ? ' ' + formattedExcludedTags.join(' ') : '');
   // add tagInput.value to selectedTags as parameter "fulltext=" if tagInput.value is not empty
   if (tagInput.value !== '') {
     finalSearchQuery.value += ' ' + 'fulltext=' + tagInput.value;
     tagInput.value = '';
   }
-  // add ftauthor to selectedTags as parameter "author=" if ftauthor is not empty
-  if (authorInput.value !== '') {
-    finalSearchQuery.value += ' ' + 'ftauthor=' + authorInput.value;
-    authorInput.value = '';
-  }
-  console.log(finalSearchQuery.value);
+
+  // console.log(finalSearchQuery.value);
 }
 
 function appendSearchInput() {
