@@ -13,6 +13,23 @@
         <link rel="stylesheet" type="text/css" {% if "exl" in brand %}href="/static/css/v2.css"{% else %}href="/static/css/general.css"{% endif %}>
         <!-- <script defer src="/_vercel/insights/script.js"></script> -->
     </head>
+    <style>
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
     <body class="site-container">
         {% if "exl" in brand %}
         <div class="item-header">
@@ -87,12 +104,18 @@
             background-color: rgb(2 21 38);
         ">
                     <img loading="lazy" src="{{ url_png }}" width="512" height="512">
-                    {% if "url_com" in datadata %}
-                    <img loading="lazy" src="{{datadata.url_com}}" width="512">
-                    <img loading="lazy" src="{{datadata.analysis.url_analysis}}" width="512">
-                    {% else %}
-                    <ul><a title="Show stats" class="blue-btn register" href="/ship/{{ image[0][0] }}?analyze=1"><span>Show stats</span></a></ul>
-                    {% endif %}
+                    <div id="conditional-content">
+                        {% if "url_com" in datadata %}
+                        <img loading="lazy" src="{{datadata.url_com}}" width="512">
+                        <img loading="lazy" src="{{datadata.analysis.url_analysis}}" width="512">
+                        {% else %}
+                        <ul>
+                            <a title="Show stats" class="blue-btn register" id="fetch-button" onclick="fetchData('{{ url_png }}')">
+                                <span>Show stats</span>
+                            </a>
+                        </ul>
+                        {% endif %}
+                    </div>
             </div>
             <div class="author ship-card">
                 <h2>Ship name : {{ image[0][5] }}</h2>
@@ -110,29 +133,7 @@
                 <P class="data"><span>Popularity :</span> {{ image[0][8] }}</P>
                 <P class="data"><span>Date of submission :</span> {{ image[0][9] }}</P>
                 <p></p>
-                {% if "url_com" in datadata %}
-                <P class="data"><span>Mass : </span><span class="number" style="color: white;">{{ datadata.total_mass }}</span> t</P>
-                <P class="data"><span>Top speed (flight orientation): </span><span class="number" style="color: white;"> {{ datadata.top_speed }}</span> m/s</P>
-                <P class="data"><span>center_of_mass_x : </span><span class="number" style="color: white;">{{ datadata.center_of_mass_x }}</span></P>
-                <P class="data"><span>center_of_mass_y : </span><span class="number" style="color: white;">{{ datadata.center_of_mass_y }}</span></P>
-                <P class="data"><span>Speed NW : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.NW }}</span></P>
-                <P class="data"><span>Speed NE : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.NE }}</span></P>
-                <P class="data"><span>Speed SW : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.SW }}</span></P>
-                <P class="data"><span>Speed SE : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.SE }}</span></P>
-                <P class="data"><span>Speed S : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.S }}</span></P>
-                <P class="data"><span>Speed N : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.N }}</span></P>
-                <P class="data"><span>Speed E : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.E }}</span></P>
-                <P class="data"><span>Speed W : </span><span class="number" style="color: white;">{{ datadata.all_direction_speeds.W }}</span></P>
-                <P class="data"><span>Price for crew: </span><span class="number" style="color: white;">{{ datadata.analysis.price_crew.percent * 100 }}</span><span>% | {{ datadata.analysis.price_crew.price }} ₡</span></P>
-                <P class="data"><span>Price for weapons: </span><span class="number" style="color: white;">{{ datadata.analysis.price_weapons.percent * 100 }}</span><span>% | {{ datadata.analysis.price_weapons.price }} ₡</span></P>
-                <P class="data"><span>Price for armor: </span><span class="number" style="color: white;">{{ datadata.analysis.price_armor.percent * 100 }}</span><span>% | {{ datadata.analysis.price_armor.price }} ₡</span></P>
-                <P class="data"><span>Price for movement: </span><span class="number" style="color: white;">{{ datadata.analysis.price_mouvement.percent * 100 }}</span><span>% | {{ datadata.analysis.price_mouvement.price }} ₡</span></P>
-                <P class="data"><span>Price for power: </span><span class="number" style="color: white;">{{ datadata.analysis.price_power.percent * 100 }}</span><span>% | {{ datadata.analysis.price_power.price }} ₡</span></P>
-                <P class="data"><span>Price for shield: </span><span class="number" style="color: white;">{{ datadata.analysis.price_shield.percent * 100 }}</span><span>% | {{ datadata.analysis.price_shield.price }} ₡</span></P>
-                <P class="data"><span>Price for storage: </span><span class="number" style="color: white;">{{ datadata.analysis.price_storage.percent * 100 }}</span><span>% | {{ datadata.analysis.price_storage.price }} ₡</span></P>
-                <P class="data"><span>Price for utility: </span><span class="number" style="color: white;">{{ datadata.analysis.price_utility.percent * 100 }}</span><span>% | {{ datadata.analysis.price_utility.price }} ₡</span></P>
-                <p></p>
-                {% endif %}
+                <p id="output"></p>
                 <p class="data" style="font-size: 12px;">Submitted by : {{ image[0][3] }}</p>
                 {% if user == "Guest" %}
                 <ul><a title="Favorite" class="blue-btn register" href="/login?button=myfavorite"><span>Login to add favorite</span></a></ul>
@@ -209,6 +210,98 @@
     // Update the submission date element with the formatted date
     element.textContent = formattedNumber;
     });
+
+    function fetchData(imgUrl) {
+            var fetchButton = document.getElementById('fetch-button');
+            var originalContent = fetchButton.innerHTML;
+
+            // Replace button content with a loading spinner
+            fetchButton.innerHTML = '<span class="spinner"></span>';
+            // Create a new XMLHttpRequest object
+            var xhr = new XMLHttpRequest();
+            
+            // Configure it: GET-request for the URL /analyze?url=' + imgUrl
+            xhr.open('GET', '/analyze?url=' + imgUrl, true);
+
+            // Set up the callback function to handle the response
+            xhr.onreadystatechange = function () {
+                // If the request is completed and the response is ready
+                if (xhr.readyState === 4) {
+                    // If the request was successful
+                    if (xhr.status === 200) {
+                        // Parse the JSON response
+                        var data = JSON.parse(xhr.responseText);
+
+                        // Display the data
+                        displayData(data.datadata);
+                    } else {
+                        // Handle the error
+                        document.getElementById('output').textContent = 'Error fetching data';
+                    }
+                }
+            };
+
+            // Send the request
+            xhr.send();
+        }
+
+        function displayData(data) {
+            var output = document.getElementById('output');
+
+            // Clear the existing content
+            output.innerHTML = '';
+
+            // Update the conditional content
+            var conditionalContent = document.getElementById('conditional-content');
+            conditionalContent.innerHTML = '';
+
+            if (data.url_com) {
+                var imgCom = document.createElement('img');
+                imgCom.src = data.url_com;
+                imgCom.width = 512;
+                conditionalContent.appendChild(imgCom);
+
+                var imgAnalysis = document.createElement('img');
+                imgAnalysis.src = data.analysis.url_analysis;
+                imgAnalysis.width = 512;
+                conditionalContent.appendChild(imgAnalysis);
+            }
+
+            // Create new elements for the fetched data
+            var properties = [
+                { label: 'Center of Mass X', value: (data.center_of_mass_x).toFixed(2) },
+                { label: 'Center of Mass Y', value: (data.center_of_mass_y).toFixed(2) },
+                { label: 'Total Mass', value: (data.total_mass).toFixed(2) },
+                { label: 'Top Speed', value: (data.top_speed).toFixed(2) },
+                // { label: 'Price', value: data.price },
+                // { label: 'Crew', value: data.crew },
+                // { label: 'Tags', value: data.tags.join(', ') }
+            ];
+
+            properties.forEach(function (property) {
+                var p = document.createElement('p');
+                p.innerHTML = `<span class="data"><span>${property.label}: </span>${property.value}</span>`;
+                output.appendChild(p);
+            });
+
+            var speeds = data.all_direction_speeds;
+            for (var direction in speeds) {
+                var p = document.createElement('p');
+                p.innerHTML = `<span class="data"><span>Speed ${direction}: </span>${(speeds[direction]).toFixed(2)}</span>`;
+                output.appendChild(p);
+            }
+
+            var prices = data.analysis;
+            for (var priceType in prices) {
+                if (priceType !== 'url_analysis' && priceType !== 'total_price') {
+                    var p = document.createElement('p');
+                    p.innerHTML = `<span class="data"><span>${priceType.replace('_', ' ')}:<br></span>${(prices[priceType].percent * 100).toFixed(2)}% | ${prices[priceType].price}₡</span>`;
+                    output.appendChild(p);
+                }
+            }
+        }
+
+
 </script>
 
  

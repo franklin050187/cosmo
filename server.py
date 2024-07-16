@@ -908,6 +908,25 @@ async def get_authors():
     authors = [author for (author,) in query_result["authors"]]
     return {"authors": authors}
 
+@app.get("/analyze")
+async def get_analyze(request: Request):
+    """
+    A route to analyze a URL and return the extracted tags.
+    
+    Parameters:
+        request (Request): The HTTP request object.
+    
+    Returns:
+        dict: A dictionary containing the extracted tags from the provided URL.
+    """
+    try :
+        query_params = request.query_params
+        print("query_params = ",query_params)
+        url = query_params.get("url")
+        datadata = extract_tags_v2(url, analyze=True)
+        return {"datadata": datadata}
+    except Exception :
+        return {"datadata": "Error"}
 
 @app.get("/{catchall:path}")
 async def serve_files(request: Request):
