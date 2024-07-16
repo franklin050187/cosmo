@@ -143,7 +143,7 @@
             {% if user == "Guest" %}
             <ul><a title="Favorite" class="blue-btn register" href="/login?button=myfavorite"><span>Login to add
                         favorite</span></a></ul>
-            {% endif %} {% if fav == 1 %}
+            {% elif fav == 1 %} 
             <ul><a title="Favorite" class="blue-btn register" href="/rmfavorite/{{ image[0][0] }}"><span>Remove from
                         favorite</span></a></ul>
             {% else %}
