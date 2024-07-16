@@ -891,6 +891,15 @@ async def search_post(request: Request):
             "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
         )
 
+@app.get("/seo_tags")
+async def get_seo_tags(request: Request):
+    """display seo tags"""
+    user = request.session.get("discord_user")
+    if not user:
+        user = "Guest"
+    return templates.TemplateResponse(
+            "seo_tags.html", {"request": request, "user": user}
+    )
 
 @app.get("/authors")
 async def get_authors():
