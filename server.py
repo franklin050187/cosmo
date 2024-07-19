@@ -43,6 +43,8 @@ load_dotenv()
 
 print("loading")
 
+MAX_SHIPS_PER_PAGE = 24
+
 db_manager = ShipImageDatabase()
 
 client_id = os.getenv("discord_id")
@@ -247,7 +249,7 @@ async def myfavorite(request: Request):
     else:
         rows = db_manager.get_my_favorite_pages(user)
         # pages is number of row / 60 int up
-        pages = math.ceil(rows[0][0] / 60)
+        pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
         return templates.TemplateResponse(
             "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
         )
@@ -616,7 +618,7 @@ async def index(request: Request):
     images = db_manager.get_index()
     rows = db_manager.get_pages()
     # pages is number of row / 60 int up
-    pages = math.ceil(rows[0][0] / 60)
+    pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
     # print(pages)
     return templates.TemplateResponse(
         "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
@@ -669,7 +671,7 @@ async def index_get(request: Request):
         )
     rows = db_manager.get_my_ships_pages(user)
     # pages is number of row / 60 int up
-    pages = math.ceil(rows[0][0] / 60)
+    pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
     return templates.TemplateResponse(
         "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
     )
@@ -849,7 +851,7 @@ async def search(request: Request):
         )
     images = db_manager.get_search(query_params)
     rows = db_manager.get_pages_search(query_params)
-    pages = math.ceil(rows[0][0] / 60)
+    pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
     return templates.TemplateResponse(
         "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
     )
@@ -886,7 +888,7 @@ async def search_post(request: Request):
         images = db_manager.get_search(query_params)
         rows = db_manager.get_pages_search(query_params)
         # pages is number of row / 60 int up
-        pages = math.ceil(rows[0][0] / 60)
+        pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
         return templates.TemplateResponse(
             "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
         )
@@ -961,7 +963,7 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 app.add_middleware(HTTPSRedirectMiddleware)
 # start server
 if __name__ == "__main__":
-    # uvicorn.run(app, host="0.0.0.0", port=8000, proxy_headers=True, forwarded_allow_ips="*")
+    # uvicorn.run(app, host="127.0.0.1", port=8000, proxy_headers=True, forwarded_allow_ips="*")
     uvicorn.run(
         "server:app",
         host="0.0.0.0",

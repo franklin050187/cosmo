@@ -41,10 +41,10 @@ function fetchData(imgUrl) {
     fetchButton.innerHTML = '<span class="spinner"></span>';
     // Create a new XMLHttpRequest object
     var xhr = new XMLHttpRequest();
-
+    
     // Configure it: GET-request for the URL /analyze?url=' + imgUrl
     xhr.open('GET', '/analyze?url=' + imgUrl, true);
-
+    // console.log('/analyze?url=' + imgUrl);
     // Set up the callback function to handle the response
     xhr.onreadystatechange = function () {
         // If the request is completed and the response is ready
@@ -53,7 +53,7 @@ function fetchData(imgUrl) {
             if (xhr.status === 200) {
                 // Parse the JSON response
                 var data = JSON.parse(xhr.responseText);
-
+                // console.log(data);
                 // Display the data
                 displayData(data.datadata);
             } else {

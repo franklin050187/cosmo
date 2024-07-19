@@ -14,6 +14,8 @@ from dotenv import load_dotenv
 from api_engine import extract_tags_v2
 from discordwh import send_message
 
+MAX_SHIPS_PER_PAGE = 24
+
 load_dotenv()
 
 class ShipImageDatabase:
@@ -365,7 +367,7 @@ class ShipImageDatabase:
         Returns:
             list: A list of ship records.
         """
-        query = "SELECT * FROM shipdb ORDER BY date DESC LIMIT 60"
+        query = f"SELECT * FROM shipdb ORDER BY date DESC LIMIT {MAX_SHIPS_PER_PAGE}"
         return self.fetch_data(query)
 
     def get_pages(self):
@@ -387,7 +389,7 @@ class ShipImageDatabase:
         Returns:
             list: A list of ship records.
         """
-        query = "SELECT * FROM shipdb WHERE brand = 'exl' ORDER BY date DESC LIMIT 60 "
+        query = f"SELECT * FROM shipdb WHERE brand = 'exl' ORDER BY date DESC LIMIT {MAX_SHIPS_PER_PAGE} "
         return self.fetch_data(query)
 
     def get_my_ships(self, user):
@@ -562,7 +564,7 @@ class ShipImageDatabase:
             query += " ORDER BY date DESC"
 
         if page:
-            limit = 60
+            limit = MAX_SHIPS_PER_PAGE
             offset = (int(page) - 1) * limit
             query += f" LIMIT {limit} OFFSET {offset}"
         # print(query)
@@ -775,7 +777,7 @@ class ShipImageDatabase:
         # Add pagination
         #page = query_params.get("page", 1)
         if page:
-            limit = 60
+            limit = MAX_SHIPS_PER_PAGE
             offset = (int(page) - 1) * limit
             query += f" LIMIT {limit} OFFSET {offset}"
         # print(query)
