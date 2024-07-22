@@ -396,6 +396,7 @@ async def finish_login(request: Request):
         for guild in guilds:
             if guild.id == desired_id:
                 request.session["discord_server"] = "exl"
+                request.session["brand"] = "exl"
                 redirect_url = "/"
                 button_clicked = request.session.pop(
                     "button_clicked", None
