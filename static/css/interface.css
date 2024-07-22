@@ -172,7 +172,7 @@ header .menu-btn {
 header img {
     display: block;
     margin: auto;
-    width: 160px;
+    width: 200px;
 }
 
 
@@ -546,7 +546,7 @@ body footer {
     margin-top: 50px;
     border-top: 1px solid #1C598C;
     background-color: #000;
-    padding: 30px 15px;
+    padding: 5px 15px;
     width: 100%;
 
 }
@@ -558,7 +558,7 @@ body footer {
         margin-top: 50px;
         border-top: 1px solid #1C598C;
         background-color: #000;
-        padding: 30px 15px;
+        padding: 15px 15px;
         width: 100%;
         position: fixed;
         left: 0;

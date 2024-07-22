@@ -2,61 +2,12 @@
 <html lang="en">
 
 <head>
-    <script>
-        !function (t, e) { var o, n, p, r; e.__SV || (window.posthog = e, e._i = [], e.init = function (i, s, a) { function g(t, e) { var o = e.split("."); 2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } } (p = t.createElement("script")).type = "text/javascript", p.async = !0, p.src = s.api_host + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r); var u = e; for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function (t) { var e = "posthog"; return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e }, u.people.toString = function () { return u.toString(1) + ".people (stub)" }, o = "capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys".split(" "), n = 0; n < o.length; n++)g(u, o[n]); e._i.push([i, s, a]) }, e.__SV = 1) }(document, window.posthog || []);
-        posthog.init('phc_kO9AL2oEQffF27SQ9RQWvatE3Nql0VpUvt5k4ASJF7T', { api_host: 'https://e.abla.io' })
-    </script>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Upload | Cosmoteer Ship Library</title>
-    <meta name="description"
-        content="Website for sharing, searching, browsing and downloading ships design for Cosmoteer: Starship Architect & Commander. It contains archive of ships blueprints.">
-    <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/index.css">
-    <script src="/static/js/common.js"></script>
+    {% include "head.html" %}
 </head>
-
-<style>
-    .spinner {
-        border: 4px solid rgba(0, 0, 0, 0.1);
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        border-left-color: #09f;
-        animation: spin 1s linear infinite;
-        display: inline-block;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-</style>
 
 <body>
     <header>
-        <button id="menu-btn" class="menu-btn blue-btn" type="button"><span></span><span></span><span></span></button>
-        <nav id="main-menu">
-            <ul class="menu-links">
-                <li><a title="Home" href="/">Home</a></li>
-                {% if user == "Guest" %}
-                <li><a title="Login" href="/login">Login</a></li>
-                /login?button=upload
-                {% else %}
-                <li><a title="Logout" href="/logoff">Log out</a></li>
-                {% endif %}
-                <li><a title="Upload" href="/initupload">Upload a ship</a></li>
-                <li><a title="My ships" href="/myships">My ships</a></li>
-                <li><a title="My favorites" href="/myfavorite">My favorites</a></li>
-            </ul>
-        </nav>
-        <!-- <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a> -->
-        <a href="/"><span><span>Cosmoteer Ship Library</span></span></a>
-        <ul class="user-container">
-            <li><a title="Register" class="blue-btn register"><span>Welcome {{ user }}</span></a></li>
-        </ul>
+        {% include "header.html" %}
     </header>
 
     <main>
@@ -69,13 +20,13 @@
                     <ul class="ships-list" style="grid-template-columns: repeat(1, 1fr);">
                         <li class="ship-card">
                             <p>Current image :</p>
-                            <img src="{{ image[2] }}" >
+                            <img src="{{ image[2] }}">
                             <form action="/update/{{ image[0] }}" method="post" enctype="multipart/form-data">
-                               <ul>
-                                  <input type="file" name="file" accept=".png" required>
-                                  <button type="submit" class="blue-btn register" >Next</button>
-                               </ul>
-                            </form>  
+                                <ul>
+                                    <input type="file" name="file" accept=".png" required>
+                                    <button type="submit" class="blue-btn register">Next</button>
+                                </ul>
+                            </form>
 
                         </li>
                     </ul>
@@ -85,14 +36,7 @@
     </main>
 
     <footer>
-        <div class="footer-content">
-            <img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp">
-            <ul>
-                <li><a title="Cookies policy" href="#">Cookies policy</a></li>
-                <li><a title="Another footer link" href="#">Another footer link</a></li>
-                <li><a title="More footer links" href="#">More footer links</a></li>
-            </ul>
-        </div>
+        {% include "footer.html" %}
     </footer>
 </body>
 

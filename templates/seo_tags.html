@@ -2,137 +2,53 @@
 <html lang="en">
 
 <head>
-    <script>
-        !function (t, e) { var o, n, p, r; e.__SV || (window.posthog = e, e._i = [], e.init = function (i, s, a) { function g(t, e) { var o = e.split("."); 2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } } (p = t.createElement("script")).type = "text/javascript", p.async = !0, p.src = s.api_host + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r); var u = e; for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function (t) { var e = "posthog"; return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e }, u.people.toString = function () { return u.toString(1) + ".people (stub)" }, o = "capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys".split(" "), n = 0; n < o.length; n++)g(u, o[n]); e._i.push([i, s, a]) }, e.__SV = 1) }(document, window.posthog || []);
-        posthog.init('phc_kO9AL2oEQffF27SQ9RQWvatE3Nql0VpUvt5k4ASJF7T', { api_host: 'https://e.abla.io' })
-    </script>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width">
-    <title>General | Cosmoteer Ship Library | Tags</title>
-    <meta name="robots" content="all">
-    <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
-    <link rel="stylesheet" type="text/css" {% if "exl" in brand %}href="/static/css/v2.css" {% else
-        %}href="/static/css/general.css" {% endif %}>
+    {% include "head.html" %}
 </head>
 
-<body class="site-container">
+<body>
+    <header>
+        {% include "header.html" %}
+    </header>
 
-    {% if "exl" in brand %}
-    <div class="item-header">
-        <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
-        <div class="item-right">
-            <span class="info-icon" title="Tags"></span>
-            <p class="username">Welcome {{ user }} </p>
-            {% if user == "Guest" %}
-            <a title="Login" class="blue-btn" href="/login?button=login">
-                <span>Login</span>
-            </a>
-            {% else %}
-            <a title="Logout" class="blue-btn" href="/logoff">
-                <span>Log out</span>
-            </a>
-            {% endif %}
-            <a title="Upload" class="blue-btn" href="/login?button=upload">
-                <span>Upload</span>
-            </a>
-            <a title="Myfavorite" class="blue-btn" href="/login?button=myfavorite">
-                <span>My favorite</span>
-            </a>
-            <a title="Myships" class="blue-btn" href="/login?button=myships">
-                <span>My Ships</span>
-            </a>
-            <a title="Home" class="blue-btn" href="/">
-                <span>Home</span>
-            </a>
-            <a title="General library" class="blue-btn" href="/gen">
-                <span>General library</span>
-            </a>
-        </div>
-    </div>
-    {% else %}
-    <div class="item-header">
-        <a style="text-decoration: none;" title="home" href="/">
-            <span class="logo">Cosmoteer Ship Library</span>
-        </a>
-        <div class="item-right">
-            <span class="info-icon" title="Tags"></span>
-            <p class="username">Welcome {{ user }} </p>
-            {% if user == "Guest" %}
-            <a title="Login" class="blue-btn" href="/login?button=login">
-                <span>Login</span>
-            </a>
-            {% else %}
-            <a title="Logout" class="blue-btn" href="/logoff">
-                <span>Log out</span>
-            </a>
-            {% endif %}
-            <a title="Upload" class="blue-btn" href="/login?button=upload">
-                <span>Upload</span>
-            </a>
+    <main>
+        <h1 id="title" style="overflow: hidden; text-overflow: ellipsis;">Explore our search options and tags</h1>
+        <section id="results" class="content-container">
+            <div class="tabs-container">
+                <div id="elim-competitive-tab" class="tab active">
+                    <h2>Browse through thousands of ships designs with our search engine</h2>
+                    <ul class="ships-list" style="grid-template-columns: repeat(1, 1fr);">
+                        <li class="ship-card">
+                            <h2>Energy Weapons</h2>
+                            <h3><a href="https://cosmoship.duckdns.org/search?laser=1">Laser Blaster</a></h3>
+                            <h3><a href="https://cosmoship.duckdns.org/search?heavy_laser=1">Heavy Laser Blaster</a>
+                                <h3><a href="https://cosmoship.duckdns.org/search?point_defense=1">Point Defense
+                                        System</a></h3>
+                                <h3><a href="https://cosmoship.duckdns.org/search?disruptors=1">Disruptor</a></h3>
+                                <h3><a href="https://cosmoship.duckdns.org/search?ion_beam=1">Ion Beam Emitter</a></h3>
+                                <h3><a href="https://cosmoship.duckdns.org/search?ion_prism=1">Ion Beam Prism</a></h3>
+                                <h3><a href="https://cosmoship.duckdns.org/search?mining_laser=1">Mining Laser</a></h3>
+                                <h2>Projectile Weapons</h2>
+                                <h3><a href="https://cosmoship.duckdns.org/search?cannon=1">Cannon</a></h3>
+                                <h3><a href="https://cosmoship.duckdns.org/search?large_cannon=1">Large Cannon</a></h3>
+                                <h3><a href="https://cosmoship.duckdns.org/search?deck_cannon=1">Deck Cannon</a></h3>
+                                <h3><a href="https://cosmoship.duckdns.org/search?emp_missiles=1">EMP Missiles</a></h3>
+                                <h3><a href="https://cosmoship.duckdns.org/search?he_missiles=1">High-Explosive
+                                        Missiles</a></h3>
+                                <h3><a href="https://cosmoship.duckdns.org/search?nukes=1">Nukes</a></h3>
+                                <h3><a href="https://cosmoship.duckdns.org/search?mines=1">Mines</a></h3>
+                                <h3><a href="https://cosmoship.duckdns.org/search?railgun=1">RailGun</a></h3>
+                                <h3><a href="https://cosmoship.duckdns.org/search?chaingun=1">Chaingun</a></h3>
+                                <h3><a href="https://cosmoship.duckdns.org/search?flak_battery=1">Flak Battery</a></h3>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
 
-            <a title="Myfavorite" class="blue-btn" href="/login?button=myfavorite">
-                <span>My favorite</span>
-            </a>
-            <a title="Myships" class="blue-btn" href="/login?button=myships">
-                <span>My Ships</span>
-            </a>
-            <a title="Home" class="blue-btn" href="/">
-                <span>Home</span>
-            </a>
-            <a title="Excelsior library" class="blue-btn" href="/exl">
-                <span>Excelsior library</span>
-            </a>
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="item-search">
-        <div></div>
-        <div>
-            <h1 style="width: max-content;">Cosmoteer: Starship Architect & Commander <br>
-                Tags, weapons and parts</h1>
-        </div>
-        <div></div>
-        <div class="intro" style="background-color: rgb(2 21 38); width: 0px;" ></div>
-        <div class="author ship-card">
-            <h2>Energy Weapons</h2>
-            <h3><a href="https://cosmoship.duckdns.org/search?laser=1">Laser Blaster</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?heavy_laser=1">Heavy Laser Blaster</a>
-            <h3><a href="https://cosmoship.duckdns.org/search?point_defense=1">Point Defense System</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?disruptors=1">Disruptor</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?ion_beam=1">Ion Beam Emitter</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?ion_prism=1">Ion Beam Prism</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?mining_laser=1">Mining Laser</a></h3>
-            <h2>Projectile Weapons</h2>
-            <h3><a href="https://cosmoship.duckdns.org/search?cannon=1">Cannon</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?large_cannon=1">Large Cannon</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?deck_cannon=1">Deck Cannon</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?emp_missiles=1">EMP Missiles</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?he_missiles=1">High-Explosive Missiles</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?nukes=1">Nukes</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?mines=1">Mines</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?railgun=1">RailGun</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?chaingun=1">Chaingun</a></h3>
-            <h3><a href="https://cosmoship.duckdns.org/search?flak_battery=1">Flak Battery</a></h3>
-        </div>
-        <div style="width: 0px;"></div>
-    </div>
-    <div class="item-listing">
-    </div>
-    <div class="item-footer">
-        {% if "gen" in brand %}
-        <a style="text-decoration: none;" title="home" href="/">
-            <span class="logo">Cosmoteer Ship Library</span>
-        </a>
-        {% else %}
-        <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
-        {% endif %}
-        <a class="blue-btn" title="Source code" href="https://github.com/franklin050187/cosmo">Source code</a>
-        <a class="blue-btn" title="Issues" href="https://github.com/franklin050187/cosmo/issues">Issues</a>
-        <a class="blue-btn" title="Support us" href="#">Support us</a>
-    </div>
+    <footer>
+        {% include "footer.html" %}
+    </footer>
 </body>
 
 </html>
-<script>
-</script>

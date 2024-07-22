@@ -1,0 +1,21 @@
+<button id="menu-btn" class="menu-btn blue-btn" type="button"><span></span><span></span><span></span></button>
+<nav id="main-menu">
+    <ul class="menu-links">
+        <li><a title="Home" href="/">Home</a></li>
+        {% if user == "Guest" %}
+        <li><a title="Login" href="/login">Login</a></li>
+        {% else %}
+        <li><a title="Logout" href="/logoff">Log out</a></li>
+        {% endif %}
+        <li><a title="Upload" href="/initupload">Upload a ship</a></li>
+        <li><a title="My ships" href="/myships">My ships</a></li>
+        <li><a title="My favorites" href="/myfavorite">My favorites</a></li>
+        <li><a title="About" href="/seo_about">About the game</a></li>
+        <li><a title="Tags" href="/seo_tags">Our tags and authors</a></li>
+    </ul>
+</nav>
+<a href="/"><img alt="Cosmoship logo" src="/static/img/logo-v2.svg"></a>
+<!-- <a href="/"><span><span>Cosmoteer Ship Library</span></span></a> -->
+<ul class="user-container">
+    <li><a title="Register" class="blue-btn register"><span>Welcome {{ user }}</span></a></li>
+</ul>
