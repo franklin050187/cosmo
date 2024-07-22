@@ -249,15 +249,9 @@
                                 </ul>
                             </li>
                             <li class="ship-card">
-                                <!-- <table style="width:100%">
-                                    <tr>
-                                        <td> -->
                                 <ul>
                                     <button type="submit" class="blue-btn register">Upload</button>
                                 </ul>
-                                <!-- </td>
-                                        <td>
-                                    <tr> -->
                                 <ul>
                                     <div {% if "gen" in data.brand %}style="display: none;" {% endif %}>
                                         <input type="checkbox" name="brand" id="exl" value="exl" {% if "exl" in
@@ -269,10 +263,6 @@
                                     <label for="ship_name">Ship name:</label>
                                     <input type="text" name="ship_name" id="ship_name" value="{{ data.shipname }}">
                                 </ul>
-                                <!-- </tr>
-                                    </td>
-                                    <td>
-                                        <tr> -->
                                 <ul>
                                     <label for="price">Price :</label>
                                     <input type="text" name="price" id="price" pattern="[0-9]+" required
@@ -286,9 +276,6 @@
                                     <input type="hidden" name="tags" id="tags" value="{{ tags }}">
                                     <input type="hidden" name="crew" id="crew" value="{{ crew }}">
                                 </ul>
-                                <!-- </tr>
-                                    </td>
-                                </table> -->
                             </li>
                         </ul>
                     </div>

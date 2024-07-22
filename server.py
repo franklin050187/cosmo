@@ -228,8 +228,11 @@ async def edit_image(ship_id: int, request: Request):
     check = db_manager.edit_ship(ship_id, user)
     if check == "ko":
         return RedirectResponse("/")
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
     return templates.TemplateResponse(
-        "edit.html", {"request": request, "image": check, "user": user, } # "brand": brand}
+        "edit.html", {"request": request, "image": check, "user": user, "brand": brand}
     )
 
 
@@ -448,8 +451,11 @@ async def upload_page(request: Request):
     user = request.session.get("discord_user")
     if not user:
         return RedirectResponse("/login?button=upload")
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
     return templates.TemplateResponse(
-        "initupload.html", {"request": request, "user": user } #, "brand": brand}
+        "initupload.html", {"request": request, "user": user, "brand": brand}
     )
 
 @app.post("/initupload") # DONE
@@ -485,6 +491,10 @@ async def init_upload(request: Request, file: UploadFile = File(...)):
         shipname = authorized_chars.replace(".png", "")
     if ".ship" in shipname:
         shipname = shipname.replace(".ship", "")
+    # brand check
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
     data = {
         "name": authorized_chars,
         "url_png": url_png,
@@ -492,11 +502,12 @@ async def init_upload(request: Request, file: UploadFile = File(...)):
         "shipname": shipname,
         "price": price,
         "crew": crew,
+        "brand": brand,
     }
     request.session["upload_data"] = data
     return templates.TemplateResponse(
         "upload.html",
-        {"request": request, "data": data, "tags": tags, "crew": crew},
+        {"request": request, "data": data, "tags": tags, "crew": crew, "brand": brand},
     )
 
 @app.post("/upload") # DONE
