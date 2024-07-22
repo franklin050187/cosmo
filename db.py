@@ -464,6 +464,7 @@ class ShipImageDatabase:
         min_price_condition = None
         max_price_condition = None
         max_crew_condition = None
+        brand_condition = None
         fulltext = None
         order_by = None
         page = 1
@@ -491,6 +492,8 @@ class ShipImageDatabase:
                     page = value
                 elif key == "fulltext":
                     fulltext = unquote_plus(value)
+                elif key == "brand" and value == "exl":
+                    brand_condition = value
 
         # Build the query dynamically
         if conditions and not_conditions:
@@ -550,8 +553,14 @@ class ShipImageDatabase:
             else:
                 query += f" WHERE crew <= {max_crew_condition}"
 
-        if fulltext:
+        if brand_condition:
             if conditions or not_conditions or min_price_condition or max_price_condition or author_condition or desc_condition or max_crew_condition:
+                query += f" AND brand = '{brand_condition}'"
+            else:
+                query += f" WHERE brand = '{brand_condition}'"
+        
+        if fulltext:
+            if conditions or not_conditions or min_price_condition or max_price_condition or author_condition or desc_condition or max_crew_condition or brand_condition:
                 query += f" AND exists ( select 1 from unnest(tags) as tag where tag like '{fulltext}%' )"
             else:
                 query += f" WHERE exists ( select 1 from unnest(tags) as tag where tag like '{fulltext}%' )"

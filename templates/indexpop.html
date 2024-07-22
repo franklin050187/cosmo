@@ -2,6 +2,10 @@
 <html lang="en">
 
 <head>
+    <script>
+        !function (t, e) { var o, n, p, r; e.__SV || (window.posthog = e, e._i = [], e.init = function (i, s, a) { function g(t, e) { var o = e.split("."); 2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } } (p = t.createElement("script")).type = "text/javascript", p.async = !0, p.src = s.api_host + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r); var u = e; for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function (t) { var e = "posthog"; return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e }, u.people.toString = function () { return u.toString(1) + ".people (stub)" }, o = "capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys".split(" "), n = 0; n < o.length; n++)g(u, o[n]); e._i.push([i, s, a]) }, e.__SV = 1) }(document, window.posthog || []);
+        posthog.init('phc_kO9AL2oEQffF27SQ9RQWvatE3Nql0VpUvt5k4ASJF7T', { api_host: 'https://e.abla.io' })
+    </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>General | Cosmoteer Ship Library</title>
@@ -40,48 +44,54 @@
         <!-- <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a> -->
         <a href="/"><span><span>Cosmoteer Ship Library</span></span></a>
         <ul class="user-container">
-            <li><a title="Register" class="blue-btn register" ><span>Welcome {{ user }}</span></a></li>
+            <li><a title="Register" class="blue-btn register"><span>Welcome {{ user }}</span></a></li>
         </ul>
     </header>
 
     <main>
-        <h1 id="title" >Explore and share ship designs with the community !</h1>
+        <h1 id="title">Explore and share ship designs with the community !</h1>
         <section id="search" class="content-container">
             <div class="tabs-container">
-                <button id="search-btn" class="active blue-btn" type="button">Search</button>
-                <button id="tags-btn" class="blue-btn" type="button">Select Tags</button>
-
+                <button id="search-btn" class="active blue-btn" type="button">Search the Library</button>
+                <button id="tags-btn" class="blue-btn" type="button" style="display: none;">Select Tags</button>
                 <form action="/" method="post" enctype="multipart/form-data">
-
                     <div id="search-tab" class="tab active">
                         <input type="text" id="authorinput" name="author" placeholder="  Search by author...">
                         <input type="text" id="desc" name="desc" placeholder="  Search by name or description...">
+
+
+
                         <div class="item-price">
-                            <div>
+                            <div style="display: flex; align-items: center;width: 91%;">
                                 <input type="text" name="min-price" id="min-price" value="0">
-                                <input type="text" name="max-price" id="max-price" value="5000000">
+                                <span for="price-slider"
+                                    style="display: flow-root;margin-bottom: 5px;font-style: italic; text-align: center;    width: 100%;">Price
+                                    Range</span>
+                                <input type="text" name="max-price" id="max-price" value="25000000">
                             </div>
                             <div id="price-slider"></div>
-                            <label for="price-slider"
-                                style="display: flow-root;margin-bottom: 5px;font-style: italic;">Price
-                                Range</label>
-                            <div>
-                                <input type="text" name="max-crew" id="max-crew" value="1000">
-                            </div>
-                            <label for="max-crew" style="display: flow-root;margin-bottom: 5px;font-style: italic;">Max
-                                Crew</label>
                         </div>
-                    </div>
-                    <div id="tags-tab" class="tab">
-                        <input type="hidden" name="query" id="final_search_query">
-                        <input type="hidden" name="order" id="order">
-                        <input type="text" id="tag-input" placeholder='  Search by tags... add "-" to exclude tags'>
-                        <div class="search-container">
+
+                        <div class="tag-boxx">
+                            <input type="text" id="tag-input" placeholder='  Search by tags... add "-" to exclude tags'>
                             <div class="tag-container">
                                 <div id="selected-tags" class="tag-box"></div>
                                 <div id="excluded-tags" class="tag-box"></div>
                             </div>
                         </div>
+                        <input type="checkbox" name="exl-only" id="exl-only" >
+                        <label for="exl">Show only Excelsior ships</label>
+                        <div class="item-crew">
+                            <input type="text" name="max-crew" id="max-crew" value="1000">
+                            <label for="max-crew" style="font-style: italic;">Max Crew</label>
+                        </div>
+
+
+                    </div>
+
+                    <div id="tags-tab" class="tab">
+                        <input type="hidden" name="query" id="final_search_query">
+                        <input type="hidden" name="order" id="order">
                     </div>
                     <div class="item-button">
                         <button type="submit" class="blue-btn" onclick="appendSearchInput()">Search</button>
@@ -151,10 +161,6 @@
                                 <span class="data"><span>Creator:</span> <a href="/search?author={{ image[6] }}"> {{
                                         image[6] }}</a></span>
                             </div>
-                            <!-- <div class="actions-container">
-                                <a class="blue-btn" title="See the ship page" href="#"></a>
-                                <button type="button" class="blue-btn" title="Download this ship"></button>
-                            </div> -->
                         </li>
                         {% endfor %}
                     </ul>
@@ -175,33 +181,35 @@
                 {% set pagenumber = page_query[1] if page_query|length == 2 else '1' %}
                 <div id="page-buttons">
                     {% for i in range(1, maxpage + 1) %}
-                        {% set newpage = i|string %}
-                        {% set newquery = request.url.query %}
-                        {% set newpath = request.url.path %}
-                        {% if newpath != '/search' %}
-                            {% set newpath = '/search' %}
-                        {% endif %}
-                        {% if page_query|length != 1 %}
-                            {% set newquery = newquery.replace('page=' + pagenumber, 'page=' + newpage) %}
-                        {% else %}
-                            {% set newquery = newquery + '&page=' + newpage %}
-                        {% endif %}
-                        {% if newpage == pagenumber %}
-                            <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}"
-                                style="font-weight: bold;font-size: x-large; color: currentcolor;">{{newpage}}</a> 
-                                <!-- current page -->
-                        {% elif newpage | int == 1 or newpage | int == maxpage %}
-                            <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}"
-                                href="{{newpath}}?{{newquery}}">{{newpage}}</a> 
-                        {% elif newpage | int == pagenumber | int - 1 or newpage | int == pagenumber | int + 1 or newpage | int == pagenumber | int - 2 or newpage | int == pagenumber | int + 2 or newpage | int == pagenumber | int - 3 or newpage | int == pagenumber | int + 3 %}
-                            <a class="blue-btn page {% if newpage == pagenumber %} selected {% endif %}"
-                                href="{{newpath}}?{{newquery}}">{{newpage}}</a> 
-                        {% else %}
-                            <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}"
-                                href="{{newpath}}?{{newquery}}" style="display: none;">{{newpage}}</a>
-                                <!-- other pages  -->
-                                 <!-- use @media to display none ?  -->
-                        {% endif %}
+                    {% set newpage = i|string %}
+                    {% set newquery = request.url.query %}
+                    {% set newpath = request.url.path %}
+                    {% if newpath != '/search' %}
+                    {% set newpath = '/search' %}
+                    {% endif %}
+                    {% if page_query|length != 1 %}
+                    {% set newquery = newquery.replace('page=' + pagenumber, 'page=' + newpage) %}
+                    {% else %}
+                    {% set newquery = newquery + '&page=' + newpage %}
+                    {% endif %}
+                    {% if newpage == pagenumber %}
+                    <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}"
+                        style="font-weight: bold;font-size: x-large; color: currentcolor;">{{newpage}}</a>
+                    <!-- current page -->
+                    {% elif newpage | int == 1 or newpage | int == maxpage %}
+                    <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}"
+                        href="{{newpath}}?{{newquery}}">{{newpage}}</a>
+                    {% elif newpage | int == pagenumber | int - 1 or newpage | int == pagenumber | int + 1 or newpage |
+                    int == pagenumber | int - 2 or newpage | int == pagenumber | int + 2 or newpage | int == pagenumber
+                    | int - 3 or newpage | int == pagenumber | int + 3 %}
+                    <a class="blue-btn page {% if newpage == pagenumber %} selected {% endif %}"
+                        href="{{newpath}}?{{newquery}}">{{newpage}}</a>
+                    {% else %}
+                    <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}"
+                        href="{{newpath}}?{{newquery}}" style="display: none;">{{newpage}}</a>
+                    <!-- other pages  -->
+                    <!-- use @media to display none ?  -->
+                    {% endif %}
                     {% endfor %}
                 </div>
                 <div style="display: flex;"></div>
@@ -280,24 +288,18 @@
         return value;
         // console.log(value);
     }
-
-
-
     // next button
     function nextPage() {
         const currentPage = Number(getParameterValue('page')) || 1;
         const nextPage = currentPage + 1;
         const url = new URL(window.location.href);
-
         // Check if '/search' is not present in the pathname
         if (url.pathname === '/' || !url.pathname.includes('/search')) {
             url.pathname = '/search';
         }
-
         url.searchParams.set('page', nextPage.toString());
         window.location.href = url.href;
     }
-
     // previous button
     function previousPage() {
         const currentPage = Number(getParameterValue('page')) || 1;
@@ -306,7 +308,6 @@
         url.searchParams.set('page', previousPage.toString());
         window.location.href = url.href;
     }
-
     function showPreviousButton() {
         const page = Number(getParameterValue('page')) || 1;
         const previousButton = document.getElementById('previous');
@@ -317,67 +318,6 @@
         }
     }
 
-
-
-    // Get all the submission date elements
-    var submissionDateElements = document.querySelectorAll('.submission-date');
-
-    // Loop through each element
-    submissionDateElements.forEach(function (element) {
-        // Get the date string
-        var dateStr = element.textContent;
-
-        // Create a new Date object from the date string
-        var date = new Date(dateStr);
-
-        // Format the date string in a readable format
-        var formattedDate = formatDate(date);
-
-        // Update the submission date element with the formatted date
-        element.textContent = formattedDate;
-    });
-
-    // Function to format the date
-    function formatDate(date) {
-        var options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
-        return date.toLocaleDateString(undefined, options);
-    }
-
-
-
-    const blurImages = document.querySelectorAll("img.blur-load");
-    blurImages.forEach(img => {
-        const parentLink = img.parentElement;
-
-        function loaded() {
-            parentLink.classList.add("loaded");
-            img.style.backgroundImage = "none";
-        }
-
-        if (img.complete) {
-            loaded();
-        } else {
-            img.addEventListener("load", loaded);
-        }
-    });
-
-    const lazyImages = document.querySelectorAll('.lazy-img');
-
-    const observer = new IntersectionObserver((entries, observer) => {
-        entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                img.src = img.dataset.src;
-                img.classList.remove('lazy-img');
-                observer.unobserve(img);
-            }
-        });
-    });
-
-    lazyImages.forEach((img) => {
-        observer.observe(img);
-    });
-
     function updateOrderParam(order) {
         document.getElementById('order').value = order;
         // find order tag in url, change it to selected value and navigate
@@ -385,14 +325,12 @@
         urlParams.set('order', order);
     }
 
-
-
     updateOrderParam(getParameterValue('order'));
     showPreviousButton();
 </script>
 <style>
-.ui-widget.ui-widget-content {
-    border: none;
-    background: none;
-}
+    .ui-widget.ui-widget-content {
+        border: none;
+        background: none;
+    }
 </style>

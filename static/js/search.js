@@ -17,12 +17,19 @@ function downloadShip(imageUrl) {
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
 const minPrice = urlParams.get('minprice') || 0;
-const maxPrice = urlParams.get('maxprice') || 5000000;
+const maxPrice = urlParams.get('maxprice') || 25000000;
 const maxCrew = urlParams.get('max-crew') || 1000;
+const exlOnly = urlParams.get('brand') || 0;
 
 document.getElementById('min-price').value = minPrice;
 document.getElementById('max-price').value = maxPrice;
 document.getElementById('max-crew').value = maxCrew;
+document.getElementById('exl-only').value = exlOnly;
+
+// check input exl-only if value is not 0
+if (exlOnly != 0) {
+  document.getElementById('exl-only').checked = true;
+}
 
 $(function() {
   // Initialize the price slider

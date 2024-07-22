@@ -1,29 +1,20 @@
 <!DOCTYPE html>
-<style>
-    .hidden-checkbox {
-        display: none;
-    }
-</style>
-
-<html lang="es">
+<html lang="en">
 
 <head>
     <script>
         !function (t, e) { var o, n, p, r; e.__SV || (window.posthog = e, e._i = [], e.init = function (i, s, a) { function g(t, e) { var o = e.split("."); 2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } } (p = t.createElement("script")).type = "text/javascript", p.async = !0, p.src = s.api_host + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r); var u = e; for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function (t) { var e = "posthog"; return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e }, u.people.toString = function () { return u.toString(1) + ".people (stub)" }, o = "capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys".split(" "), n = 0; n < o.length; n++)g(u, o[n]); e._i.push([i, s, a]) }, e.__SV = 1) }(document, window.posthog || []);
-        posthog.init('phc_K77EUohajEup7Xj92C4lZUUjbVEh2x1nAhQYTdZ2xJL', { api_host: 'https://e.abla.io' })
+        posthog.init('phc_kO9AL2oEQffF27SQ9RQWvatE3Nql0VpUvt5k4ASJF7T', { api_host: 'https://e.abla.io' })
     </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Excelsior | Cosmoteer Ship Library</title>
-    <meta name="robots" content="noindex,nofollow">
+    <title>Upload - Tag | Cosmoteer Ship Library</title>
+    <meta name="description"
+        content="Website for sharing, searching, browsing and downloading ships design for Cosmoteer: Starship Architect & Commander. It contains archive of ships blueprints.">
     <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
     <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
     <link rel="stylesheet" type="text/css" href="/static/css/index.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/upload.css">
-    <script src="/static/js/jquery-3.6.0.min.js"></script>
     <script src="/static/js/common.js"></script>
-    <script src="/static/js/index.js"></script>
-    <!-- <script defer src="/_vercel/insights/script.js"></script> -->
     <script src="https://cdn.ckeditor.com/ckeditor5/36.0.1/classic/ckeditor.js"></script>
     <style>
         /* Style the CKEditor input area */
@@ -31,7 +22,7 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             padding: 10px;
-            background-color: darkblue;
+            background-color: #021526;;
             color: white;
         }
 
@@ -39,7 +30,7 @@
 
             border-radius: 4px;
             padding: 10px;
-            background-color: darkblue;
+            background-color: #021526;;
             color: white;
         }
 
@@ -47,7 +38,7 @@
 
             border-radius: 4px;
             padding: 10px;
-            background-color: darkblue;
+            background-color: #021526;;
             color: white;
         }
 
@@ -55,7 +46,7 @@
 
             border-radius: 4px;
             padding: 10px;
-            background-color: darkblue;
+            background-color: #021526;;
             color: white;
         }
 
@@ -63,7 +54,7 @@
 
             border-radius: 4px;
             padding: 10px;
-            background-color: darkblue;
+            background-color: #021526;;
             color: white;
         }
 
@@ -71,7 +62,7 @@
 
             border-radius: 4px;
             padding: 10px;
-            background-color: darkblue;
+            background-color: #021526;;
             color: white;
         }
 
@@ -79,14 +70,14 @@
 
             border-radius: 4px;
             padding: 10px;
-            background-color: darkblue;
+            background-color: #021526;;
             color: white;
         }
 
         .ck-editor__editable {
             border-radius: 4px;
             padding: 10px;
-            background-color: darkblue;
+            background-color: #021526;;
             color: white;
 
         }
@@ -94,7 +85,7 @@
         .ck.ck-editor__main p {
             border-radius: 4px;
             padding: 10px;
-            background-color: darkblue;
+            background-color: #021526;;
             color: white;
 
         }
@@ -103,291 +94,278 @@
 
 <body>
     <header>
-        <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
-        <ul class="user-container">
-            <p class="username">Welcome {{ user }}</p>
-            <li>
+        <button id="menu-btn" class="menu-btn blue-btn" type="button"><span></span><span></span><span></span></button>
+        <nav id="main-menu">
+            <ul class="menu-links">
+                <li><a title="Home" href="/">Home</a></li>
                 {% if user == "Guest" %}
-                <a title="Login" class="blue-btn register" href="/login?button=login">
-                    <span>Login</span>
-                </a>
+                <li><a title="Login" href="/login">Login</a></li>
+                /login?button=upload
                 {% else %}
-                <a title="Logout" class="blue-btn register" href="/logoff">
-                    <span>Log out</span>
-                </a>
+                <li><a title="Logout" href="/logoff">Log out</a></li>
                 {% endif %}
-            </li>
-            <li>
-                <a title="Upload" class="blue-btn register" href="/login?button=upload">
-                    <span>Upload</span>
-                </a>
-            </li>
-            <li>
-            </li>
-            <li>
-                <a title="Myships" class="blue-btn register" href="/login?button=myships">
-                    <span>My Ships</span>
-                </a>
-            </li>
-            <li>
-                <a title="Home" class="blue-btn register" href="/">
-                    <span>Home</span>
-                </a>
-            </li>
-        </ul>
-    </header>
-    <main>
-        <h1>Upload your ship !</h1>
-        <section id="competitive" class="content-container">
-            <div class="section-description">
-                <h2>Share your ships with the community</h2>
-                <p>Pick tags your ship has in order to help the community to find your creation !</p>
-                <p>To go back click on the hamburger menu on the top left.</p>
-
+                <li><a title="Upload" href="/initupload">Upload a ship</a></li>
+                <li><a title="My ships" href="/myships">My ships</a></li>
+                <li><a title="My favorites" href="/myfavorite">My favorites</a></li>
+                </div>
+        </nav>
+        <!-- <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a> -->
+        <a href="/"><span><span>Cosmoteer Ship Library</span></span></a>
+        <ul class="user-container">
+            <li><a title="Register" class="blue-btn register"><span>Welcome {{ user }}</span></a></li>
             </div>
+    </header>
+
+    <main>
+        <h1>Ship Edit</h1>
+        <section id="results" class="content-container">
             <div class="tabs-container">
-                <div id="elim-competitive-tab" class="tab active">
-                    <ul>
-                        <h1>Ship Edit</h1>
+                <form action="/edit/{{ image[0] }}" method="post" enctype="multipart/form-data">
+                    <div id="elim-competitive-tab" class="tab active">
                         <a title="Replace image" class="blue-btn register" href="/update/{{ image[0] }}">
                             <span>Replace image</span>
                         </a>
-                        <p>{{ image[1] }}</p>
                         {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") |
                         replace(" ", "") %}
                         {% set image_tags_list = image_tags.split(",") %}
-                        <form action="/edit/{{ image[0] }}" method="post" enctype="multipart/form-data">
-                            <img loading="lazy" src="{{ image[2] }}" width="512" height="512">
-                            <table style="width:100%; text-align: left;">
-                                <tr>
-                                    <th scope="col">Thrust arrangements</th>
-                                    <th scope="col">Defenses</th>
-                                    <th scope="col">Ship type</th>
-                                    <th scope="col">Game mode</th>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div>
-                                            <input type="radio" name="thrust_type" id="bidirectional_thrust"
-                                                value="bidirectional_thrust" {% if "bidirectional_thrust" in
-                                                image_tags_list %}checked{% endif %}>
-                                            <label for="bidirectional_thrust">Bidirectional Thrust</label>
-                                        </div>
-                                        <div>
-                                            <input type="radio" name="thrust_type" id="mono_thrust" value="mono_thrust"
-                                                {% if "mono_thrust" in image_tags_list %}checked{% endif %}>
-                                            <label for="mono_thrust">Mono-Thrust</label>
-                                        </div>
-                                        <div>
-                                            <input type="radio" name="thrust_type" id="multi_thrust"
-                                                value="multi_thrust" {% if "multi_thrust" in image_tags_list %}checked{%
-                                                endif %}>
-                                            <label for="multi_thrust">Multi-Thrust</label>
-                                        </div>
-                                        <div>
-                                            <input type="radio" name="thrust_type" id="omni_thrust" value="omni_thrust"
-                                                {% if "omni_thrust" in image_tags_list %}checked{% endif %}>
-                                            <label for="omni_thrust">Omni-Thrust</label>
-                                        </div>
-                                        <div>
-                                            <input type="radio" name="thrust_type" id="no_thrust" value="no_thrust" {%
-                                                if "no_thrust" in image_tags_list %}checked{% endif %}>
-                                            <label for="no_thrust">No thrust</label>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div>
-                                            <input type="radio" name="defense_type" id="armor_defenses"
-                                                value="armor_defenses" {% if "armor_defenses" in image_tags_list
-                                                %}checked{% endif %}>
-                                            <label for="armor_defenses">Armor Defenses</label>
-                                        </div>
-                                        <div>
-                                            <input type="radio" name="defense_type" id="mixed_defenses"
-                                                value="mixed_defenses" {% if "mixed_defenses" in image_tags_list
-                                                %}checked{% endif %}>
-                                            <label for="mixed_defenses">Mixed Defenses</label>
-                                        </div>
-                                        <div>
-                                            <input type="radio" name="defense_type" id="shield_defenses"
-                                                value="shield_defenses" {% if "shield_defenses" in image_tags_list
-                                                %}checked{% endif %}>
-                                            <label for="shield_defenses">Shield Defenses</label>
-                                        </div>
-                                        <div>
-                                            <input type="radio" name="defense_type" id="no_defenses" value="no_defenses"
-                                                {% if "no_defenses" in image_tags_list %}checked{% endif %}>
-                                            <label for="no_defenses">No Defenses</label>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <ul>
-                                            <input type="checkbox" name="kiter" id="kiter" {% if "kiter" in
-                                                image_tags_list %}checked{% endif %}>
-                                            <label for="kiter">kiter</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="diagonal" id="diagonal" {% if "diagonal" in
-                                                image_tags_list %}checked{% endif %}>
-                                            <label for="diagonal">Diagonal</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="avoider" id="avoider" {% if "avoider" in
-                                                image_tags_list %}checked{% endif %}>
-                                            <label for="avoider">avoider</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="mixed_weapons" id="mixed_weapons" {%
-                                                if "mixed_weapons" in image_tags_list %}checked{% endif %}>
-                                            <label for="mixed_weapons">Mixed Weapons</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="painted" id="painted" {% if "painted" in
-                                                image_tags_list %}checked{% endif %}>
-                                            <label for="painted">Painted</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="splitter" id="splitter" {% if "splitter" in
-                                                image_tags_list %}checked{% endif %}>
-                                            <label for="splitter">Splitter</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="utility_weapons" id="utility_weapons" {%
-                                                if "utility_weapons" in image_tags_list %}checked{% endif %}>
-                                            <label for="utility_weapons">Utility Weapons</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="rammer" id="rammer" {% if "rammer" in
-                                                image_tags_list %}checked{% endif %}>
-                                            <label for="rammer">rammer</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="orbiter" id="orbiter" {% if "orbiter" in
-                                                image_tags_list %}checked{% endif %}>
-                                            <label for="orbiter">orbiter</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="scout/racer" id="scout/racer" {%
-                                                if "scout/racer" in image_tags_list %}checked{% endif %}>
-                                            <label for="scout/racer">scout/racer</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="broadsider" id="broadsider" {% if "broadsider"
-                                                in image_tags_list %}checked{% endif %}>
-                                            <label for="broadsider">broadsider</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="waste_ship" id="waste_ship" {% if "waste_ship"
-                                                in image_tags_list %}checked{% endif %}>
-                                            <label for="waste_ship">waste ship</label>
-                                        </ul>
+                        <ul class="ships-list">
+                            <li class="ship-card">
+                                <p>{{ image[1] }}</p>
+                                <img src="{{ image[2] }}">
+                                <div>
+                                    <p>Thrust arrangements</p>
+                                    <div>
+                                        <input type="radio" name="thrust_type" id="bidirectional_thrust"
+                                            value="bidirectional_thrust" {% if "bidirectional_thrust" in image_tags_list
+                                            %}checked{% endif %}>
+                                        <label for="bidirectional_thrust">Bidirectional Thrust</label>
+                                    </div>
+                                    <div>
+                                        <input type="radio" name="thrust_type" id="mono_thrust" value="mono_thrust" {%
+                                            if "mono_thrust" in image_tags_list %}checked{% endif %}>
+                                        <label for="mono_thrust">Mono-Thrust</label>
+                                    </div>
+                                    <div>
+                                        <input type="radio" name="thrust_type" id="multi_thrust" value="multi_thrust" {%
+                                            if "multi_thrust" in image_tags_list %}checked{% endif %}>
+                                        <label for="multi_thrust">Multi-Thrust</label>
+                                    </div>
+                                    <div>
+                                        <input type="radio" name="thrust_type" id="omni_thrust" value="omni_thrust" {%
+                                            if "omni_thrust" in image_tags_list %}checked{% endif %}>
+                                        <label for="omni_thrust">Omni-Thrust</label>
+                                    </div>
+                                    <div>
+                                        <input type="radio" name="thrust_type" id="no_thrust" value="no_thrust" {%
+                                            if "no_thrust" in image_tags_list %}checked{% endif %}>
+                                        <label for="no_thrust">No thrust</label>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="ship-card">
+                                <p>Ship type</p>
+                                <div>
+                                    <input type="checkbox" name="kiter" id="kiter" {% if "kiter" in image_tags_list
+                                        %}checked{% endif %}>
+                                    <label for="kiter">kiter</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="diagonal" id="diagonal" {% if "diagonal" in
+                                        image_tags_list %}checked{% endif %}>
+                                    <label for="diagonal">Diagonal</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="avoider" id="avoider" {% if "avoider" in
+                                        image_tags_list %}checked{% endif %}>
+                                    <label for="avoider">avoider</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="mixed_weapons" id="mixed_weapons" {% if "mixed_weapons"
+                                        in image_tags_list %}checked{% endif %}>
+                                    <label for="mixed_weapons">Mixed Weapons</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="painted" id="painted" {% if "painted" in
+                                        image_tags_list %}checked{% endif %}>
+                                    <label for="painted">Painted</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="splitter" id="splitter" {% if "splitter" in
+                                        image_tags_list %}checked{% endif %}>
+                                    <label for="splitter">Splitter</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="utility_weapons" id="utility_weapons" {%
+                                        if "utility_weapons" in image_tags_list %}checked{% endif %}>
+                                    <label for="utility_weapons">Utility Weapons</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="rammer" id="rammer" {% if "rammer" in image_tags_list
+                                        %}checked{% endif %}>
+                                    <label for="rammer">rammer</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="orbiter" id="orbiter" {% if "orbiter" in
+                                        image_tags_list %}checked{% endif %}>
+                                    <label for="orbiter">orbiter</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="scout/racer" id="scout/racer" {% if "scout/racer" in
+                                        image_tags_list %}checked{% endif %}>
+                                    <label for="scout/racer">scout/racer</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="broadsider" id="broadsider" {% if "broadsider" in
+                                        image_tags_list %}checked{% endif %}>
+                                    <label for="broadsider">broadsider</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="waste_ship" id="waste_ship" {% if "waste_ship" in
+                                        image_tags_list %}checked{% endif %}>
+                                    <label for="waste_ship">waste ship</label>
+                                </div>
 
-                                        <ul>
-                                            <input type="checkbox" name="sundiver" id="sundiver" {% if "sundiver" in
-                                                image_tags_list %}checked{% endif %}>
-                                            <label for="sundiver">sundiver</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="cargo_ship" id="cargo_ship" {% if "cargo_ship"
-                                                in image_tags_list %}checked{% endif %}>
-                                            <label for="cargo_ship">cargo ship</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="spinner" id="spinner" {% if "spinner" in
-                                                image_tags_list %}checked{% endif %}>
-                                            <label for="spinner">spinner</label>
-                                        </ul>
-                                    </td>
-                                    <td>
-                                        <ul>
-                                            <input type="checkbox" name="campaign_ship" id="campaign_ship" {%
-                                                if "campaign_ship" in image_tags_list %}checked{% endif %}>
-                                            <label for="campaign_ship">Campaign ship</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="elimination_ship" id="elimination_ship" {%
-                                                if "elimination_ship" in image_tags_list %}checked{% endif %}>
-                                            <label for="elimination_ship">Elimination ship</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="domination_ship" id="domination_ship" {%
-                                                if "domination_ship" in image_tags_list %}checked{% endif %}>
-                                            <label for="domination_ship">Domination ship</label>
-                                        </ul>
-                                        <ul>
-                                            <input type="checkbox" name="debugging_tool" id="debugging_tool" {%
-                                                if "debugging_tool" in image_tags_list %}checked{% endif %}>
-                                            <label for="debugging_tool">debugging tool</label>
-                                        </ul>
-                                    </td>
-                                </tr>
-                            </table>
-                            <table style="width:100%">
-                                <tr>
-                                    <td>
-                                        <ul>
-                                            <button type="submit" class="blue-btn register">Valid modification</button>
-                                        </ul>
-                                    </td>
-                                    <td>
-                                <tr>
-                                    <ul>
-                                        <div {% if "gen" in brand %}style="display: none;" {% endif %}>
-                                            <input type="checkbox" name="brand" id="exl" value="exl" {% if "exl" in
-                                                brand %}checked{% endif %}>
-                                            <label for="exl">Upload to Excelsior section</label>
-                                        </div>
-                                        <label for="author">Author:</label>
-                                        <input type="text" name="author" id="author" value="{{ image[6] }}">
-                                        <label for="ship_name">Ship name:</label>
-                                        <input type="text" name="ship_name" id="ship_name" value="{{ image[5] }}">
-                                        <label for="submitted_by">Submitted by (/!\ use Discord Username):</label>
-                                        <input type="text" name="submitted_by" id="submitted_by" value="{{ image[3] }}">
-                                    </ul>
-                                </tr>
-                                </td>
-                                <td>
+                                <div>
+                                    <input type="checkbox" name="sundiver" id="sundiver" {% if "sundiver" in
+                                        image_tags_list %}checked{% endif %}>
+                                    <label for="sundiver">sundiver</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="cargo_ship" id="cargo_ship" {% if "cargo_ship" in
+                                        image_tags_list %}checked{% endif %}>
+                                    <label for="cargo_ship">cargo ship</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="spinner" id="spinner" {% if "spinner" in
+                                        image_tags_list %}checked{% endif %}>
+                                    <label for="spinner">spinner</label>
+                                </div>
+                            </li>
+                            <li class="ship-card">
+                                <p>Defenses</p>
+                                <div>
+                                    <input type="radio" name="defense_type" id="armor_defenses" value="armor_defenses"
+                                        {% if "armor_defenses" in image_tags_list %}checked{% endif %}"}>
+                                    <label for="armor_defenses">Armor Defenses</label>
+                                </div>
+                                <div>
+                                    <input type="radio" name="defense_type" id="mixed_defenses" value="mixed_defenses"
+                                        {% if "mixed_defenses" in image_tags_list %}checked{% endif %}">
+                                    <label for="mixed_defenses">Mixed Defenses</label>
+                                </div>
+                                <div>
+                                    <input type="radio" name="defense_type" id="shield_defenses" value="shield_defenses"
+                                        {% if "shield_defenses" in image_tags_list %}checked{% endif %}>
+                                    <label for="shield_defenses">Shield Defenses</label>
+                                </div>
+                                <div>
+                                    <input type="radio" name="defense_type" id="no_defenses" value="no_defenses" {%
+                                        if "no_defenses" in image_tags_list %}checked{% endif %}>
+                                    <label for="no_defenses">No Defenses</label>
+                                </div>
+                                <br>
+                                <br>
+                                <p>Game Mode</p>
+                                <div>
+                                    <input type="checkbox" name="campaign_ship" id="campaign_ship" {% if "campaign_ship"
+                                        in image_tags_list %}checked{% endif %}>
+                                    <label for="campaign_ship">Campaign ship</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="elimination_ship" id="elimination_ship" {%
+                                        if "elimination_ship" in image_tags_list %}checked{% endif %}>
+                                    <label for="elimination_ship">Elimination ship</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="domination_ship" id="domination_ship" {%
+                                        if "domination_ship" in image_tags_list %}checked{% endif %}>
+                                    <label for="domination_ship">Domination ship</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" name="debugging_tool" id="debugging_tool" {%
+                                        if "debugging_tool" in image_tags_list %}checked{% endif %}>
+                                    <label for="debugging_tool">debugging tool</label>
+                                </div>
+                            </li>
+                            <li class="ship-card">
+                                <!-- <table style="width:100%">
                                     <tr>
-                                        <ul>
-                                            <label for="price">Price :</label>
-                                            <input type="text" name="price" id="price" pattern="[0-9]+" required
-                                                value="{{ image[7] }}">
-                                            <div class="form-group">
-                                                <label for="description">Description:</label>
-                                                <textarea name="description" id="description">{{ image[4] }}</textarea>
+                                        <td> -->
+                                            <div>
+                                                <button type="submit" class="blue-btn register">Valid
+                                                    modification</button>
                                             </div>
-                                        </ul>
+                                        <!-- </td>
+
+                                        <td> -->
+                                            <div>
+                                                <div {% if "gen" in brand %}style="display: none;" {% endif %}>
+                                                    <input type="checkbox" name="brand" id="exl" value="exl" {% if "exl"
+                                                        in brand %}checked{% endif %}>
+                                                    <label for="exl">Upload to Excelsior section</label>
+                                                </div>
+                                                <label for="author">Author:</label>
+                                                <input type="text" name="author" id="author" value="{{ image[6] }}">
+                                                <label for="ship_name">Ship name:</label>
+                                                <input type="text" name="ship_name" id="ship_name"
+                                                    value="{{ image[5] }}">
+                                                <label for="submitted_by">Submitted by (/!\ use Discord
+                                                    Username):</label>
+                                                <input type="text" name="submitted_by" id="submitted_by"
+                                                    value="{{ image[3] }}">
+                                            </div>
+                                        <!-- </td>
                                     </tr>
-                                </td>
-                                </tr>
-                            </table>
-                        </form>
-                    </ul>
-                </div>
+                                    <tr>
+                                        <td> -->
+                                            <div>
+                                                <label for="price">Price :</label>
+                                                <input type="text" name="price" id="price" pattern="[0-9]+" required
+                                                    value="{{ image[7] }}">
+                                                <div class="form-group">
+                                                    <label for="description">Description:</label>
+                                                    <textarea name="description"
+                                                        id="description">{{ image[4] }}</textarea>
+                                                </div>
+                                                <input type="hidden" name="filename" id="filename"
+                                                    value="{{ image[1] }}">
+                                                <input type="hidden" name="url_png" id="url_png"
+                                                    value="{{ image[2] }}">
+                                                <input type="hidden" name="tags" id="tags" value="{{ tags }}">
+                                                <input type="hidden" name="crew" id="crew" value="{{ crew }}">
+                                            </div>
+                                        <!-- </td>
+                                    </tr>
+                                </table> -->
+                            </li>
+                        </ul>
+                    </div>
+                </form>
             </div>
         </section>
     </main>
+
     <footer>
         <div class="footer-content">
-            <img loading="lazy" alt="Excelsior logo" src="img/excelsior-logo.webp">
-
-            <ul>
+            <img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp">
+            <div>
                 <li><a title="Cookies policy" href="#">Cookies policy</a></li>
                 <li><a title="Another footer link" href="#">Another footer link</a></li>
                 <li><a title="More footer links" href="#">More footer links</a></li>
-
-            </ul>
+            </div>
         </div>
     </footer>
 </body>
 
-
 </html>
-<script>
-    function redirectToHomePage() {
-        window.location.href = "/";
-    }
 
+<style>
+    .hidden-checkbox {
+        display: none;
+    }
+</style>
+
+<script>
     ClassicEditor
         .create(document.querySelector('#description'))
         .catch(error => {
