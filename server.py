@@ -78,14 +78,14 @@ async def get_sitemap():
     If an exception occurs during the file write operation, it serves the static file.
     Returns a FileResponse object for the sitemap.xml file.
     """
-    # try:
-    #     with open("static/sitemap.xml", "w", encoding="utf-8") as f:
-    #         f.write(generate_sitemap())
-    # except Exception as e:
-    #     # not writable access, serve static file
-    #     print(e)
-    xmldata = generate_sitemap()
-    return FileResponse(xmldata, media_type="application/xml")
+    try:
+        with open("static/sitemap.xml", "w", encoding="utf-8") as f:
+            f.write(generate_sitemap())
+    except Exception as e:
+        # not writable access, serve static file
+        print(e)
+    # xmldata = generate_sitemap()
+    return FileResponse("static/sitemap.xml", media_type="application/xml")
 
 
 @app.get("/ship/{ship_id}")
@@ -870,12 +870,12 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 app.add_middleware(HTTPSRedirectMiddleware)
 # start server
 if __name__ == "__main__":
-    # uvicorn.run(app, host="127.0.0.1", port=8000, proxy_headers=True, forwarded_allow_ips="*")
-    uvicorn.run(
-        "server:app",
-        host="0.0.0.0",
-        port=8000,
-        proxy_headers=True,
-        forwarded_allow_ips="*",
-        workers=5,
-    )
+    uvicorn.run(app, host="127.0.0.1", port=8000, proxy_headers=True, forwarded_allow_ips="*")
+    # uvicorn.run(
+    #     "server:app",
+    #     host="0.0.0.0",
+    #     port=8000,
+    #     proxy_headers=True,
+    #     forwarded_allow_ips="*",
+    #     workers=5,
+    # )
