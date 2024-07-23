@@ -11,34 +11,19 @@
     </header>
 
     <main>
-        <h1 id="title" style="overflow: hidden; text-overflow: ellipsis;">Explore our search options and tags</h1>
+        <h1 id="title" style="overflow: hidden; text-overflow: ellipsis;">Explore our search options, tags and authors</h1>
         <section id="results" class="content-container">
             <div class="tabs-container">
                 <div id="elim-competitive-tab" class="tab active">
                     <h2>Browse through thousands of ships designs with our search engine</h2>
                     <ul class="ships-list" style="grid-template-columns: repeat(1, 1fr);">
                         <li class="ship-card">
-                            <h2>Energy Weapons</h2>
-                            <h3><a href="https://cosmoship.duckdns.org/search?laser=1">Laser Blaster</a></h3>
-                            <h3><a href="https://cosmoship.duckdns.org/search?heavy_laser=1">Heavy Laser Blaster</a>
-                                <h3><a href="https://cosmoship.duckdns.org/search?point_defense=1">Point Defense
-                                        System</a></h3>
-                                <h3><a href="https://cosmoship.duckdns.org/search?disruptors=1">Disruptor</a></h3>
-                                <h3><a href="https://cosmoship.duckdns.org/search?ion_beam=1">Ion Beam Emitter</a></h3>
-                                <h3><a href="https://cosmoship.duckdns.org/search?ion_prism=1">Ion Beam Prism</a></h3>
-                                <h3><a href="https://cosmoship.duckdns.org/search?mining_laser=1">Mining Laser</a></h3>
-                                <h2>Projectile Weapons</h2>
-                                <h3><a href="https://cosmoship.duckdns.org/search?cannon=1">Cannon</a></h3>
-                                <h3><a href="https://cosmoship.duckdns.org/search?large_cannon=1">Large Cannon</a></h3>
-                                <h3><a href="https://cosmoship.duckdns.org/search?deck_cannon=1">Deck Cannon</a></h3>
-                                <h3><a href="https://cosmoship.duckdns.org/search?emp_missiles=1">EMP Missiles</a></h3>
-                                <h3><a href="https://cosmoship.duckdns.org/search?he_missiles=1">High-Explosive
-                                        Missiles</a></h3>
-                                <h3><a href="https://cosmoship.duckdns.org/search?nukes=1">Nukes</a></h3>
-                                <h3><a href="https://cosmoship.duckdns.org/search?mines=1">Mines</a></h3>
-                                <h3><a href="https://cosmoship.duckdns.org/search?railgun=1">RailGun</a></h3>
-                                <h3><a href="https://cosmoship.duckdns.org/search?chaingun=1">Chaingun</a></h3>
-                                <h3><a href="https://cosmoship.duckdns.org/search?flak_battery=1">Flak Battery</a></h3>
+                            <h2>Our tag list</h2>
+                            {{ tags | safe}}
+                        </li>
+                        <li class="ship-card">
+                            <h2>Our author list</h2>
+                            {{ authors | safe}}
                         </li>
                     </ul>
                 </div>

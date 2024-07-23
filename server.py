@@ -37,7 +37,7 @@ from starlette_discord.client import DiscordOAuthClient
 from api_engine import extract_tags_v2
 from db import ShipImageDatabase
 from png_upload import upload_image_to_imgbb
-from sitemap import generate_sitemap
+from sitemap import generate_sitemap, generate_url_tags, generate_url_authors
 
 load_dotenv()
 
@@ -78,13 +78,14 @@ async def get_sitemap():
     If an exception occurs during the file write operation, it serves the static file.
     Returns a FileResponse object for the sitemap.xml file.
     """
-    try:
-        with open("static/sitemap.xml", "w", encoding="utf-8") as f:
-            f.write(generate_sitemap())
-    except Exception as e:
-        # not writable access, serve static file
-        print(e)
-    return FileResponse("static/sitemap.xml", media_type="application/xml")
+    # try:
+    #     with open("static/sitemap.xml", "w", encoding="utf-8") as f:
+    #         f.write(generate_sitemap())
+    # except Exception as e:
+    #     # not writable access, serve static file
+    #     print(e)
+    xmldata = generate_sitemap()
+    return FileResponse(xmldata, media_type="application/xml")
 
 
 @app.get("/ship/{ship_id}")
@@ -219,7 +220,7 @@ async def myfavorite(request: Request):
     )
 
 
-@app.get("/edit/{ship_id}") # TODO
+@app.get("/edit/{ship_id}")
 async def edit_image(ship_id: int, request: Request):
     """
     Replace image information from the database based on the provided ID
@@ -236,7 +237,7 @@ async def edit_image(ship_id: int, request: Request):
     )
 
 
-@app.post("/edit/{ship_id}") # TODO
+@app.post("/edit/{ship_id}")
 async def edit_image_post(ship_id: int, request: Request):
     """
     Edit an image in the database based on the provided ship ID.
@@ -260,7 +261,7 @@ async def edit_image_post(ship_id: int, request: Request):
     return RedirectResponse(url="/", status_code=303)
 
 
-@app.get("/update/{ship_id}") # TODO
+@app.get("/update/{ship_id}")
 async def update_image(ship_id: int, request: Request):
     """
     Update image information from the database based on the provided ID
@@ -282,11 +283,16 @@ async def update_image(ship_id: int, request: Request):
     if not user:
         return RedirectResponse("/login")
     return templates.TemplateResponse(
-        "update.html", {"request": request, "image": check, "user": user, } # "brand": brand}
+        "update.html",
+        {
+            "request": request,
+            "image": check,
+            "user": user,
+        },  # "brand": brand}
     )
 
 
-@app.post("/update/{ship_id}") # TODO
+@app.post("/update/{ship_id}")
 async def upload_update(ship_id: int, request: Request, file: UploadFile = File(...)):
     """
     A function to handle the upload of an image update for a ship.
@@ -315,16 +321,6 @@ async def upload_update(ship_id: int, request: Request, file: UploadFile = File(
         error = "API tag extractor is down, try again later"
         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
     if price == "unknown" or crew == "unknown":
-        error = "unable to decode file provided, check upload guide below"
-        return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
-    # get the tags
-    try:
-        dataextract = extract_tags_v2(url_png)
-        tags = dataextract[0]
-        crew = dataextract[2]
-        price = dataextract[3]
-
-    except Exception:
         error = "unable to decode file provided, check upload guide below"
         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
 
@@ -440,7 +436,7 @@ async def logoff(request: Request):
     return RedirectResponse("/")
 
 
-@app.get("/initupload", response_class=FileResponse) # DONE
+@app.get("/initupload", response_class=FileResponse)  # DONE
 async def upload_page(request: Request):
     """
     A function to handle the "/initupload" route.
@@ -459,7 +455,8 @@ async def upload_page(request: Request):
         "initupload.html", {"request": request, "user": user, "brand": brand}
     )
 
-@app.post("/initupload") # DONE
+
+@app.post("/initupload")  # DONE
 async def init_upload(request: Request, file: UploadFile = File(...)):
     """
     A function to handle the initial upload of an image.
@@ -511,7 +508,8 @@ async def init_upload(request: Request, file: UploadFile = File(...)):
         {"request": request, "data": data, "tags": tags, "crew": crew, "brand": brand},
     )
 
-@app.post("/upload") # DONE
+
+@app.post("/upload")  # DONE
 async def upload(request: Request):
     """
     Uploads an image to the server.
@@ -526,6 +524,7 @@ async def upload(request: Request):
     form_data = await request.form()
     db_manager.upload_image(form_data, user)
     return RedirectResponse(url="/", status_code=303)
+
 
 @app.get("/download/{image_id}")
 async def download_ship(image_id: str):
@@ -555,7 +554,7 @@ async def download_ship(image_id: str):
     return "Image not found"
 
 
-@app.get("/") # DONE
+@app.get("/")  # DONE
 async def index(request: Request):
     """
     Handle the root route ("/") and render the appropriate template based on the user's brand.
@@ -575,6 +574,7 @@ async def index(request: Request):
     return templates.TemplateResponse(
         "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
     )
+
 
 @app.get("/myships")
 async def index_get(request: Request):
@@ -725,7 +725,7 @@ async def home(request: Request):
         query_tags.append(("order", "new"))
     if crewstrip:
         query_tags.append(("max-crew", crewstrip))
-    if exlstrip :
+    if exlstrip:
         query_tags.append(("brand", "exl"))
     query_tags.append(("minprice", minstrip))
     query_tags.append(("maxprice", maxstrip))
@@ -785,25 +785,28 @@ async def search_post(request: Request):
         "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
     )
 
+
 @app.get("/seo_tags")
 async def get_seo_tags(request: Request):
     """display seo tags"""
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
+    tags = generate_url_tags()
+    authors = generate_url_authors()
     return templates.TemplateResponse(
-            "seo_tags.html", {"request": request, "user": user}
+        "seo_tags.html", {"request": request, "user": user, "tags": tags, "authors": authors}
     )
-    
+
+
 @app.get("/seo_about")
 async def get_seo_about(request: Request):
     """display seo about page"""
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
-    return templates.TemplateResponse(
-            "seo_about.html", {"request": request, "user": user}
-    )
+    return templates.TemplateResponse("seo_about.html", {"request": request, "user": user})
+
 
 @app.get("/authors")
 async def get_authors():
@@ -821,25 +824,27 @@ async def get_authors():
     authors = [author for (author,) in query_result["authors"]]
     return {"authors": authors}
 
+
 @app.get("/analyze")
 async def get_analyze(request: Request):
     """
     A route to analyze a URL and return the extracted tags.
-    
+
     Parameters:
         request (Request): The HTTP request object.
-    
+
     Returns:
         dict: A dictionary containing the extracted tags from the provided URL.
     """
-    try :
+    try:
         query_params = request.query_params
-        print("query_params = ",query_params)
+        print("query_params = ", query_params)
         url = query_params.get("url")
         datadata = extract_tags_v2(url, analyze=True)
         return {"datadata": datadata}
-    except Exception :
+    except Exception:
         return {"datadata": "Error"}
+
 
 @app.get("/{catchall:path}")
 async def serve_files(request: Request):
