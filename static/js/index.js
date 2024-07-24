@@ -1,56 +1,76 @@
-// $(document).ready(function() {
-//   $('#elim-competitive-btn').click(function() {
-//     if (!$(this).hasClass('active')) {
-//       $('#dom-competitive-btn').removeClass('active');
-//       $(this).addClass('active');
-//       $('#elim-competitive-tab').stop().slideDown(250);
-//       $('#dom-competitive-tab').stop().slideUp(250);
+document.addEventListener('DOMContentLoaded', function() {
 
-//       var $shipList = $("#elim-competitive-ship-list");
-//       var $ships = $shipList.find(".ship-card");
+    var urlParams = new URLSearchParams(window.location.search);
+    var order = urlParams.get('order');
+    if (order === 'pop') {
+        document.getElementById('order-pop-btn').classList.add('active');
+        document.getElementById('order-new-btn').classList.remove('active');
+        document.getElementById('order-fav-btn').classList.remove('active');
+    } else if (order === 'fav') {
+        document.getElementById('order-fav-btn').classList.add('active');
+        document.getElementById('order-new-btn').classList.remove('active');
+        document.getElementById('order-pop-btn').classList.remove('active');
+    } else {
+        document.getElementById('order-new-btn').classList.add('active');
+        document.getElementById('order-pop-btn').classList.remove('active');
+        document.getElementById('order-fav-btn').classList.remove('active');
+    }
+    
 
-//       $ships.sort(function(a, b) {
-//         var dateA = new Date($(a).find(".data:contains('Date of submission:')").text().trim().split(" ")[3]).getTime();
-//         var dateB = new Date($(b).find(".data:contains('Date of submission:')").text().trim().split(" ")[3]).getTime();
+    const search = document.getElementById('search-btn');
+    const tags = document.getElementById('tags-btn');
+    const ordernew = document.getElementById('order-new-btn');
+    const orderpop = document.getElementById('order-pop-btn');
+    const orderfav = document.getElementById('order-fav-btn');
 
-//         return dateB - dateA;
-//       });
+    if (typeof $ !== 'function') {
+        console.error('jQuery is not defined.');
+        return;
+    }
 
-//       $shipList.empty().append($ships);
-//     }
-//   });
+    ordernew.addEventListener('click', function() {
+        if (!this.classList.contains('active')) {
+            orderpop.classList.remove('active');
+            orderfav.classList.remove('active');
+            this.classList.add('active');
+        }
+    })
 
-//   // Sort the #elim-competitive-btn ship list by date of submission when the page is initially loaded
-//   var $shipList = $("#elim-competitive-ship-list");
-//   var $ships = $shipList.find(".ship-card");
+    orderpop.addEventListener('click', function() {
+        if (!this.classList.contains('active')) {
+            ordernew.classList.remove('active');
+            orderfav.classList.remove('active');
+            this.classList.add('active');
+        }
+    })
 
-//   $ships.sort(function(a, b) {
-//     var dateA = new Date($(a).find(".data:contains('Date of submission:')").text().trim().split(" ")[3]).getTime();
-//     var dateB = new Date($(b).find(".data:contains('Date of submission:')").text().trim().split(" ")[3]).getTime();
+    orderfav.addEventListener('click', function() {
+        if (!this.classList.contains('active')) {
+            ordernew.classList.remove('active');
+            orderpop.classList.remove('active');
+            this.classList.add('active');
+        }
+    })
 
-//     return dateB - dateA;
-//   });
+    search.addEventListener('click', function() {
+        if (!this.classList.contains('active')) {
+            tags.classList.remove('active');
+            this.classList.add('active');
+            document.getElementById('search-tab').style.display = 'block';
+            document.getElementById('tags-tab').style.display = 'none';
+        }
+    });
+    
+    tags.addEventListener('click', function() {
+        if (!this.classList.contains('active')) {
+            search.classList.remove('active');
+            this.classList.add('active');
+            document.getElementById('tags-tab').style.display = 'block';
+            document.getElementById('search-tab').style.display = 'none';
+        }
+    });
+});
 
-//   $shipList.empty().append($ships);
 
-//   $('#dom-competitive-btn').click(function() {
-//     if (!$(this).hasClass('active')) {
-//       $('#elim-competitive-btn').removeClass('active');
-//       $(this).addClass('active');
-//       $('#elim-competitive-tab').stop().slideUp(250);
-//       $('#dom-competitive-tab').stop().slideDown(250);
 
-//       var $shipList = $("#dom-competitive-ship-list");
-//       var $ships = $shipList.find(".ship-card");
-
-//       $ships.sort(function(a, b) {
-//         var popularityA = parseInt($(a).find(".data:contains('Popularity:')").text().trim().split(" ")[1]);
-//         var popularityB = parseInt($(b).find(".data:contains('Popularity:')").text().trim().split(" ")[1]);
-
-//         return popularityB - popularityA;
-//       });
-
-//       $shipList.empty().append($ships);
-//     }
-//   });
-// });
+    

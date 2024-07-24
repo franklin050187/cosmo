@@ -17,12 +17,19 @@ function downloadShip(imageUrl) {
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
 const minPrice = urlParams.get('minprice') || 0;
-const maxPrice = urlParams.get('maxprice') || 5000000;
+const maxPrice = urlParams.get('maxprice') || 25000000;
 const maxCrew = urlParams.get('max-crew') || 1000;
+const exlOnly = urlParams.get('brand') || 0;
 
 document.getElementById('min-price').value = minPrice;
 document.getElementById('max-price').value = maxPrice;
 document.getElementById('max-crew').value = maxCrew;
+document.getElementById('exl-only').value = exlOnly;
+
+// check input exl-only if value is not 0
+if (exlOnly != 0) {
+  document.getElementById('exl-only').checked = true;
+}
 
 $(function() {
   // Initialize the price slider
@@ -98,8 +105,8 @@ function selectAuthor() {
 }  
 
 const tagList = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust','no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kiter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'domination_ship', 'elimination_ship', 'orbiter', 'campaign_ship', 'builtin', 'chaingun', 'large_hyperdrive', 'rocket_thrusters', 'scout/racer', 'broadsider', 'waste_ship', 'debugging_tool', 'sundiver', 'cargo_ship', 'spinner']; // Predefined list of tags
-const infoIcon = document.querySelector('.info-icon');
-infoIcon.setAttribute('data-tags', tagList.join('\n'));
+// const infoIcon = document.querySelector('.info-icon');
+// infoIcon.setAttribute('data-tags', tagList.join('\n'));
 
 const tagInput = document.getElementById('tag-input');
 const tagSuggestionsDiv = document.getElementById('tag-suggestions');

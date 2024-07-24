@@ -1,183 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <!-- Google Tag Manager -->
-        <script>
-            !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-            posthog.init('phc_K77EUohajEup7Xj92C4lZUUjbVEh2x1nAhQYTdZ2xJL',{api_host:'https://e.abla.io'})
-          </script>
-        <!-- End Google Tag Manager -->
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-        <meta name="description" content="Website for sharing, searching, browsing and downloading ships and design for Cosmoteer: Starship Architect & Commander. It contains archive of ships blueprints. Access via Discord login.">
-        <title>General | Cosmoteer Ship Library</title>
-        <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
-        <link rel="stylesheet" type="text/css" href="/static/css/general.css">
-        <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script defer src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
-        <script defer src="/static/js/search.js"></script>
-        <link rel="stylesheet" href="https://cdn.scaleflex.it/plugins/js-cloudimage-responsive/latest/js-cloudimage-responsive.min.css?vh=a076ef&func=proxy"></link>
-    </head>
-    <body class="site-container">
-        <div class="item-header">
-            <a style="text-decoration: none;" title="home" href="/">
-                <span class="logo">Cosmoteer Ship Library</span>
-            </a>
-            <div class="item-right">
-                <span class="info-icon" title="Tags"></span>
-                <p class="username">Welcome {{ user }}  </p>
-                {% if user == "Guest" %}
-                <a title="Login" class="blue-btn" href="/login?button=login">
-                    <span>Login</span>
-                </a>
-                {% else %}
-                <a title="Logout" class="blue-btn" href="/logoff">
-                    <span>Log out</span>
-                </a>
-                {% endif %}
-                <a title="Upload" class="blue-btn" href="/login?button=upload">
-                    <span>Upload</span>
-                </a>
 
-                <a title="Myfavorite" class="blue-btn" href="/login?button=myfavorite">
-                    <span>My favorite</span>
-                </a>
-                <a title="Myships" class="blue-btn" href="/login?button=myships">
-                    <span>My Ships</span>
-                </a>
-                <a title="Home" class="blue-btn" href="/">
-                    <span>Home</span>
-                </a>
-                <a title="Excelsior library" class="blue-btn" href="/exl">
-                    <span>Excelsior library</span>
-                </a>
-                <a title="SEO" class="blue-btn" href="/seo_tags" style="display: none;"></a>
-            </div>
-        </div>
-        <div class="item-search">
-            <div class="item-intro">
-                <h1>Cosmoteer Ship Library, a new way to share your ship designs, browse and download thousands of designs !</h1>
-                <h2 style="text-align: center;">Share your ship designs with the community !</h2>
-            </div>
-                <div class="item-author">
-            <form action="/" method="post" enctype="multipart/form-data">
-                    <input type="text" id="authorinput" name="author" placeholder="  Search by author...">
-                    <input type="text" id="desc" name="desc" placeholder="  Search by name or description...">
-                </div>
-                <div class="item-tag">
-                    <input type="hidden" name="query" id="final_search_query">
-                    <input type="hidden" name="order" id="order">
-                    <input type="text" id="tag-input" placeholder='  Search by tags... add "-" to exclude tags'>
-                    <div class="search-container">
-                        <div class="tag-container">
-                            <div id="selected-tags" class="tag-box"></div>
-                            <div id="excluded-tags" class="tag-box"></div>
+<head>
+    {% include "head.html" %}
+    <script src="/static/js/index.js"></script>
+    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script defer src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
+    <script defer src="/static/js/search.js"></script>
+    <link rel="stylesheet"
+        href="https://cdn.scaleflex.it/plugins/js-cloudimage-responsive/latest/js-cloudimage-responsive.min.css?vh=a076ef&func=proxy">
+    </link>
+</head>
+
+
+<body>
+    <header>
+        {% include "header.html" %}
+    </header>
+    <main>
+        <h1 id="title">Explore and share ship designs with the community !</h1>
+        <section id="search" class="content-container">
+            <div class="tabs-container">
+                <button id="search-btn" class="active blue-btn" type="button">Search the Library</button>
+                <button id="tags-btn" class="blue-btn" type="button" style="display: none;">Select Tags</button>
+                <form action="/" method="post" enctype="multipart/form-data">
+                    <div id="search-tab" class="tab active">
+                        <input type="text" id="authorinput" name="author" placeholder="  Search by author...">
+                        <input type="text" id="desc" name="desc" placeholder="  Search by name or description...">
+                        <div class="item-price">
+                            <div style="display: flex; align-items: center;width: 91%;">
+                                <input type="text" name="min-price" id="min-price" value="0">
+                                <span for="price-slider"
+                                    style="display: flow-root;margin-bottom: 5px;font-style: italic; text-align: center;    width: 100%;">Price
+                                    Range</span>
+                                <input type="text" name="max-price" id="max-price" value="25000000">
+                            </div>
+                            <div id="price-slider"></div>
+                        </div>
+                        <div class="tag-boxx">
+                            <input type="text" id="tag-input" placeholder='  Search by tags... add "-" to exclude tags'>
+                            <div class="tag-container">
+                                <div id="selected-tags" class="tag-box"></div>
+                                <div id="excluded-tags" class="tag-box"></div>
+                            </div>
+                        </div>
+                        <input type="checkbox" name="exl-only" id="exl-only">
+                        <label for="exl">Show only Excelsior ships</label>
+                        <div class="item-crew">
+                            <input type="text" name="max-crew" id="max-crew" value="1000">
+                            <label for="max-crew" style="font-style: italic;">Max Crew</label>
                         </div>
                     </div>
-                </div>
-                <div class="item-price">
-                    <div>
-                        <input type="text" name="min-price" id="min-price" value="0">
-                        <input type="text" name="max-price" id="max-price" value="5000000">
+                    <div id="tags-tab" class="tab">
+                        <input type="hidden" name="query" id="final_search_query">
+                        <input type="hidden" name="order" id="order">
                     </div>
-                        <div id="price-slider"></div>
-                        <label for="price-slider" style="display: flow-root;margin-bottom: 5px;font-style: italic;">Price Range</label>
-                    <div>
-                        <input type="text" name="max-crew" id="max-crew" value="1000">
+                    <div class="item-button">
+                        <button type="submit" class="blue-btn" onclick="appendSearchInput()">Search</button>
+                        <a title="Reset" class="blue-btn" href="/">
+                            <span>Reset</span>
+                        </a>
                     </div>
-                    <label for="max-crew" style="display: flow-root;margin-bottom: 5px;font-style: italic;">Max Crew</label>
-                </div>
-                <div class="item-button">
-                    <button type="submit" class="blue-btn" onclick="appendSearchInput()">Search</button>
-                    <a title="Reset" class="red-btn" href="/">
-                        <span>Reset</span>
-                    </a>
-                </div>
-                <div class="item-order">
-                    <button id="elim-competitive-btn" class="active blue-btnfirst" onclick="updateOrderParam('new')">Sort by new first</button>
-                    <button id="dom-competitive-btn" class="blue-btnmiddle" onclick="updateOrderParam('pop')">Sort by most popular</button>
-                    <button id="fav-competitive-btn" class="blue-btnlast" onclick="updateOrderParam('fav')">Sort by most favorites</button>
-                </div>
-            </form>
-        </div>
+            </div>
+        </section>
 
-        <div class="item-listing">
-            {% for image in images %}
-            <div class="ship-card">
-                <div style="display: flex;justify-content: space-between;">
-                    <div>
-                        <i class="stars" title="Popularity"></i>
-                        <span>{{ image[11] }}</span>
-                    </div>
-                    <div>
-                        <i class="likes" title="Favorite"></i>
-                        <span>{{ image[8] }}</span>
-                    </div>
+        <section id="results" class="content-container">
+            <div class="tabs-container">
+                <button id="order-new-btn" class="active blue-btn" onclick="updateOrderParam('new')">New</button>
+                <button id="order-pop-btn" class="blue-btn" onclick="updateOrderParam('pop')">Pop</button>
+                <button id="order-fav-btn" class="blue-btn" onclick="updateOrderParam('fav')">Fav</button>
+                </form>
+                <div id="elim-competitive-tab" class="tab active">
+                    {% set order_query = request.url.query.split('order=') if request.url.query.split('order=')|length >
+                    1 else '1' %}
+                    {% if order_query|length > 1 %}
+                    {% set order = order_query[1].split('&') %}
+                    {% if order|length > 1 %}
+                    {% set order_order = order[0] %}
+                    {% else %}
+                    {% set order_order = 'new' %}
+                    {% endif %}
+                    {% else %}
+                    {% set order_order = 'new' %}
+                    {% endif %}
+                    {% if order_order == 'pop' %}
+                    <p id="order-text">Browse most popular ships!</p>
+                    {% elif order_order == 'fav' %}
+                    <p id="order-text">Browse most liked ships!</p>
+                    {% else %}
+                    <p id="order-text">Browse latest uploaded ships, brand new!</p>
+                    {% endif %}
+                    <ul class="ships-list">
+                        {% set total_images = images | length %}
+                        {% for image in images %}
+                        <li class="ship-card">
+                            <button type="button" class="stars" title="Give it a star">{{ image[11] }}</button>
+                            <button type="button" class="likes" title="Like it">{{ image[8] }}</button>
+                            <a href="/ship/{{ image[0] }}">
+                                <img ci-src="{{ image[2] }}" alt="{{ image[5] }}">
+                            </a>
+                            <div class="ship-data">
+                                <span class="data"><span>Ship name:</span> {{ image[5] }}</span>
+                                <span class="data"><span>Ship tags:</span><span class="data">{% set tagList = [
+                                        'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery',
+                                        'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'factories',
+                                        'disruptors', 'heavy_laser',
+                                        'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'kiter',
+                                        'avoider', 'rammer',
+                                        'orbiter', 'campaign_ship', 'elimination_ship', 'domination_ship', 'diagonal',
+                                        'splitter', 'chaingun',
+                                        'scout/racer', 'broadsider', 'waste_ship', 'debugging_tool', 'sundiver',
+                                        'cargo_ship', 'spinner' ] %} {%
+                                        set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'",
+                                        "") | replace(" ", "")
+                                        %} {% set image_tags_list = image_tags.split(",") %} {% for tag in
+                                        image_tags_list %} {% if tag in
+                                        tagList %}
+                                        <span class="selected-tag"> <a href="/search?{{ tag }}=1">{{ tag }}</a></span>
+                                        {% endif %} {% endfor
+                                        %}</span></span>
+                                <span class="data credits"><span>Cost:</span> {{ image[7] }}₡</span>
+                                <span class="data"><span>Crew : {{ image[13] }}</span></span>
+                                <span class="data"><span>Creator:</span> <a href="/search?author={{ image[6] }}"> {{
+                                        image[6] }}</a></span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
                 </div>
-                <a href="/ship/{{ image[0] }}">
-                    <img ci-src="{{ image[2] }}" alt="{{ image[5] }}">
-                </a>
-                <span class="data">{{ image[5] }}</span>
-                <span class="data">{% set tagList = [ 'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'factories', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'kiter', 'avoider', 'rammer', 'orbiter', 'campaign_ship', 'elimination_ship', 'domination_ship', 'diagonal', 'splitter', 'chaingun', 'scout/racer', 'broadsider', 'waste_ship', 'debugging_tool', 'sundiver', 'cargo_ship', 'spinner' ] %} {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") | replace(" ", "") %} {% set image_tags_list = image_tags.split(",") %} {% for tag in image_tags_list %} {% if tag in tagList %}
-                <span class="selected-tag"> <a href="/search?{{ tag }}=1">{{ tag }}</a></span> {% endif %} {% endfor %}</span>
-                <span class="data"><span>By </span><a href="/search?author={{ image[6] }}"> {{ image[6] }}</a></span>
-                <span class="data"><span class="data credits"> {{ image[7] }}₡</span></span>
-                <span class="data"><span>Crew : {{ image[13] }}</span></span>
             </div>
-            {% endfor %}
-        </div>
-        <div class="item-pagination" id="pagination">
-            <div style="background-color: #021526; padding: 3px; display: flex;">
-                <a class="blue-btn" style="display: none;" id="previous" title="Previous" onclick="previousPage()">Previous</a>
-            </div>
-            {% set page_query = request.url.query.split('page=') %}
-            {% set pagenumber = page_query[1] if page_query|length == 2 else '1' %}
-            <div id="page-buttons">
-                {% for i in range(1, maxpage + 1) %}
+
+        </section>
+        <section id="pagination" class="content-container">
+            <div class="item-pagination" id="pagination">
+                <!-- should display first, last and current
+                other will be display none
+                if desktop display first, last current and +1 +2 +3 and -1 -2 -3 -->
+                <div style="display: flex;">
+                    <a class="blue-btn" style="display: none;" id="previous" title="Previous"
+                        onclick="previousPage()">Previous</a>
+                </div>
+                {% set page_query = request.url.query.split('page=') %}
+                {% set pagenumber = page_query[1] if page_query|length == 2 else '1' %}
+                <div id="page-buttons">
+                    {% for i in range(1, maxpage + 1) %}
                     {% set newpage = i|string %}
                     {% set newquery = request.url.query %}
                     {% set newpath = request.url.path %}
                     {% if newpath != '/search' %}
-                        {% set newpath = '/search' %}
+                    {% set newpath = '/search' %}
                     {% endif %}
                     {% if page_query|length != 1 %}
-                        {% set newquery = newquery.replace('page=' + pagenumber, 'page=' + newpage) %}
+                    {% set newquery = newquery.replace('page=' + pagenumber, 'page=' + newpage) %}
                     {% else %}
-                        {% set newquery = newquery + '&page=' + newpage %}
+                    {% set newquery = newquery + '&page=' + newpage %}
                     {% endif %}
                     {% if newpage == pagenumber %}
-                    <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}" style="font-weight: bold;font-size: x-large;" >{{newpage}}</a>
+                    <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}"
+                        style="font-weight: bold;font-size: x-large; color: currentcolor;">{{newpage}}</a>
+                    <!-- current page -->
+                    {% elif newpage | int == 1 or newpage | int == maxpage %}
+                    <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}"
+                        href="{{newpath}}?{{newquery}}">{{newpage}}</a>
+                    {% elif newpage | int == pagenumber | int - 1 or newpage | int == pagenumber | int + 1 or newpage |
+                    int == pagenumber | int - 2 or newpage | int == pagenumber | int + 2 or newpage | int == pagenumber
+                    | int - 3 or newpage | int == pagenumber | int + 3 %}
+                    <a class="blue-btn page {% if newpage == pagenumber %} selected {% endif %}"
+                        href="{{newpath}}?{{newquery}}">{{newpage}}</a>
                     {% else %}
-                    <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}" href="{{newpath}}?{{newquery}}">{{newpage}}</a>
+                    <a class="blue-btn {% if newpage == pagenumber %} selected {% endif %}"
+                        href="{{newpath}}?{{newquery}}" style="display: none;">{{newpage}}</a>
+                    <!-- other pages  -->
+                    <!-- use @media to display none ?  -->
                     {% endif %}
-                {% endfor %}
-            </div>
-            <div style="background-color: #021526; padding: 3px; display: flex;"></div>
-                {% if images|length == 60 %}
+                    {% endfor %}
+                </div>
+                <div style="display: flex;"></div>
+                {% if images|length == 24 %}
                 <a class="blue-btn" title="Next" onclick="nextPage()">Next</a>
                 {% endif %}
             </div>
-        </div>
-        <div class="item-footer">
-            <a style="text-decoration: none;" title="home" href="/"><span class="logo">Cosmoteer Ship Library</span></a>
-            <a class="blue-btn" title="Source code" href="https://github.com/franklin050187/cosmo">Source code</a>
-            <a class="blue-btn" title="Issues" href="https://github.com/franklin050187/cosmo/issues">Issues</a>
-            <a class="blue-btn" title="Support us" href="#">Support us</a>
-        </div>
-    </body>
-</html>
+        </section>
+    </main>
 
-<!-- Add lazyload library -->
+    <footer>
+        {% include "footer.html" %}
+    </footer>
+</body>
+<script>
+    // hide search and tabs if url is /myships or /myfavorites
+    if (window.location.pathname === '/myships' || window.location.pathname === '/myfavorite') {
+        document.getElementById('search').style.display = 'none';
+        document.getElementById('order-new-btn').style.display = 'none';
+        document.getElementById('order-pop-btn').style.display = 'none';
+        document.getElementById('order-fav-btn').style.display = 'none';
+        document.getElementById('pagination').style.display = 'none';
+    }
+    // update text on page
+    if (window.location.pathname === '/myships') {
+        document.getElementById('title').innerHTML = 'My ships';
+        document.getElementById('order-text').innerHTML = 'Ships you uploaded on Cosmoship. <br> {% if total_images > 1 %} Your armada is currently sitting at {{ total_images }}, impressive ! {% else %} Start sharing your designs now ! {% endif %}';
+    }
+
+    if (window.location.pathname === '/myfavorite') {
+        document.getElementById('title').innerHTML = 'My favorites';
+        document.getElementById('order-text').innerHTML = 'Ships you added to your favorites. <br> {% if total_images > 1 %} You found {{ total_images }} amazing ships, awesome ! {% else %} Start adding ships to your collection now ! {% endif %}';
+    }
+</script>
 <script>
     window.lazySizesConfig = window.lazySizesConfig || {};
     window.lazySizesConfig.init = false;
 </script>
 <script src="https://cdn.scaleflex.it/filerobot/js-cloudimage-responsive/lazysizes.min.js"></script>
-
-    <!-- Add js-cloudimage-responsiv library -->
 <script src="https://cdn.scaleflex.it/plugins/js-cloudimage-responsive/4.8.4/js-cloudimage-responsive.min.js"></script>
-
-    <!-- Initialize cloudimage responsive -->
 <script>
     const ciResponsive = new window.CIResponsive({
         token: 'cnfyupteqa',
@@ -187,143 +222,60 @@
 
     window.lazySizes.init();
 </script>
-
-
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
+</html>
 <script defer>
 
-function getParameterValue(param) {
-    const urlParams = new URLSearchParams(window.location.search);
-    var value = urlParams.get(param);
-    return value;
-    console.log(value);
-}
-
-// next button
-function nextPage() {
-    const currentPage = Number(getParameterValue('page')) || 1;
-    const nextPage = currentPage + 1;
-    const url = new URL(window.location.href);
-    
-    // Check if '/search' is not present in the pathname
-    if (url.pathname === '/' || !url.pathname.includes('/search')) {
-      url.pathname = '/search';
+    function getParameterValue(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        var value = urlParams.get(param);
+        return value;
+        // console.log(value);
     }
-  
-    url.searchParams.set('page', nextPage.toString());
-    window.location.href = url.href;
-  }
-
-// previous button
-function previousPage() {
-    const currentPage = Number(getParameterValue('page')) || 1;
-    const previousPage = currentPage - 1;
-    const url = new URL(window.location.href);
-    url.searchParams.set('page', previousPage.toString());
-    window.location.href = url.href;
-  }
-
-function showPreviousButton() {
-  const page = Number(getParameterValue('page')) || 1;
-  const previousButton = document.getElementById('previous');
-  if (page > 1) {
-    previousButton.style.display = 'block';
-  } else {
-    previousButton.style.display = 'none';
-  }
-}
-
-
-
-// Get all the submission date elements
-var submissionDateElements = document.querySelectorAll('.submission-date');
-
-// Loop through each element
-submissionDateElements.forEach(function(element) {
-  // Get the date string
-  var dateStr = element.textContent;
-
-  // Create a new Date object from the date string
-  var date = new Date(dateStr);
-
-  // Format the date string in a readable format
-  var formattedDate = formatDate(date);
-
-  // Update the submission date element with the formatted date
-  element.textContent = formattedDate;
-});
-
-// Function to format the date
-function formatDate(date) {
-  var options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
-  return date.toLocaleDateString(undefined, options);
-}
-
-
-
-    const blurImages = document.querySelectorAll("img.blur-load");
-    blurImages.forEach(img => {
-        const parentLink = img.parentElement;
-    
-        function loaded() {
-            parentLink.classList.add("loaded");
-            img.style.backgroundImage = "none";
+    // next button
+    function nextPage() {
+        const currentPage = Number(getParameterValue('page')) || 1;
+        const nextPage = currentPage + 1;
+        const url = new URL(window.location.href);
+        // Check if '/search' is not present in the pathname
+        if (url.pathname === '/' || !url.pathname.includes('/search')) {
+            url.pathname = '/search';
         }
-    
-        if (img.complete) {
-            loaded();
-        } else {
-            img.addEventListener("load", loaded);
-        }
-    });
-
-    window.addEventListener('DOMContentLoaded', function() {
-        var urlParams = new URLSearchParams(window.location.search);
-        var order = urlParams.get('order');
-        if (order === 'pop') {
-            document.getElementById('dom-competitive-btn').classList.add('active');
-            document.getElementById('elim-competitive-btn').classList.remove('active');
-            document.getElementById('fav-competitive-btn').classList.remove('active');
-        } else if (order === 'fav') {
-            document.getElementById('dom-competitive-btn').classList.remove('active');
-            document.getElementById('elim-competitive-btn').classList.remove('active');
-            document.getElementById('fav-competitive-btn').classList.add('active');
-        } else {
-            document.getElementById('dom-competitive-btn').classList.remove('active');
-            document.getElementById('elim-competitive-btn').classList.add('active');
-            document.getElementById('fav-competitive-btn').classList.remove('active');
-        }
-    });
-
-const lazyImages = document.querySelectorAll('.lazy-img');
-
-const observer = new IntersectionObserver((entries, observer) => {
-  entries.forEach((entry) => {
-    if (entry.isIntersecting) {
-      const img = entry.target;
-      img.src = img.dataset.src;
-      img.classList.remove('lazy-img');
-      observer.unobserve(img);
+        url.searchParams.set('page', nextPage.toString());
+        window.location.href = url.href;
     }
-  });
-});
+    // previous button
+    function previousPage() {
+        const currentPage = Number(getParameterValue('page')) || 1;
+        const previousPage = currentPage - 1;
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', previousPage.toString());
+        window.location.href = url.href;
+    }
+    function showPreviousButton() {
+        const page = Number(getParameterValue('page')) || 1;
+        const previousButton = document.getElementById('previous');
+        if (page > 1) {
+            previousButton.style.display = 'block';
+        } else {
+            previousButton.style.display = 'none';
+        }
+    }
 
-lazyImages.forEach((img) => {
-  observer.observe(img);
-});
+    function updateOrderParam(order) {
+        document.getElementById('order').value = order;
+        // find order tag in url, change it to selected value and navigate
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('order', order);
+    }
 
-function updateOrderParam(order) {
-    document.getElementById('order').value = order;
-    // find order tag in url, change it to selected value and navigate
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set('order', order);
-}
-
-
-
-updateOrderParam(getParameterValue('order'));
-showPreviousButton();
+    updateOrderParam(getParameterValue('order'));
+    showPreviousButton();
 </script>
-
- 
+<style>
+    .ui-widget.ui-widget-content {
+        border: none;
+        background: none;
+    }
+</style>

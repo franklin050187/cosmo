@@ -2,20 +2,10 @@
 <html lang="en">
 
 <head>
-    <script>
-        !function (t, e) { var o, n, p, r; e.__SV || (window.posthog = e, e._i = [], e.init = function (i, s, a) { function g(t, e) { var o = e.split("."); 2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } } (p = t.createElement("script")).type = "text/javascript", p.async = !0, p.src = s.api_host + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r); var u = e; for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function (t) { var e = "posthog"; return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e }, u.people.toString = function () { return u.toString(1) + ".people (stub)" }, o = "capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys".split(" "), n = 0; n < o.length; n++)g(u, o[n]); e._i.push([i, s, a]) }, e.__SV = 1) }(document, window.posthog || []);
-        posthog.init('phc_K77EUohajEup7Xj92C4lZUUjbVEh2x1nAhQYTdZ2xJL', { api_host: 'https://e.abla.io' })
-    </script>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>General | Cosmoteer Ship Library</title>
-    <meta name="robots" content="noindex,nofollow">
-    <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
-    <link rel="stylesheet" type="text/css" {% if "exl" in brand %}href="/static/css/v2.css" {% else
-        %}href="/static/css/general.css" {% endif %}>
-    <!-- <script defer src="/_vercel/insights/script.js"></script> -->
+    {% include "head.html" %}
     <script src="/static/js/ship.js"></script>
 </head>
+
 <style>
     .spinner {
         border: 4px solid rgba(0, 0, 0, 0.1);
@@ -34,158 +24,107 @@
     }
 </style>
 
-<body class="site-container">
-    {% if "exl" in brand %}
-    <div class="item-header">
-        <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
-        <div class="item-right">
-            <span class="info-icon" title="Tags"></span>
-            <p class="username">Welcome {{ user }} </p>
-            {% if user == "Guest" %}
-            <a title="Login" class="blue-btn" href="/login?button=login">
-                <span>Login</span>
-            </a>
-            {% else %}
-            <a title="Logout" class="blue-btn" href="/logoff">
-                <span>Log out</span>
-            </a>
-            {% endif %}
-            <a title="Upload" class="blue-btn" href="/login?button=upload">
-                <span>Upload</span>
-            </a>
-            <a title="Myfavorite" class="blue-btn" href="/login?button=myfavorite">
-                <span>My favorite</span>
-            </a>
-            <a title="Myships" class="blue-btn" href="/login?button=myships">
-                <span>My Ships</span>
-            </a>
-            <a title="Home" class="blue-btn" href="/">
-                <span>Home</span>
-            </a>
-            <a title="General library" class="blue-btn" href="/gen">
-                <span>General library</span>
-            </a>
-        </div>
-    </div>
-    {% else %}
-    <div class="item-header">
-        <a style="text-decoration: none;" title="home" href="/">
-            <span class="logo">Cosmoteer Ship Library</span>
-        </a>
-        <div class="item-right">
-            <span class="info-icon" title="Tags"></span>
-            <p class="username">Welcome {{ user }} </p>
-            {% if user == "Guest" %}
-            <a title="Login" class="blue-btn" href="/login?button=login">
-                <span>Login</span>
-            </a>
-            {% else %}
-            <a title="Logout" class="blue-btn" href="/logoff">
-                <span>Log out</span>
-            </a>
-            {% endif %}
-            <a title="Upload" class="blue-btn" href="/login?button=upload">
-                <span>Upload</span>
-            </a>
+<body>
+    <header>
+        {% include "header.html" %}
+    </header>
 
-            <a title="Myfavorite" class="blue-btn" href="/login?button=myfavorite">
-                <span>My favorite</span>
-            </a>
-            <a title="Myships" class="blue-btn" href="/login?button=myships">
-                <span>My Ships</span>
-            </a>
-            <a title="Home" class="blue-btn" href="/">
-                <span>Home</span>
-            </a>
-            <a title="Excelsior library" class="blue-btn" href="/exl">
-                <span>Excelsior library</span>
-            </a>
-        </div>
-    </div>
-    {% endif %}
-    <div class="item-search">
-        <div class="intro" style="
-            background-color: rgb(2 21 38);
-        ">
-            <img loading="lazy" src="{{ url_png }}" width="512" height="512">
-            <div id="conditional-content">
-                {% if "url_com" in datadata %}
-                <img loading="lazy" src="{{datadata.url_com}}" width="512">
-                <img loading="lazy" src="{{datadata.analysis.url_analysis}}" width="512">
-                {% else %}
-                <ul>
-                    <a title="Show stats" class="blue-btn register" id="fetch-button"
-                        onclick="fetchData('{{ url_png }}')">
-                        <span>Show stats</span>
-                    </a>
-                </ul>
-                {% endif %}
+    <main>
+        <h1 id="title" style="overflow: hidden; text-overflow: ellipsis;">Datasheet for {{ image[0][5] }}</h1>
+        <h2 style="display: none;">{{ image[0][4] | safe}}</h2>
+        <section id="results" class="content-container">
+            <div class="tabs-container">
+                <div id="elim-competitive-tab" class="tab active">
+                    <ul class="ships-list" style="grid-template-columns: repeat(1, 1fr);">
+                        <li class="ship-card">
+                            <div class="intro">
+                                <img src="{{ url_png }}">
+                            </div>
+                            <div class="ship-data">
+                                <p>Ship name : </p>
+                                <p style="color: antiquewhite;">{{ image[0][5] }}</p>
+                                {% if "exl" in image[0][12] and "gen" in brand %}
+                                <p>WARNING : This ship is from the Excelsior library, it requires piloting skills.
+                                </p>
+                                {% endif %}
+                                <p>Author : </p>
+                                <p style="color: antiquewhite;">{{ image[0][6] }}</p>
+                                <p>Ship description : </p>
+                                <span class="data">{{ image[0][4] | safe}}</span>
+                                <p></p>
+                                <p><span class="data credits"><span>Cost:</span> {{ image[0][7] }}₡</span>
+                                </p>
+                                <p>
+                                    <span class="data"><span>Crew : {{ image[0][13] }} 웃</span></span>
+                                </p>
+                                <P class="data"><span>Popularity :</span> {{ image[0][8] }}</P>
+                                <P class="data"><span>Date of submission :</span> {{ image[0][9] }}</P>
+                                <p></p>
+                                <p class="data" style="font-size: 12px;">Submitted by : {{ image[0][3] }}</p>
+                                <ul class="ships-list">
+                                    <span class="data">
+                                        <span>Ship tags:</span>
+                                        {% set image_tags = image[0][10] | replace("[", "") | replace("]", "") |
+                                        replace("'", "") |
+                                        replace(" ", "") %} {% set image_tags_list = image_tags.split(",") %} {%
+                                        for
+                                        tag in image_tags_list
+                                        %}
+                                        <li style="list-style: none;"><span class="selected-tag">{{ tag
+                                                }}</span>
+                                        </li>
+                                        {% endfor %}
+                                    </span>
+                                </ul>
+                            </div>
+                            <div class="ship-data">
+                                <p id="conditional-content">
+                                    <a title="Show stats" class="blue-btn register" id="fetch-button"
+                                        onclick="fetchData('{{ url_png }}')">
+                                        <span>Show stats</span>
+                                    </a>
+                                </p>
+                                <p id="output"></p>
+                            </div>
+                            <div class="ship-data">
+                                {% if user == "Guest" %}
+                                <ul><a title="Favorite" class="blue-btn register"
+                                        href="/login?button=myfavorite"><span>Login to add
+                                            favorite</span></a></ul>
+                                {% elif fav == 1 %}
+                                <ul><a title="Favorite" class="blue-btn register"
+                                        href="/rmfavorite/{{ image[0][0] }}"><span>Remove
+                                            from
+                                            favorite</span></a></ul>
+                                {% else %}
+                                <ul><a title="Favorite" class="blue-btn register"
+                                        href="/favorite/{{ image[0][0] }}"><span>Add to
+                                            favorite</span></a></ul>
+                                {% endif %}
+                                <ul><a title="Download" class="blue-btn register"
+                                        onclick="downloadShip('{{ image[0][0] }}')"><span>Download</span></a>
+                                </ul>
+                                {% if user == image[0][3] or user in modlist %}
+                                <ul><a title="Edit" class="blue-btn register"
+                                        href="/edit/{{ image[0][0] }}"><span>Edit</span></a>
+                                </ul>
+                                <ul><a title="Delete" class="blue-btn " style="
+                                        background: brown;
+                                    " href="/delete/{{ image[0][0] }}"><span>Delete</span></a>
+                                </ul>
+                                {% endif %}
+                            </div>
+
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </div>
-        <div class="author ship-card">
-            <h2>Ship name : {{ image[0][5] }}</h2>
-            {% if "exl" in image[0][12] and "gen" in brand %}
-            <p>WARNING : This ship is from the Excelsior library, it requires piloting skills.</p>
-            {% endif %}
-            <p>Author : {{ image[0][6] }}</p>
-            <p>Ship description : {{ image[0][4] | safe}}</p>
-            <p></p>
-            <p><span class="data credits"><span>Cost:</span> {{ image[0][7] }}₡</span>
-            </p>
-            <p>
-                <span class="data"><span>Crew : {{ image[0][13] }} 웃</span></span>
-            </p>
-            <P class="data"><span>Popularity :</span> {{ image[0][8] }}</P>
-            <P class="data"><span>Date of submission :</span> {{ image[0][9] }}</P>
-            <p></p>
-            <p id="output"></p>
-            <p class="data" style="font-size: 12px;">Submitted by : {{ image[0][3] }}</p>
-            {% if user == "Guest" %}
-            <ul><a title="Favorite" class="blue-btn register" href="/login?button=myfavorite"><span>Login to add
-                        favorite</span></a></ul>
-            {% elif fav == 1 %} 
-            <ul><a title="Favorite" class="blue-btn register" href="/rmfavorite/{{ image[0][0] }}"><span>Remove from
-                        favorite</span></a></ul>
-            {% else %}
-            <ul><a title="Favorite" class="blue-btn register" href="/favorite/{{ image[0][0] }}"><span>Add to
-                        favorite</span></a></ul>
-            {% endif %}
-        </div>
-        <div class="tag ship-card">
-            <ul class="ships-list">
-                <span class="data">
-                    <span>Ship tags:</span>
-                    {% set image_tags = image[0][10] | replace("[", "") | replace("]", "") | replace("'", "") |
-                    replace(" ", "") %} {% set image_tags_list = image_tags.split(",") %} {% for tag in image_tags_list
-                    %}
-                    <li style="list-style: none;"><span class="selected-tag">{{ tag }}</span></li>
-                    {% endfor %}
-                </span>
+        </section>
+    </main>
 
-                <ul><a title="Download" class="blue-btn register"
-                        onclick="downloadShip('{{ image[0][0] }}')"><span>Download</span></a></ul>
-                {% if user == image[0][3] or user in modlist %}
-                <ul><a title="Edit" class="blue-btn register" href="/edit/{{ image[0][0] }}"><span>Edit</span></a></ul>
-                <ul><a title="Delete" class="red-btn register" href="/delete/{{ image[0][0] }}"><span>Delete</span></a>
-                </ul>
-                {% endif %}
-            </ul>
-        </div>
-    </div>
-    <div class="item-listing">
-    </div>
-    <div class="item-footer">
-        {% if "gen" in brand %}
-        <a style="text-decoration: none;" title="home" href="/">
-            <span class="logo">Cosmoteer Ship Library</span>
-        </a>
-        {% else %}
-        <a href="/"><img loading="lazy" alt="Excelsior logo" src="/static/img/excelsior-logo.webp"></a>
-        {% endif %}
-        <a class="blue-btn" title="Source code" href="https://github.com/franklin050187/cosmo">Source code</a>
-        <a class="blue-btn" title="Issues" href="https://github.com/franklin050187/cosmo/issues">Issues</a>
-        <a class="blue-btn" title="Support us" href="#">Support us</a>
-    </div>
+    <footer>
+        {% include "footer.html" %}
+    </footer>
 </body>
 
 </html>

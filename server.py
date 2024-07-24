@@ -37,11 +37,13 @@ from starlette_discord.client import DiscordOAuthClient
 from api_engine import extract_tags_v2
 from db import ShipImageDatabase
 from png_upload import upload_image_to_imgbb
-from sitemap import generate_sitemap
+from sitemap import generate_sitemap, generate_url_tags, generate_url_authors
 
 load_dotenv()
 
 print("loading")
+
+MAX_SHIPS_PER_PAGE = 24
 
 db_manager = ShipImageDatabase()
 
@@ -82,6 +84,7 @@ async def get_sitemap():
     except Exception as e:
         # not writable access, serve static file
         print(e)
+    # xmldata = generate_sitemap()
     return FileResponse("static/sitemap.xml", media_type="application/xml")
 
 
@@ -115,34 +118,9 @@ async def get_image(ship_id: int, request: Request):
     if ship_id not in shipidsession:
         request.session["shipidsession"].append(ship_id)
         db_manager.update_downloads(ship_id)
-    brand = request.session.get("brand")
-    if not brand:
-        brand = "gen"
     image_data = db_manager.get_image_data(ship_id)
     url_png = image_data[0][2]  # change to send the url instead of the image
     datadata = {}
-    query_params = request.query_params
-    isanalyze = query_params.get("analyze")
-    if isanalyze == "1":
-        try:
-            rs = extract_tags_v2(url_png, analyze=True)
-        except Exception as e:
-            print(e)
-            rs = None
-        datadata = rs
-        return templates.TemplateResponse(
-            "ship.html",
-            {
-                "request": request,
-                "image": image_data,
-                "user": user,
-                "url_png": url_png,
-                "modlist": modlist,
-                "fav": fav,
-                "brand": brand,
-                "datadata": datadata,
-            },
-        )
     return templates.TemplateResponse(
         "ship.html",
         {
@@ -152,7 +130,6 @@ async def get_image(ship_id: int, request: Request):
             "url_png": url_png,
             "modlist": modlist,
             "fav": fav,
-            "brand": brand,
             "datadata": datadata,
         },
     )
@@ -236,21 +213,11 @@ async def myfavorite(request: Request):
     if not user:
         return RedirectResponse("/login?button=myfavorite")
     images = db_manager.get_my_favorite(user)
-    if not request.session.get("brand"):
-        brand = "gen"
-        request.session["brand"] = brand
-    brand = request.session.get("brand")
-    if brand == "exl":
-        return templates.TemplateResponse(
-            "index.html", {"request": request, "images": images, "user": user}
-        )
-    else:
-        rows = db_manager.get_my_favorite_pages(user)
-        # pages is number of row / 60 int up
-        pages = math.ceil(rows[0][0] / 60)
-        return templates.TemplateResponse(
-            "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
-        )
+    rows = db_manager.get_my_favorite_pages(user)
+    pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
+    return templates.TemplateResponse(
+        "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
+    )
 
 
 @app.get("/edit/{ship_id}")
@@ -258,7 +225,6 @@ async def edit_image(ship_id: int, request: Request):
     """
     Replace image information from the database based on the provided ID
     """
-    # Delete image information from the database based on the provided ID
     user = request.session.get("discord_user")
     check = db_manager.edit_ship(ship_id, user)
     if check == "ko":
@@ -266,8 +232,6 @@ async def edit_image(ship_id: int, request: Request):
     brand = request.session.get("brand")
     if not brand:
         brand = request.session.get("discord_server")
-    print(check)
-    # Redirect to the home page after deleting the image
     return templates.TemplateResponse(
         "edit.html", {"request": request, "image": check, "user": user, "brand": brand}
     )
@@ -313,13 +277,18 @@ async def update_image(ship_id: int, request: Request):
     check = db_manager.edit_ship(ship_id, user)
     if check == "ko":
         return RedirectResponse("/")  # this should be an "you dont have the rights" page
-    brand = request.session.get("brand")
-    if not brand:
-        brand = request.session.get("discord_server")
+    # brand = request.session.get("brand")
+    # if not brand:
+    #     brand = request.session.get("discord_server")
     if not user:
         return RedirectResponse("/login")
     return templates.TemplateResponse(
-        "update.html", {"request": request, "image": check, "user": user, "brand": brand}
+        "update.html",
+        {
+            "request": request,
+            "image": check,
+            "user": user,
+        },  # "brand": brand}
     )
 
 
@@ -344,16 +313,14 @@ async def upload_update(ship_id: int, request: Request, file: UploadFile = File(
     encoded_data = base64.b64encode(contents).decode("utf-8")
     url_png = upload_image_to_imgbb(encoded_data)
     if url_png == "ko":
-        error = "upload servers are down, try again later"
+        error = "Upload servers are down, try again later"
         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
-    # get the tags
     try:
-        dataextract = extract_tags_v2(url_png)
-        tags = dataextract[0]
-        crew = dataextract[2]
-        price = dataextract[3]
-
+        tags, author, crew, price = extract_tags_v2(url_png)
     except Exception:
+        error = "API tag extractor is down, try again later"
+        return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
+    if price == "unknown" or crew == "unknown":
         error = "unable to decode file provided, check upload guide below"
         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
 
@@ -364,9 +331,6 @@ async def upload_update(ship_id: int, request: Request, file: UploadFile = File(
         shipname = authorized_chars.replace(".png", "")
     if ".ship" in shipname:
         shipname = shipname.replace(".ship", "")
-    brand = request.session.get("brand")
-    if not brand:
-        brand = request.session.get("discord_server")
     data = {
         "id": ship_id,
         "url_png": url_png,
@@ -428,6 +392,7 @@ async def finish_login(request: Request):
         for guild in guilds:
             if guild.id == desired_id:
                 request.session["discord_server"] = "exl"
+                request.session["brand"] = "exl"
                 redirect_url = "/"
                 button_clicked = request.session.pop(
                     "button_clicked", None
@@ -436,6 +401,8 @@ async def finish_login(request: Request):
                     redirect_url = "/initupload"
                 elif button_clicked == "myships":
                     redirect_url = "/myships"
+                elif button_clicked == "myfavorite":
+                    redirect_url = "/myfavorite"
                 return RedirectResponse(redirect_url)
         for guild in guilds:  # to ensure higher privilege
             if guild.id == second_id:
@@ -448,28 +415,10 @@ async def finish_login(request: Request):
                     redirect_url = "/initupload"
                 elif button_clicked == "myships":
                     redirect_url = "/myships"
+                elif button_clicked == "myfavorite":
+                    redirect_url = "/myfavorite"
                 return RedirectResponse(redirect_url)
     return templates.TemplateResponse("auth.html", {"request": request, "user": None})
-
-
-@app.get("/initupload", response_class=FileResponse)
-async def upload_page(request: Request):
-    """
-    A function to handle the "/initupload" route.
-    Retrieves user and brand information from the request's session,
-    checks and assigns the brand if not present, redirects to the login page
-    if the user is not logged in, and returns a TemplateResponse with the "initupload.html"
-    template along with the request, user, and brand data.
-    """
-    user = request.session.get("discord_user")
-    brand = request.session.get("brand")
-    if not brand:
-        brand = request.session.get("discord_server")
-    if not user:
-        return RedirectResponse("/login")
-    return templates.TemplateResponse(
-        "initupload.html", {"request": request, "user": user, "brand": brand}
-    )
 
 
 @app.get("/logoff")
@@ -487,24 +436,27 @@ async def logoff(request: Request):
     return RedirectResponse("/")
 
 
-@app.post("/upload")
-async def upload(request: Request):
+@app.get("/initupload", response_class=FileResponse)  # DONE
+async def upload_page(request: Request):
     """
-    Uploads an image to the server.
-
-    Parameters:
-        request (Request): The HTTP request object.
-
-    Returns:
-        RedirectResponse: A redirect response to the root URL ("/").
+    A function to handle the "/initupload" route.
+    Retrieves user and brand information from the request's session,
+    checks and assigns the brand if not present, redirects to the login page
+    if the user is not logged in, and returns a TemplateResponse with the "initupload.html"
+    template along with the request, user, and brand data.
     """
     user = request.session.get("discord_user")
-    form_data = await request.form()
-    db_manager.upload_image(form_data, user)
-    return RedirectResponse(url="/", status_code=303)
+    if not user:
+        return RedirectResponse("/login?button=upload")
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
+    return templates.TemplateResponse(
+        "initupload.html", {"request": request, "user": user, "brand": brand}
+    )
 
 
-@app.post("/initupload")
+@app.post("/initupload")  # DONE
 async def init_upload(request: Request, file: UploadFile = File(...)):
     """
     A function to handle the initial upload of an image.
@@ -520,11 +472,14 @@ async def init_upload(request: Request, file: UploadFile = File(...)):
     encoded_data = base64.b64encode(contents).decode("utf-8")
     url_png = upload_image_to_imgbb(encoded_data)
     if url_png == "ko":
-        error = "upload servers are down, try again later"
+        error = "Upload servers are down, try again later"
         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
     try:
         tags, author, crew, price = extract_tags_v2(url_png)
     except Exception:
+        error = "API tag extractor is down, try again later"
+        return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
+    if price == "unknown" or crew == "unknown":
         error = "unable to decode file provided, check upload guide below"
         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
     file_name = file.filename
@@ -534,6 +489,7 @@ async def init_upload(request: Request, file: UploadFile = File(...)):
         shipname = authorized_chars.replace(".png", "")
     if ".ship" in shipname:
         shipname = shipname.replace(".ship", "")
+    # brand check
     brand = request.session.get("brand")
     if not brand:
         brand = request.session.get("discord_server")
@@ -543,14 +499,31 @@ async def init_upload(request: Request, file: UploadFile = File(...)):
         "author": author,
         "shipname": shipname,
         "price": price,
-        "brand": brand,
         "crew": crew,
+        "brand": brand,
     }
     request.session["upload_data"] = data
     return templates.TemplateResponse(
         "upload.html",
-        {"request": request, "data": data, "tags": tags, "brand": brand, "crew": crew},
+        {"request": request, "data": data, "tags": tags, "crew": crew, "brand": brand},
     )
+
+
+@app.post("/upload")  # DONE
+async def upload(request: Request):
+    """
+    Uploads an image to the server.
+
+    Parameters:
+        request (Request): The HTTP request object.
+
+    Returns:
+        RedirectResponse: A redirect response to the root URL ("/").
+    """
+    user = request.session.get("discord_user")
+    form_data = await request.form()
+    db_manager.upload_image(form_data, user)
+    return RedirectResponse(url="/", status_code=303)
 
 
 @app.get("/download/{image_id}")
@@ -568,29 +541,20 @@ async def download_ship(image_id: str):
     Raises:
         None
     """
-    # Logic to retrieve the file path and filename based on the image_id
     result = db_manager.download_ship_png(image_id)
     if result:
         image_url, filename = result
-        # Fetch the image content from the URL
         response = requests.get(image_url, timeout=30)
         if response.status_code == 200:
-            # Set the appropriate content type based on the response headers
             content_type = response.headers.get("content-type", "application/octet-stream")
-
-            # Encode the filename with UTF-8 and quote special characters
             encoded_filename = quote(filename.encode("utf-8"))
-
-            # Use the 'filename*' parameter to specify UTF-8 encoding
             headers = {"Content-Disposition": f"attachment; filename={encoded_filename}"}
-
-            # Return the image content as bytes with the encoded filename
             return Response(content=response.content, media_type=content_type, headers=headers)
         return "Failed to fetch the image from the URL"
     return "Image not found"
 
 
-@app.get("/")
+@app.get("/")  # DONE
 async def index(request: Request):
     """
     Handle the root route ("/") and render the appropriate template based on the user's brand.
@@ -601,52 +565,15 @@ async def index(request: Request):
     Returns:
         TemplateResponse: The rendered template with the appropriate images and user information.
     """
-    if not request.session.get("brand"):
-        brand = "gen"
-        request.session["brand"] = brand
-    brand = request.session.get("brand")
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
-    if brand == "exl":
-        images = db_manager.get_index_exl()
-        return templates.TemplateResponse(
-            "index.html", {"request": request, "images": images, "user": user}
-        )
     images = db_manager.get_index()
     rows = db_manager.get_pages()
-    # pages is number of row / 60 int up
-    pages = math.ceil(rows[0][0] / 60)
-    # print(pages)
+    pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
     return templates.TemplateResponse(
         "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
     )
-
-
-@app.get("/gen")
-async def index_gen(request: Request):
-    """
-    sets the brand to gen on the session
-    """
-    brand = "gen"
-    if not request.session.get("brand"):
-        request.session["brand"] = brand
-    else:
-        request.session["brand"] = brand
-    return RedirectResponse(url="/", status_code=303)
-
-
-@app.get("/exl")
-async def index_exl(request: Request):
-    """
-    sets the brand to exl on the session
-    """
-    brand = "exl"
-    if not request.session.get("brand"):
-        request.session["brand"] = brand
-    else:
-        request.session["brand"] = brand
-    return RedirectResponse(url="/", status_code=303)
 
 
 @app.get("/myships")
@@ -659,17 +586,8 @@ async def index_get(request: Request):
     if not user:
         return RedirectResponse("/login?button=myships")
     images = db_manager.get_my_ships(user)
-    if not request.session.get("brand"):
-        brand = "gen"
-        request.session["brand"] = brand
-    brand = request.session.get("brand")
-    if brand == "exl":
-        return templates.TemplateResponse(
-            "index.html", {"request": request, "images": images, "user": user}
-        )
     rows = db_manager.get_my_ships_pages(user)
-    # pages is number of row / 60 int up
-    pages = math.ceil(rows[0][0] / 60)
+    pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
     return templates.TemplateResponse(
         "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
     )
@@ -692,6 +610,7 @@ async def home(request: Request):
     user = request.session.get("discord_user")
     fulltext = None
     ftauthor = None
+    exlstrip = None
     if not user:
         user = "Guest"
     tags_list = [
@@ -774,6 +693,8 @@ async def home(request: Request):
     minstrip: int = form_input.get("min-price").strip()
     maxstrip: int = form_input.get("max-price").strip()
     crewstrip: int = form_input.get("max-crew").strip()
+    if form_input.get("exl-only"):
+        exlstrip = form_input.get("exl-only").strip()
     query_tags = []
     for word in words:
         if word.startswith("-"):
@@ -804,22 +725,17 @@ async def home(request: Request):
         query_tags.append(("order", "new"))
     if crewstrip:
         query_tags.append(("max-crew", crewstrip))
+    if exlstrip:
+        query_tags.append(("brand", "exl"))
     query_tags.append(("minprice", minstrip))
     query_tags.append(("maxprice", maxstrip))
-    query = "SELECT * FROM images"
-    conditions = []
-    args = []
-    for tag, value in query_tags:
-        conditions.append(f"{tag} = %s")
-        args.append(value)
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
     query_params = {}
     for tag, value in query_tags:
         query_params[tag] = str(value)
     base_url = request.url_for("search")
     redirect_url = f"{base_url}?"
     redirect_url += urlencode(query_params)
+    redirect_url += "#results"
     return RedirectResponse(redirect_url, status_code=307)
 
 
@@ -838,18 +754,9 @@ async def search(request: Request):
     if not user:
         user = "Guest"
     query_params = request.query_params
-    if not request.session.get("brand"):
-        brand = "gen"
-        request.session["brand"] = brand
-    brand = request.session.get("brand")
-    if brand == "exl":
-        images = db_manager.get_search_exl(query_params)
-        return templates.TemplateResponse(
-            "index.html", {"request": request, "images": images, "user": user}
-        )
     images = db_manager.get_search(query_params)
     rows = db_manager.get_pages_search(query_params)
-    pages = math.ceil(rows[0][0] / 60)
+    pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
     return templates.TemplateResponse(
         "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
     )
@@ -869,27 +776,15 @@ async def search_post(request: Request):
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
-    # Get the query parameters from the request URL
     query_params = request.query_params
+    images = db_manager.get_search(query_params)
+    rows = db_manager.get_pages_search(query_params)
+    # pages is number of row / 60 int up
+    pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
+    return templates.TemplateResponse(
+        "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
+    )
 
-    # print("query_param_post = ",query_params)
-    if not request.session.get("brand"):
-        brand = "gen"
-        request.session["brand"] = brand
-    brand = request.session.get("brand")
-    if brand == "exl":
-        images = db_manager.get_search_exl(query_params)
-        return templates.TemplateResponse(
-            "index.html", {"request": request, "images": images, "user": user}
-        )
-    else:
-        images = db_manager.get_search(query_params)
-        rows = db_manager.get_pages_search(query_params)
-        # pages is number of row / 60 int up
-        pages = math.ceil(rows[0][0] / 60)
-        return templates.TemplateResponse(
-            "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
-        )
 
 @app.get("/seo_tags")
 async def get_seo_tags(request: Request):
@@ -897,9 +792,21 @@ async def get_seo_tags(request: Request):
     user = request.session.get("discord_user")
     if not user:
         user = "Guest"
+    tags = generate_url_tags()
+    authors = generate_url_authors()
     return templates.TemplateResponse(
-            "seo_tags.html", {"request": request, "user": user}
+        "seo_tags.html", {"request": request, "user": user, "tags": tags, "authors": authors}
     )
+
+
+@app.get("/seo_about")
+async def get_seo_about(request: Request):
+    """display seo about page"""
+    user = request.session.get("discord_user")
+    if not user:
+        user = "Guest"
+    return templates.TemplateResponse("seo_about.html", {"request": request, "user": user})
+
 
 @app.get("/authors")
 async def get_authors():
@@ -917,25 +824,27 @@ async def get_authors():
     authors = [author for (author,) in query_result["authors"]]
     return {"authors": authors}
 
+
 @app.get("/analyze")
 async def get_analyze(request: Request):
     """
     A route to analyze a URL and return the extracted tags.
-    
+
     Parameters:
         request (Request): The HTTP request object.
-    
+
     Returns:
         dict: A dictionary containing the extracted tags from the provided URL.
     """
-    try :
+    try:
         query_params = request.query_params
-        print("query_params = ",query_params)
+        print("query_params = ", query_params)
         url = query_params.get("url")
         datadata = extract_tags_v2(url, analyze=True)
         return {"datadata": datadata}
-    except Exception :
+    except Exception:
         return {"datadata": "Error"}
+
 
 @app.get("/{catchall:path}")
 async def serve_files(request: Request):
@@ -961,12 +870,12 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 app.add_middleware(HTTPSRedirectMiddleware)
 # start server
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000, proxy_headers=True, forwarded_allow_ips="*")
-    # uvicorn.run(
-    #     "server:app",
-    #     host="0.0.0.0",
-    #     port=8000,
-    #     proxy_headers=True,
-    #     forwarded_allow_ips="*",
-    #     workers=5,
-    # )
+    # uvicorn.run(app, host="0.0.0.0", port=8000, proxy_headers=True, forwarded_allow_ips="*")
+    uvicorn.run(
+        "server:app",
+        host="0.0.0.0",
+        port=8000,
+        proxy_headers=True,
+        forwarded_allow_ips="*",
+        workers=3,
+    )

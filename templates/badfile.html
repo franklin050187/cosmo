@@ -1,140 +1,43 @@
 <!DOCTYPE html>
-<style>
-   .form-container {
-   display: flex;
-   justify-content: space-between;
-   }
-   .form-list {
-   list-style: none;
-   padding: 0;
-   margin: 0;
-   }
-   .form-table {
-   display: table;
-   width: 100%;
-   }
-   .form-table-row {
-   display: table-row;
-   }
-   .form-table-cell {
-   display: table-cell;
-   width: 100%; /* Adjust the width as needed */
-   padding-right: 20px; /* Adjust the spacing between cells as needed */
-   
-   }
-   td {
-      vertical-align: top;
-    }
+<html lang="en">
 
-    input#price {
-        background-color: darkblue;
-        color: white;
-    }
-    input#description {
-      background-color: darkblue;
-      color: white;
-  }
-  input#submitted_by {
-   background-color: darkblue;
-   color: white;
-}
-input#ship_name {
-   background-color: darkblue;
-   color: white;
-}
-input#author {
-   background-color: darkblue;
-   color: white;
-}
+<head>
+   {% include "head.html" %}
+</head>
 
-</style>
-<html lang="es">
-   <head>
-      <script>
-         !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-         posthog.init('phc_K77EUohajEup7Xj92C4lZUUjbVEh2x1nAhQYTdZ2xJL',{api_host:'https://e.abla.io'})
-       </script>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Excelsior | Cosmoteer Ship Library</title>
-      <meta name="robots" content="noindex,nofollow">
-      <link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon.ico">
-      <link rel="stylesheet" type="text/css" href="/static/css/interface.css">
-      <link rel="stylesheet" type="text/css" href="/static/css/index.css">
-      <script src="/static/js/jquery-3.6.0.min.js"></script>
-      <script src="/static/js/common.js"></script>
-      <script src="/static/js/index.js"></script>
-      <!-- <script defer src="/_vercel/insights/script.js"></script> -->
-   </head>
-   <body>
-      <header>
-         <img loading="lazy"alt="Excelsior logo" src="/static/img/excelsior-logo.webp"  href="/">
-         <ul class="user-container">
-            <p class="username">Welcome {{ user }}</p>
-                <li>
-                    {% if user == "Guest" %}
-                    <a title="Login" class="blue-btn register" href="/login?button=login">
-                        <span>Login</span>
-                    </a>
-                    {% else %}
-                    <a title="Logout" class="blue-btn register" href="/logoff">
-                        <span>Log out</span>
-                    </a>
-                    {% endif %}
-                </li>
-                <li>
-                    <a title="Upload" class="blue-btn register" href="/login?button=upload">
-                        <span>Upload</span>
-                    </a>
-                </li>
-                <li>
-                </li>
-                <li>
-                    <a title="Myships" class="blue-btn register" href="/login?button=myships">
-                        <span>My Ships</span>
-                    </a>
-                </li>
-                <li>
-                    <a title="Home" class="blue-btn register" href="/">
-                        <span>Home</span>
-                    </a>
-                </li>
-        </ul>
-      </header>
-      <main>
-         <h1>Error</h1>
-         <section id="competitive" class="content-container">
-            <div class="section-description">
-               <h2>Oops, there was an error... {{ error }}</h2>
-               <p>{{ error }}</p>
-               
-               
+<body>
+   <header>
+      {% include "header.html" %}
+   </header>
+
+   <main>
+      <h1 id="title" style="overflow: hidden; text-overflow: ellipsis;">Error with the ship file</h1>
+
+      <section id="results" class="content-container">
+         <div class="tabs-container">
+
+            <div id="elim-competitive-tab" class="tab active">
+               <h2>Check our guide to share a ship : <a
+                     href="https://steamcommunity.com/sharedfiles/filedetails/?id=2878136833">Here</a></h2>
+               <ul class="ships-list" style="grid-template-columns: repeat(1, 1fr);">
+                  <li class="ship-card">
+                     <h2>Oops, there was an error... </h2>
+                     <p>{{ error }}</p>
+                     <ul><a title="Home" class="blue-btn register" href="/"><span>Back to home page</span></a>
+                     </ul>
+                     <ul><a title="initupload" class="blue-btn register" href="/initupload"><span>Try another
+                              file</span></a>
+                     </ul>
+                  </li>
+               </ul>
             </div>
-            <div class="tabs-container">
-               <div id="elim-competitive-tab" class="tab active">
-                  
-                  <ul>
-                    <a title="Join" class="blue-btn register center" href="https://steamcommunity.com/sharedfiles/filedetails/?id=2878136833"><span>Guide to share a ship</span></a>
-                      
-                  </ul>
-               </div>
-            </div>
-         </section>
-      </main>
-      <footer>
-         <div class="footer-content">
-            <img loading="lazy"alt="Excelsior logo" src="/static/img/excelsior-logo.webp">
-            <ul>
-               <li><a title="Cookies policy" href="#">Cookies policy</a></li>
-                  <li><a title="Another footer link" href="#">Another footer link</a></li>
-                     <li><a title="More footer links" href="#">More footer links</a></li>
-            </ul>
          </div>
-      </footer>
-   </body>
+      </section>
+   </main>
+
+   <footer>
+      {% include "footer.html" %}
+   </footer>
+</body>
+
 </html>
-<script>
-   function redirectToHomePage() {
-     window.location.href = "/";
-   }
- </script>
