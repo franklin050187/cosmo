@@ -311,8 +311,8 @@ async def upload_update(ship_id: int, request: Request, file: UploadFile = File(
         return RedirectResponse("/")  # this should be an "you dont have the rights" page
     contents = await file.read()
     encoded_data = base64.b64encode(contents).decode("utf-8")
-    # url_png = upload_image_to_imgbb(encoded_data)
-    url_png = upload_image_to_cloudinary(encoded_data)
+    url_png = upload_image_to_imgbb(encoded_data)
+    # url_png = upload_image_to_cloudinary(encoded_data)
 
     if url_png == "ko":
         error = "Upload servers are down, try again later"
@@ -472,8 +472,8 @@ async def init_upload(request: Request, file: UploadFile = File(...)):
     """
     contents = await file.read()
     encoded_data = base64.b64encode(contents).decode("utf-8")
-    # url_png = upload_image_to_imgbb(encoded_data)
-    url_png = upload_image_to_cloudinary(encoded_data)
+    url_png = upload_image_to_imgbb(encoded_data)
+    # url_png = upload_image_to_cloudinary(encoded_data)
 
     if url_png == "ko":
         error = "Upload servers are down, try again later"
