@@ -21,7 +21,7 @@ def generate_sitemap():
 
     # Main page
     sitemap.append("<url>")
-    sitemap.append("<loc>https://cosmoship.duckdns.org/</loc>")
+    sitemap.append("<loc>https://cosmo-lilac.vercel.app/</loc>")
     sitemap.append(f"<lastmod>{current_time}</lastmod>")
     sitemap.append("<priority>1.0</priority>")
     sitemap.append("</url>")
@@ -30,7 +30,7 @@ def generate_sitemap():
     for author in authors:
         author = quote(author[0])
         sitemap.append("<url>")
-        sitemap.append(f"<loc>https://cosmoship.duckdns.org/search?author={author}</loc>")
+        sitemap.append(f"<loc>https://cosmo-lilac.vercel.app/search?author={author}</loc>")
         sitemap.append(f"<lastmod>{current_time}</lastmod>")
         sitemap.append("<priority>1.0</priority>")
         sitemap.append("</url>")
@@ -39,7 +39,7 @@ def generate_sitemap():
     for tag in tags:
         tag = quote(tag[0])
         sitemap.append("<url>")
-        sitemap.append(f"<loc>https://cosmoship.duckdns.org/search?{tag}=1</loc>")
+        sitemap.append(f"<loc>https://cosmo-lilac.vercel.app/search?{tag}=1</loc>")
         sitemap.append(f"<lastmod>{current_time}</lastmod>")
         sitemap.append("<priority>1.0</priority>")
         sitemap.append("</url>")
@@ -57,7 +57,7 @@ def generate_url_tags():
         taguri = quote(tag[0])
         linetag = (
             "<h3><a href="
-            + f"https://cosmoship.duckdns.org/search?{taguri}=1"
+            + f"https://cosmo-lilac.vercel.app/search?{taguri}=1"
             + ">"
             + tag[0]
             + "</a></h3>"
@@ -79,7 +79,7 @@ def generate_url_authors():
         authoruri = quote(author[0])
         line = (
             "<h3><a href="
-            + f"https://cosmoship.duckdns.org/search?author={authoruri}"
+            + f"https://cosmo-lilac.vercel.app/search?author={authoruri}"
             + ">"
             + author[0]
             + "</a></h3>"
