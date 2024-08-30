@@ -36,7 +36,7 @@ from starlette_discord.client import DiscordOAuthClient
 
 from api_engine import extract_tags_v2
 from db import ShipImageDatabase
-from png_upload import upload_image_to_imgbb
+from png_upload import upload_image_to_imgbb, upload_image_to_cloudinary
 from sitemap import generate_sitemap, generate_url_tags, generate_url_authors
 
 load_dotenv()
@@ -311,7 +311,9 @@ async def upload_update(ship_id: int, request: Request, file: UploadFile = File(
         return RedirectResponse("/")  # this should be an "you dont have the rights" page
     contents = await file.read()
     encoded_data = base64.b64encode(contents).decode("utf-8")
-    url_png = upload_image_to_imgbb(encoded_data)
+    # url_png = upload_image_to_imgbb(encoded_data)
+    url_png = upload_image_to_cloudinary(encoded_data)
+
     if url_png == "ko":
         error = "Upload servers are down, try again later"
         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
@@ -470,7 +472,9 @@ async def init_upload(request: Request, file: UploadFile = File(...)):
     """
     contents = await file.read()
     encoded_data = base64.b64encode(contents).decode("utf-8")
-    url_png = upload_image_to_imgbb(encoded_data)
+    # url_png = upload_image_to_imgbb(encoded_data)
+    url_png = upload_image_to_cloudinary(encoded_data)
+
     if url_png == "ko":
         error = "Upload servers are down, try again later"
         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
