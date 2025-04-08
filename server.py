@@ -54,7 +54,12 @@ client = DiscordOAuthClient(client_id, client_secret, redirect_uri, ("identify",
 api_uri = os.getenv("api_uri")
 trusted_host = os.getenv("trusted_host")
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+
+static_path = os.path.join(os.path.dirname(__file__), "static")
+if os.path.isdir(static_path):
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 db_manager.init_db()
 modlist = os.getenv("mods_list")
