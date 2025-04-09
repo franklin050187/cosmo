@@ -60,7 +60,10 @@ if os.path.isdir(static_path):
     app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 # app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+# templates = Jinja2Templates(directory="templates")
+base_dir = os.path.dirname(__file__)
+templates = Jinja2Templates(directory=os.path.join(base_dir, "templates"))
+
 db_manager.init_db()
 modlist = os.getenv("mods_list")
 modlist = ast.literal_eval(modlist)
