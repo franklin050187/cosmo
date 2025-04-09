@@ -7,9 +7,6 @@
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
     <script defer src="/static/js/search.js"></script>
-    <link rel="stylesheet"
-        href="https://cdn.scaleflex.it/plugins/js-cloudimage-responsive/latest/js-cloudimage-responsive.min.css?vh=a076ef&func=proxy">
-    </link>
 </head>
 
 
@@ -97,7 +94,7 @@
                             <button type="button" class="stars" title="Give it a star">{{ image[11] }}</button>
                             <button type="button" class="likes" title="Like it">{{ image[8] }}</button>
                             <a href="/ship/{{ image[0] }}">
-                                <img ci-src="{{ image[2] }}" alt="{{ image[5] }}">
+                                <img src="{{ image[2] }}" alt="{{ image[5] }}">
                             </a>
                             <div class="ship-data">
                                 <span class="data"><span>Ship name:</span> {{ image[5] }}</span>
