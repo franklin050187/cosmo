@@ -11,14 +11,19 @@
 <link rel="preconnect" href="//code.jquery.com" crossorigin>
 <link rel="preconnect" href="//stats.hport.dev" crossorigin>
 
-<!-- Preload critical CSS -->
+<!-- Preload critical resources -->
 <link rel="preload" href="/static/css/interface.css" as="style">
 <link rel="preload" href="/static/css/index.css" as="style">
+<link rel="preload" href="/static/js/common.js" as="script">
+<link rel="preload" href="/static/img/logo-v2.svg" as="image" type="image/svg+xml">
+
 <!-- Load non-critical CSS asynchronously -->
 <link rel="stylesheet" href="/static/css/interface.css" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="/static/css/index.css" media="print" onload="this.media='all'">
+
 <!-- Load analytics asynchronously -->
 <script async defer data-domain="cosmoship.hport.dev" src="https://stats.hport.dev/js/script.file-downloads.outbound-links.pageview-props.js"></script>
 <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+
 <!-- Load common.js asynchronously -->
 <script defer src="/static/js/common.js"></script>

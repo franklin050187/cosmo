@@ -11,8 +11,11 @@
             margin: 1rem 0;
             color: #333;
             text-align: center;
-            opacity: 0;
-            animation: fadeIn 0.3s ease-in forwards;
+            will-change: transform;
+            backface-visibility: hidden;
+            transform: translateZ(0);
+            -webkit-font-smoothing: antialiased;
+            contain: content;
         }
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -27,6 +30,112 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 1rem;
+            will-change: transform;
+            contain: layout;
+        }
+        /* Prevent layout shifts */
+        .tabs-container {
+            min-height: 50px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            will-change: transform;
+            contain: layout;
+        }
+        .content-container {
+            min-height: 200px;
+            position: relative;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            will-change: transform;
+            contain: layout;
+        }
+        #search {
+            min-height: 300px;
+            contain: layout;
+        }
+        #results {
+            min-height: 400px;
+            contain: layout;
+        }
+        .tab {
+            position: absolute;
+            width: 100%;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .tab.active {
+            opacity: 1;
+            position: relative;
+        }
+        .ships-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            contain: layout;
+        }
+        .ship-card {
+            min-height: 300px;
+            position: relative;
+            background: #fff;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            contain: content;
+        }
+        .ship-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+            loading: lazy;
+            decoding: async;
+            will-change: transform;
+        }
+        .ship-data {
+            padding: 1rem;
+        }
+        .data {
+            display: block;
+            margin: 0.5rem 0;
+        }
+        .blue-btn {
+            min-width: 120px;
+            height: 40px;
+            padding: 0 1rem;
+            margin: 0.5rem;
+            contain: content;
+        }
+        .item-button {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            contain: content;
+        }
+        .tag-boxx {
+            min-height: 100px;
+            contain: content;
+        }
+        .tag-container {
+            min-height: 50px;
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            contain: content;
+        }
+        .tag-box {
+            min-height: 50px;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            contain: content;
         }
     </style>
     <!-- Preload critical resources -->
@@ -216,51 +325,62 @@
     </footer>
     <!-- Move non-critical scripts to bottom -->
     <script>
+        // Initialize lazy loading config
         window.lazySizesConfig = window.lazySizesConfig || {};
         window.lazySizesConfig.init = false;
     </script>
 </body>
-<script>
-    // hide search and tabs if url is /myships or /myfavorites
-    if (window.location.pathname === '/myships' || window.location.pathname === '/myfavorite') {
-        document.getElementById('search').style.display = 'none';
-        document.getElementById('order-new-btn').style.display = 'none';
-        document.getElementById('order-pop-btn').style.display = 'none';
-        document.getElementById('order-fav-btn').style.display = 'none';
-        document.getElementById('pagination').style.display = 'none';
-    }
-    // update text on page
-    if (window.location.pathname === '/myships') {
-        document.getElementById('title').innerHTML = 'My ships';
-        document.getElementById('order-text').innerHTML = 'Ships you uploaded on Cosmoship. <br> {% if total_images > 1 %} Your armada is currently sitting at {{ total_images }}, impressive ! {% else %} Start sharing your designs now ! {% endif %}';
-    }
+<script type="module">
+    // Defer initialization until after page load
+    document.addEventListener('DOMContentLoaded', () => {
+        // URL path handling
+        const path = window.location.pathname;
+        const search = document.getElementById('search');
+        const orderNewBtn = document.getElementById('order-new-btn');
+        const orderPopBtn = document.getElementById('order-pop-btn');
+        const orderFavBtn = document.getElementById('order-fav-btn');
+        const pagination = document.getElementById('pagination');
+        const title = document.getElementById('title');
+        const orderText = document.getElementById('order-text');
 
-    if (window.location.pathname === '/myfavorite') {
-        document.getElementById('title').innerHTML = 'My favorites';
-        document.getElementById('order-text').innerHTML = 'Ships you added to your favorites. <br> {% if total_images > 1 %} You found {{ total_images }} amazing ships, awesome ! {% else %} Start adding ships to your collection now ! {% endif %}';
-    }
-</script>
-<script defer>
+        if (path === '/myships' || path === '/myfavorite') {
+            if (search) search.style.display = 'none';
+            if (orderNewBtn) orderNewBtn.style.display = 'none';
+            if (orderPopBtn) orderPopBtn.style.display = 'none';
+            if (orderFavBtn) orderFavBtn.style.display = 'none';
+            if (pagination) pagination.style.display = 'none';
+        }
 
+        // Update page content based on path
+        if (path === '/myships' && title && orderText) {
+            title.textContent = 'My ships';
+            orderText.innerHTML = 'Ships you uploaded on Cosmoship. <br> {% if total_images > 1 %} Your armada is currently sitting at {{ total_images }}, impressive ! {% else %} Start sharing your designs now ! {% endif %}';
+        }
+
+        if (path === '/myfavorite' && title && orderText) {
+            title.textContent = 'My favorites';
+            orderText.innerHTML = 'Ships you added to your favorites. <br> {% if total_images > 1 %} You found {{ total_images }} amazing ships, awesome ! {% else %} Start adding ships to your collection now ! {% endif %}';
+        }
+    });
+
+    // URL parameter handling
     function getParameterValue(param) {
         const urlParams = new URLSearchParams(window.location.search);
-        var value = urlParams.get(param);
-        return value;
-        // console.log(value);
+        return urlParams.get(param);
     }
-    // next button
+
+    // Navigation functions
     function nextPage() {
         const currentPage = Number(getParameterValue('page')) || 1;
         const nextPage = currentPage + 1;
         const url = new URL(window.location.href);
-        // Check if '/search' is not present in the pathname
         if (url.pathname === '/' || !url.pathname.includes('/search')) {
             url.pathname = '/search';
         }
         url.searchParams.set('page', nextPage.toString());
         window.location.href = url.href;
     }
-    // previous button
+
     function previousPage() {
         const currentPage = Number(getParameterValue('page')) || 1;
         const previousPage = currentPage - 1;
@@ -268,25 +388,29 @@
         url.searchParams.set('page', previousPage.toString());
         window.location.href = url.href;
     }
+
     function showPreviousButton() {
         const page = Number(getParameterValue('page')) || 1;
         const previousButton = document.getElementById('previous');
-        if (page > 1) {
-            previousButton.style.display = 'block';
-        } else {
-            previousButton.style.display = 'none';
+        if (previousButton) {
+            previousButton.style.display = page > 1 ? 'block' : 'none';
         }
     }
 
     function updateOrderParam(order) {
-        document.getElementById('order').value = order;
-        // find order tag in url, change it to selected value and navigate
-        const urlParams = new URLSearchParams(window.location.search);
-        urlParams.set('order', order);
+        const orderInput = document.getElementById('order');
+        if (orderInput) {
+            orderInput.value = order;
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('order', order);
+        }
     }
 
-    updateOrderParam(getParameterValue('order'));
-    showPreviousButton();
+    // Initialize page state
+    document.addEventListener('DOMContentLoaded', () => {
+        updateOrderParam(getParameterValue('order'));
+        showPreviousButton();
+    });
 </script>
 <style>
     .ui-widget.ui-widget-content {
