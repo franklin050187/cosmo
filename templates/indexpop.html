@@ -4,34 +4,19 @@
 <head>
     {% include "head.html" %}
     <style>
-        /* Critical CSS for title and initial render */
+        /* Critical CSS for title */
         #title {
             font-size: 2rem;
             font-weight: bold;
             margin: 1rem 0;
             color: #333;
             text-align: center;
-            opacity: 0;
-            animation: fadeIn 0.3s ease-in forwards;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
         .ui-widget.ui-widget-content {
             border: none;
             background: none;
         }
-        /* Critical layout styles */
-        main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1rem;
-        }
     </style>
-    <!-- Preload critical resources -->
-    <link rel="preload" href="https://code.jquery.com/jquery-3.6.0.min.js" as="script">
-    <link rel="preload" href="/static/js/search.js" as="script">
     <!-- Defer non-critical JavaScript -->
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
@@ -46,7 +31,7 @@
         {% include "header.html" %}
     </header>
     <main>
-        <h1 id="title" class="title" aria-label="Explore and share ship designs with the community">Explore and share ship designs with the community !</h1>
+        <h1 id="title" class="title">Explore and share ship designs with the community !</h1>
         <section id="search" class="content-container">
             <div class="tabs-container">
                 <button id="search-btn" class="active blue-btn" type="button">Search the Library</button>
@@ -219,6 +204,16 @@
         window.lazySizesConfig = window.lazySizesConfig || {};
         window.lazySizesConfig.init = false;
     </script>
+    <!-- <script defer src="https://cdn.scaleflex.it/filerobot/js-cloudimage-responsive/lazysizes.min.js"></script>
+    <script defer src="https://cdn.scaleflex.it/plugins/js-cloudimage-responsive/4.8.4/js-cloudimage-responsive.min.js"></script>
+    <script>
+        const ciResponsive = new window.CIResponsive({
+            token: 'cnfyupteqa',
+            apiVersion: null,
+            lazyLoading: true
+        });
+        window.lazySizes.init();
+    </script> -->
 </body>
 <script>
     // hide search and tabs if url is /myships or /myfavorites
