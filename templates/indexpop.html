@@ -3,10 +3,26 @@
 
 <head>
     {% include "head.html" %}
-    <script src="/static/js/index.js"></script>
+    <style>
+        /* Critical CSS for title */
+        #title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 1rem 0;
+            color: #333;
+            text-align: center;
+        }
+        .ui-widget.ui-widget-content {
+            border: none;
+            background: none;
+        }
+    </style>
+    <!-- Defer non-critical JavaScript -->
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
     <script defer src="/static/js/search.js"></script>
+    <script defer src="/static/js/index.js"></script>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" media="print" onload="this.media='all'">
 </head>
 
 
@@ -15,7 +31,7 @@
         {% include "header.html" %}
     </header>
     <main>
-        <h1 id="title">Explore and share ship designs with the community !</h1>
+        <h1 id="title" class="title">Explore and share ship designs with the community !</h1>
         <section id="search" class="content-container">
             <div class="tabs-container">
                 <button id="search-btn" class="active blue-btn" type="button">Search the Library</button>
@@ -183,6 +199,21 @@
     <footer>
         {% include "footer.html" %}
     </footer>
+    <!-- Move non-critical scripts to bottom -->
+    <script>
+        window.lazySizesConfig = window.lazySizesConfig || {};
+        window.lazySizesConfig.init = false;
+    </script>
+    <!-- <script defer src="https://cdn.scaleflex.it/filerobot/js-cloudimage-responsive/lazysizes.min.js"></script>
+    <script defer src="https://cdn.scaleflex.it/plugins/js-cloudimage-responsive/4.8.4/js-cloudimage-responsive.min.js"></script>
+    <script>
+        const ciResponsive = new window.CIResponsive({
+            token: 'cnfyupteqa',
+            apiVersion: null,
+            lazyLoading: true
+        });
+        window.lazySizes.init();
+    </script> -->
 </body>
 <script>
     // hide search and tabs if url is /myships or /myfavorites
@@ -204,24 +235,6 @@
         document.getElementById('order-text').innerHTML = 'Ships you added to your favorites. <br> {% if total_images > 1 %} You found {{ total_images }} amazing ships, awesome ! {% else %} Start adding ships to your collection now ! {% endif %}';
     }
 </script>
-<script>
-    window.lazySizesConfig = window.lazySizesConfig || {};
-    window.lazySizesConfig.init = false;
-</script>
-<script src="https://cdn.scaleflex.it/filerobot/js-cloudimage-responsive/lazysizes.min.js"></script>
-<script src="https://cdn.scaleflex.it/plugins/js-cloudimage-responsive/4.8.4/js-cloudimage-responsive.min.js"></script>
-<script>
-    const ciResponsive = new window.CIResponsive({
-        token: 'cnfyupteqa',
-        apiVersion: null,
-        lazyLoading: true                                       // optional
-    });
-
-    window.lazySizes.init();
-</script>
-<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-
-</html>
 <script defer>
 
     function getParameterValue(param) {
@@ -276,3 +289,5 @@
         background: none;
     }
 </style>
+
+</html>
