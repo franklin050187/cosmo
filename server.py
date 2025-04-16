@@ -557,9 +557,11 @@ async def download_ship(image_id: str):
             content_type = response.headers.get("content-type", "application/octet-stream")
             # Properly encode the filename for Content-Disposition header
             encoded_filename = quote(filename.encode('utf-8'))
-            # Add filename* parameter for non-ASCII characters
+            # Create a safe ASCII filename as fallback
+            safe_filename = re.sub(r'[^\w\-_.]', '_', filename)
+            # Set both UTF-8 encoded and ASCII-safe filenames
             headers = {
-                "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}; filename=\"{filename}\""
+                "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}; filename=\"{safe_filename}\""
             }
             return Response(content=response.content, media_type=content_type, headers=headers)
         return "Failed to fetch the image from the URL"
