@@ -1,14 +1,24 @@
 
-function downloadShip(imageUrl) {
+function downloadShip(imageId) {
     var xhr = new XMLHttpRequest();
-    xhr.open("GET", "/download/" + imageUrl, true);
-    xhr.responseType = "blob"; // Set the response type to 'blob' to handle binary data
+    xhr.open("GET", "/download/" + imageId, true);
+    xhr.responseType = "blob";
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
-            // Create a temporary link element to download the file
+            var contentDisposition = xhr.getResponseHeader("Content-Disposition");
+            var filename = "downloaded_file"; // fallback
+
+            if (contentDisposition) {
+                // Extract filename*=UTF-8''encoded_name from header
+                var match = contentDisposition.match(/filename\*=(?:UTF-8'')?([^;]+)/i);
+                if (match && match[1]) {
+                    filename = decodeURIComponent(match[1]);
+                }
+            }
+
             var link = document.createElement("a");
             link.href = window.URL.createObjectURL(xhr.response);
-            link.download = xhr.getResponseHeader("Content-Disposition").split("filename=")[1];
+            link.download = filename;
             link.click();
         }
     };

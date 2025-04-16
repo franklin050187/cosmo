@@ -536,27 +536,17 @@ async def upload(request: Request):
 
 @app.get("/download/{image_id}")
 async def download_ship(image_id: str):
-    """
-    Downloads a ship image based on the given image ID.
-
-    Args:
-        image_id (str): The ID of the image to download.
-
-    Returns:
-        Response: The downloaded image as a response with the appropriate content type and filename.
-        str: If the image ID is not found or the image cannot be fetched from the URL.
-
-    Raises:
-        None
-    """
     result = db_manager.download_ship_png(image_id)
     if result:
         image_url, filename = result
         response = requests.get(image_url, timeout=30)
         if response.status_code == 200:
             content_type = response.headers.get("content-type", "application/octet-stream")
-            encoded_filename = quote(filename.encode("utf-8"))
-            headers = {"Content-Disposition": f"attachment; filename={encoded_filename}"}
+            # Encode the filename properly
+            quoted_filename = quote(filename)
+            headers = {
+                "Content-Disposition": f"attachment; filename*=UTF-8''{quoted_filename}"
+            }
             return Response(content=response.content, media_type=content_type, headers=headers)
         return "Failed to fetch the image from the URL"
     return "Image not found"
