@@ -7,9 +7,10 @@ FIFO
 # from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
+import os
 
 API_URL = "https://api.cosmoship.duckdns.org/"
-API_URL_FALLBACK = "https://cosmo-api-six.vercel.app/"
+API_URL_FALLBACK = os.getenv("API_URL")
 
 
 def extract_tags_v2(png_file, analyze=False):
