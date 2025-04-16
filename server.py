@@ -556,7 +556,10 @@ async def download_ship(image_id: str):
         if response.status_code == 200:
             content_type = response.headers.get("content-type", "application/octet-stream")
             # Properly encode the filename for Content-Disposition header
-            encoded_filename = quote(filename.encode('utf-8'))
+            try:
+                encoded_filename = quote(filename.encode('latin-1'))
+            except UnicodeEncodeError:
+                encoded_filename = quote(filename.encode('utf-8'))
             # Create a safe ASCII filename as fallback
             safe_filename = re.sub(r'[^\w\-_.]', '_', filename)
             # Set both UTF-8 encoded and ASCII-safe filenames
