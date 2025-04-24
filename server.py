@@ -819,7 +819,7 @@ async def serve_files(request: Request):
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("secret_session"))
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
-# app.add_middleware(HTTPSRedirectMiddleware)
+app.add_middleware(HTTPSRedirectMiddleware)
 # start server
 if __name__ == "__main__":
     # uvicorn.run(app, host="0.0.0.0", port=8000, proxy_headers=True, forwarded_allow_ips="*")
@@ -829,5 +829,5 @@ if __name__ == "__main__":
         port=8000,
         proxy_headers=True,
         forwarded_allow_ips="*",
-        workers=3,
+        workers=5,
     )
