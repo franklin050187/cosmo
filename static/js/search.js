@@ -330,8 +330,16 @@ function updateFinalSearchQuery() {
 }
 
 function appendSearchInput() {
+  // Ensure we capture the current selected values
+  const order = getParameterValue('order') || 'new'; // fallback to 'new'
+  const tagInput = document.getElementById('tag-input').value;
 
+  // Set hidden inputs with current values
+  document.getElementById('order').value = order;
+  document.getElementById('final_search_query').value = tagInput;
 
+  // Optional: if you want to update the URL fragment
+  window.location.hash = 'results';
 }
 
 filterTags();

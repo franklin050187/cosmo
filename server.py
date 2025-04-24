@@ -1,28 +1,17 @@
-"""Copyright 2023 Poney!
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-associated documentation files (the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all copies or
-substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
-BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."""
-
 import ast
 import base64
 import math
 import os
 import re
-from urllib.parse import quote, urlencode
+import jwt
+import json
+from datetime import datetime, timedelta, timezone
+from urllib.parse import quote, urlencode, urljoin
 
 import requests
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Path, Query
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -35,9 +24,6 @@ from starlette.templating import Jinja2Templates
 from starlette_discord.client import DiscordOAuthClient
 
 from api_engine import extract_tags_v2
-from db import ShipImageDatabase
-from png_upload import upload_image_to_imgbb
-from sitemap import generate_sitemap, generate_url_tags, generate_url_authors
 
 load_dotenv()
 
@@ -45,29 +31,37 @@ print("loading")
 
 MAX_SHIPS_PER_PAGE = 24
 
-db_manager = ShipImageDatabase()
+SECRET_KEY = os.getenv("SECRET_KEY")
+API_URL = os.getenv("API_URL")
 
+# discord
 client_id = os.getenv("discord_id")
 client_secret = os.getenv("discord_secret")
 redirect_uri = os.getenv("discord_redirect")
 client = DiscordOAuthClient(client_id, client_secret, redirect_uri, ("identify", "guilds"))
-api_uri = os.getenv("api_uri")
-trusted_host = os.getenv("trusted_host")
+
+# fastapi
 app = FastAPI()
 
+# static
 static_path = os.path.join(os.path.dirname(__file__), "static")
 if os.path.isdir(static_path):
     app.mount("/static", StaticFiles(directory=static_path), name="static")
-
-# app.mount("/static", StaticFiles(directory="static"), name="static")
-# templates = Jinja2Templates(directory="templates")
 base_dir = os.path.dirname(__file__)
 templates = Jinja2Templates(directory=os.path.join(base_dir, "templates"))
 
-db_manager.init_db()
-modlist = os.getenv("mods_list")
-modlist = ast.literal_eval(modlist)
-
+# generate user token
+def create_token(user: str) -> str:
+    """
+    Create a secure token for adding a ship to favorites.
+    The token is valid for 5 minutes and can only be used once.
+    """
+    payload = {
+        "user": user,
+        "iat": datetime.now(tz=timezone.utc),
+        "exp": datetime.now(tz=timezone.utc) + timedelta(seconds=15),
+     }
+    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots():
@@ -80,274 +74,273 @@ def robots():
 
 @app.get("/sitemap.xml")
 async def get_sitemap():
-    """
-    A function that generates the sitemap.xml file by writing the output
-    of generate_sitemap() to 'static/sitemap.xml'.
-    If an exception occurs during the file write operation, it serves the static file.
-    Returns a FileResponse object for the sitemap.xml file.
-    """
-    try:
-        with open("static/sitemap.xml", "w", encoding="utf-8") as f:
-            f.write(generate_sitemap())
-    except Exception as e:
-        # not writable access, serve static file
-        print(e)
-    # xmldata = generate_sitemap()
     return FileResponse("static/sitemap.xml", media_type="application/xml")
 
 
 @app.get("/ship/{ship_id}")
-async def get_image(ship_id: int, request: Request):
-    """
-    A function that handles the retrieval of an image based on the provided ID.
-    It checks user session data, manages favorites, updates session information,
-    retrieves image data from the database, handles API requests for analysis,
-    and returns a template response with relevant data for the ship image page.
-    Parameters:
-        id (int): The ID of the image to retrieve.
-        request (Request): The request object containing session and query data.
-    Returns:
-        templates.TemplateResponse: The response containing data for rendering the ship image page.
-    """
+async def get_ship(request: Request, ship_id: int = Path(..., description="Id if the ship"), token: str = Query(None, description="Token for auth")):
+# async def get_image(ship_id: int, request: Request): # API : need to pass user and ship_id and return ship data, fav + push on download and view
     user = request.session.get("discord_user")
     if not request.session.get("shipidsession"):
         shipidsession = []
         request.session["shipidsession"] = shipidsession
     else:
         shipidsession = request.session.get("shipidsession")
-    fav = 0
+
     if user:
-        litsid = db_manager.get_my_favorite(user)
-        ids = [item[0] for item in litsid]
-        if ship_id in ids:
-            fav = 1
+        token = create_token(user=user)
     if not user:
         user = "Guest"
-    if ship_id not in shipidsession:
-        request.session["shipidsession"].append(ship_id)
-        db_manager.update_downloads(ship_id)
-    image_data = db_manager.get_image_data(ship_id)
-    url_png = image_data[0][2]  # change to send the url instead of the image
-    datadata = {}
-    return templates.TemplateResponse(
-        "ship.html",
-        {
-            "request": request,
-            "image": image_data,
-            "user": user,
-            "url_png": url_png,
-            "modlist": modlist,
-            "fav": fav,
-            "datadata": datadata,
-        },
-    )
+
+    base_path = f"/ship/{ship_id}"
+    query_params = {'token': token} if token else {}
+
+    # Build the full URL
+    target = urljoin(API_URL, base_path)
+    if query_params:
+        target = f"{target}?{urlencode(query_params)}"
+
+    response = requests.get(url=target)
+    data = json.loads(response.content)
+    page_info = data['data'][0]
+
+    # if ship_id not in shipidsession: # FIXME
+    #     request.session["shipidsession"].append(ship_id)
+    #     db_manager.update_downloads(ship_id) # migrate
+    # {"request": request, "images": images, "user": user, "maxpage": pages}
+    return templates.TemplateResponse("ship.html", {"request": request, "data":page_info, "user":user, "ship_id":ship_id})
 
 
-@app.get("/delete/{ship_id}")
-async def delete_image(ship_id: int, request: Request):
-    """
-    Delete image information from the database based on the provided ID.
-
-    Parameters:
-        id (int): The ID of the image to be deleted.
-        request (Request): The HTTP request object.
-
-    Returns:
-        RedirectResponse: A redirect response to the home page if the image is successfully deleted.
-    """
-    user = request.session.get("discord_user")
-    check = db_manager.delete_ship(ship_id, user)
-    if check is not None:
-        return RedirectResponse("/")
-    return RedirectResponse("/")
-
-
-@app.get("/favorite/{ship_id}")
-async def favorite(ship_id: int, request: Request):
-    """
-    Adds a ship to the user's favorites and redirects to the ship page.
-
-    Parameters:
-        ship_id (int): The ID of the ship to be added to favorites.
-        request (Request): The HTTP request object.
-
-    Returns:
-        RedirectResponse: A redirect response to the ship page if the user is logged in.
-    """
+@app.get("/")  # DONE
+async def index(request: Request):
     user = request.session.get("discord_user")
     if not user:
-        return RedirectResponse("/login")
-    user = request.session.get("discord_user")
-    db_manager.add_to_favorites(user, ship_id)
-    db_manager.add_fav(ship_id)
-    url = "/ship/" + str(ship_id)
-    return RedirectResponse(url)
+        user = "Guest"
 
+    base_path = "/search"
+    target = urljoin(API_URL, base_path)
+    response = requests.get(url=target)
+    data = json.loads(response.content)
+    page_info = data['data']
+    pages = data['max_page']
 
-@app.get("/rmfavorite/{ship_id}")
-async def rmfavorite(ship_id: int, request: Request):
-    """
-    Remove a ship from the user's favorites and redirect to the ship page.
-
-    Parameters:
-        ship_id (int): The ID of the ship to be removed from favorites.
-        request (Request): The HTTP request object.
-
-    Returns:
-        RedirectResponse: A redirect response to the ship page if the user is logged in.
-    """
-    user = request.session.get("discord_user")
-    if not user:
-        return RedirectResponse("/login")
-    user = request.session.get("discord_user")
-    db_manager.delete_from_favorites(user, ship_id)
-    db_manager.remove_fav(ship_id)
-    url = "/ship/" + str(ship_id)
-    return RedirectResponse(url)
-
-
-@app.get("/myfavorite")
-async def myfavorite(request: Request):
-    """
-    A function to handle the "/myfavorite" route.
-
-    Parameters:
-        request (Request): The HTTP request object.
-
-    Returns:
-        TemplateResponse: A response based on user's favorite images and brand.
-    """
-    user = request.session.get("discord_user")
-    if not user:
-        return RedirectResponse("/login?button=myfavorite")
-    images = db_manager.get_my_favorite(user)
-    rows = db_manager.get_my_favorite_pages(user)
-    pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
     return templates.TemplateResponse(
-        "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
+        "indexpop.html", {"request": request, "images": page_info, "user": user, "maxpage": pages}
     )
 
-
-@app.get("/edit/{ship_id}")
-async def edit_image(ship_id: int, request: Request):
-    """
-    Replace image information from the database based on the provided ID
-    """
+@app.get("/search")
+async def search(request: Request):
     user = request.session.get("discord_user")
-    check = db_manager.edit_ship(ship_id, user)
-    if check == "ko":
-        return RedirectResponse("/")
-    brand = request.session.get("brand")
-    if not brand:
-        brand = request.session.get("discord_server")
-    return templates.TemplateResponse(
-        "edit.html", {"request": request, "image": check, "user": user, "brand": brand}
-    )
-
-
-@app.post("/edit/{ship_id}")
-async def edit_image_post(ship_id: int, request: Request):
-    """
-    Edit an image in the database based on the provided ship ID.
-
-    Parameters:
-        ship_id (int): The ID of the ship to be edited.
-        request (Request): The request object containing the session and form data.
-
-    Returns:
-        RedirectResponse: A redirect response to the home page if the edit is successful,
-        or to the home page if the edit fails.
-
-    Raises:
-        None.
-    """
-    user = request.session.get("discord_user")
-    form_data = await request.form()
-    check = db_manager.post_edit_ship(ship_id, form_data, user)
-    if check == "ko":
-        return RedirectResponse("/")
-    return RedirectResponse(url="/", status_code=303)
-
-
-@app.get("/update/{ship_id}")
-async def update_image(ship_id: int, request: Request):
-    """
-    Update image information from the database based on the provided ID
-
-    Parameters:
-        ship_id (int): The ID of the ship to be updated.
-        request (Request): The HTTP request object containing user information.
-
-    Returns:
-        TemplateResponse: A response containing the update page with relevant data.
-    """
-    user = request.session.get("discord_user")
-    check = db_manager.edit_ship(ship_id, user)
-    if check == "ko":
-        return RedirectResponse("/")  # this should be an "you dont have the rights" page
-    # brand = request.session.get("brand")
-    # if not brand:
-    #     brand = request.session.get("discord_server")
     if not user:
-        return RedirectResponse("/login")
+        user = "Guest"
+    query_params = request.query_params
+    base_path = "/search"
+    target = urljoin(API_URL, base_path)
+    if query_params:
+        target = f"{target}?{urlencode(query_params)}"
+    response = requests.get(url=target)
+    data = json.loads(response.content)
+    page_info = data['data']
+    pages = data['max_page']
     return templates.TemplateResponse(
-        "update.html",
-        {
-            "request": request,
-            "image": check,
-            "user": user,
-        },  # "brand": brand}
+        "indexpop.html", {"request": request, "images": page_info, "user": user, "maxpage": pages}
     )
 
+# @app.get("/delete/{ship_id}")
+# async def delete_image(ship_id: int, request: Request):
+#     """
+#     Delete image information from the database based on the provided ID.
 
-@app.post("/update/{ship_id}")
-async def upload_update(ship_id: int, request: Request, file: UploadFile = File(...)):
-    """
-    A function to handle the upload of an image update for a ship.
+#     Parameters:
+#         id (int): The ID of the image to be deleted.
+#         request (Request): The HTTP request object.
 
-    Parameters:
-        ship_id (int): The ID of the ship to be updated.
-        request (Request): The HTTP request object containing user information.
-        file (UploadFile): The file object containing the image to be uploaded.
+#     Returns:
+#         RedirectResponse: A redirect response to the home page if the image is successfully deleted.
+#     """
+#     user = request.session.get("discord_user")
+#     check = db_manager.delete_ship(ship_id, user)
+#     if check is not None:
+#         return RedirectResponse("/")
+#     return RedirectResponse("/")
 
-    Returns:
-        RedirectResponse: Redirects to the edit page of the ship with status code 303.
-    """
-    user = request.session.get("discord_user")
-    check = db_manager.edit_ship(ship_id, user)
-    if check == "ko":
-        return RedirectResponse("/")  # this should be an "you dont have the rights" page
-    contents = await file.read()
-    encoded_data = base64.b64encode(contents).decode("utf-8")
-    url_png = upload_image_to_imgbb(encoded_data)
-    if url_png == "ko":
-        error = "Upload servers are down, try again later"
-        return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
-    try:
-        tags, author, crew, price = extract_tags_v2(url_png)
-    except Exception:
-        error = "API tag extractor is down, try again later"
-        return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
-    if price == "unknown" or crew == "unknown":
-        error = "unable to decode file provided, check upload guide below"
-        return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
 
-    file_name = file.filename
-    authorized_chars = re.sub(r"[^\w\-_.]", "_", file_name)
-    shipname = authorized_chars
-    if ".png" in shipname:
-        shipname = authorized_chars.replace(".png", "")
-    if ".ship" in shipname:
-        shipname = shipname.replace(".ship", "")
-    data = {
-        "id": ship_id,
-        "url_png": url_png,
-        "price": price,
-        "crew": crew,
-        "tags": tags,
-    }
-    db_manager.upload_update(data)
-    return RedirectResponse(url="/edit/" + str(ship_id), status_code=303)
+# @app.get("/favorite/{ship_id}")
+# async def favorite(ship_id: int, request: Request):
+#     user = request.session.get("discord_user")
+#     if not user:
+#         return RedirectResponse("/login")
+#     user = request.session.get("discord_user")
+#     db_manager.add_to_favorites(user, ship_id)
+#     db_manager.add_fav(ship_id)
+#     url = "/ship/" + str(ship_id)
+#     return RedirectResponse(url)
+
+
+# @app.get("/rmfavorite/{ship_id}")
+# async def rmfavorite(ship_id: int, request: Request):
+#     """
+#     Remove a ship from the user's favorites and redirect to the ship page.
+
+#     Parameters:
+#         ship_id (int): The ID of the ship to be removed from favorites.
+#         request (Request): The HTTP request object.
+
+#     Returns:
+#         RedirectResponse: A redirect response to the ship page if the user is logged in.
+#     """
+#     user = request.session.get("discord_user")
+#     if not user:
+#         return RedirectResponse("/login")
+#     user = request.session.get("discord_user")
+#     db_manager.delete_from_favorites(user, ship_id)
+#     db_manager.remove_fav(ship_id)
+#     url = "/ship/" + str(ship_id)
+#     return RedirectResponse(url)
+
+
+# @app.get("/myfavorite")
+# async def myfavorite(request: Request):
+#     """
+#     A function to handle the "/myfavorite" route.
+
+#     Parameters:
+#         request (Request): The HTTP request object.
+
+#     Returns:
+#         TemplateResponse: A response based on user's favorite images and brand.
+#     """
+#     user = request.session.get("discord_user")
+#     if not user:
+#         return RedirectResponse("/login?button=myfavorite")
+#     images = db_manager.get_my_favorite(user)
+#     rows = db_manager.get_my_favorite_pages(user)
+#     pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
+#     return templates.TemplateResponse(
+#         "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
+#     )
+
+
+# @app.get("/edit/{ship_id}")
+# async def edit_image(ship_id: int, request: Request):
+#     """
+#     Replace image information from the database based on the provided ID
+#     """
+#     user = request.session.get("discord_user")
+#     check = db_manager.edit_ship(ship_id, user)
+#     if check == "ko":
+#         return RedirectResponse("/")
+#     brand = request.session.get("brand")
+#     if not brand:
+#         brand = request.session.get("discord_server")
+#     return templates.TemplateResponse(
+#         "edit.html", {"request": request, "image": check, "user": user, "brand": brand}
+#     )
+
+
+# @app.post("/edit/{ship_id}")
+# async def edit_image_post(ship_id: int, request: Request):
+#     """
+#     Edit an image in the database based on the provided ship ID.
+
+#     Parameters:
+#         ship_id (int): The ID of the ship to be edited.
+#         request (Request): The request object containing the session and form data.
+
+#     Returns:
+#         RedirectResponse: A redirect response to the home page if the edit is successful,
+#         or to the home page if the edit fails.
+
+#     Raises:
+#         None.
+#     """
+#     user = request.session.get("discord_user")
+#     form_data = await request.form()
+#     check = db_manager.post_edit_ship(ship_id, form_data, user)
+#     if check == "ko":
+#         return RedirectResponse("/")
+#     return RedirectResponse(url="/", status_code=303)
+
+
+# @app.get("/update/{ship_id}")
+# async def update_image(ship_id: int, request: Request):
+#     """
+#     Update image information from the database based on the provided ID
+
+#     Parameters:
+#         ship_id (int): The ID of the ship to be updated.
+#         request (Request): The HTTP request object containing user information.
+
+#     Returns:
+#         TemplateResponse: A response containing the update page with relevant data.
+#     """
+#     user = request.session.get("discord_user")
+#     check = db_manager.edit_ship(ship_id, user)
+#     if check == "ko":
+#         return RedirectResponse("/")  # this should be an "you dont have the rights" page
+#     # brand = request.session.get("brand")
+#     # if not brand:
+#     #     brand = request.session.get("discord_server")
+#     if not user:
+#         return RedirectResponse("/login")
+#     return templates.TemplateResponse(
+#         "update.html",
+#         {
+#             "request": request,
+#             "image": check,
+#             "user": user,
+#         },  # "brand": brand}
+#     )
+
+
+# @app.post("/update/{ship_id}")
+# async def upload_update(ship_id: int, request: Request, file: UploadFile = File(...)):
+#     """
+#     A function to handle the upload of an image update for a ship.
+
+#     Parameters:
+#         ship_id (int): The ID of the ship to be updated.
+#         request (Request): The HTTP request object containing user information.
+#         file (UploadFile): The file object containing the image to be uploaded.
+
+#     Returns:
+#         RedirectResponse: Redirects to the edit page of the ship with status code 303.
+#     """
+#     user = request.session.get("discord_user")
+#     check = db_manager.edit_ship(ship_id, user)
+#     if check == "ko":
+#         return RedirectResponse("/")  # this should be an "you dont have the rights" page
+#     contents = await file.read()
+#     encoded_data = base64.b64encode(contents).decode("utf-8")
+#     url_png = upload_image_to_imgbb(encoded_data)
+#     if url_png == "ko":
+#         error = "Upload servers are down, try again later"
+#         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
+#     try:
+#         tags, author, crew, price = extract_tags_v2(url_png)
+#     except Exception:
+#         error = "API tag extractor is down, try again later"
+#         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
+#     if price == "unknown" or crew == "unknown":
+#         error = "unable to decode file provided, check upload guide below"
+#         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
+
+#     file_name = file.filename
+#     authorized_chars = re.sub(r"[^\w\-_.]", "_", file_name)
+#     shipname = authorized_chars
+#     if ".png" in shipname:
+#         shipname = authorized_chars.replace(".png", "")
+#     if ".ship" in shipname:
+#         shipname = shipname.replace(".ship", "")
+#     data = {
+#         "id": ship_id,
+#         "url_png": url_png,
+#         "price": price,
+#         "crew": crew,
+#         "tags": tags,
+#     }
+#     db_manager.upload_update(data)
+#     return RedirectResponse(url="/edit/" + str(ship_id), status_code=303)
 
 
 @app.route("/login")
@@ -464,337 +457,298 @@ async def upload_page(request: Request):
     )
 
 
-@app.post("/initupload")  # DONE
-async def init_upload(request: Request, file: UploadFile = File(...)):
-    """
-    A function to handle the initial upload of an image.
+# @app.post("/initupload")  # DONE
+# async def init_upload(request: Request, file: UploadFile = File(...)):
+#     """
+#     A function to handle the initial upload of an image.
 
-    Parameters:
-        request (Request): The HTTP request object.
-        file (UploadFile): The file object containing the image to be uploaded.
+#     Parameters:
+#         request (Request): The HTTP request object.
+#         file (UploadFile): The file object containing the image to be uploaded.
 
-    Returns:
-        TemplateResponse: A response containing the uploaded image data and metadata.
-    """
-    contents = await file.read()
-    encoded_data = base64.b64encode(contents).decode("utf-8")
-    url_png = upload_image_to_imgbb(encoded_data)
-    if url_png == "ko":
-        error = "Upload servers are down, try again later"
-        return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
-    try:
-        tags, author, crew, price = extract_tags_v2(url_png)
-    except Exception:
-        error = "API tag extractor is down, try again later"
-        return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
-    if price == "unknown" or crew == "unknown":
-        error = "unable to decode file provided, check upload guide below"
-        return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
-    file_name = file.filename
-    authorized_chars = re.sub(r"[^\w\-_.]", "_", file_name)
-    shipname = authorized_chars
-    if ".png" in shipname:
-        shipname = authorized_chars.replace(".png", "")
-    if ".ship" in shipname:
-        shipname = shipname.replace(".ship", "")
-    # brand check
-    brand = request.session.get("brand")
-    if not brand:
-        brand = request.session.get("discord_server")
-    data = {
-        "name": authorized_chars,
-        "url_png": url_png,
-        "author": author,
-        "shipname": shipname,
-        "price": price,
-        "crew": crew,
-        "brand": brand,
-    }
-    request.session["upload_data"] = data
-    return templates.TemplateResponse(
-        "upload.html",
-        {"request": request, "data": data, "tags": tags, "crew": crew, "brand": brand},
-    )
-
-
-@app.post("/upload")  # DONE
-async def upload(request: Request):
-    """
-    Uploads an image to the server.
-
-    Parameters:
-        request (Request): The HTTP request object.
-
-    Returns:
-        RedirectResponse: A redirect response to the root URL ("/").
-    """
-    user = request.session.get("discord_user")
-    form_data = await request.form()
-    db_manager.upload_image(form_data, user)
-    return RedirectResponse(url="/", status_code=303)
+#     Returns:
+#         TemplateResponse: A response containing the uploaded image data and metadata.
+#     """
+#     contents = await file.read()
+#     encoded_data = base64.b64encode(contents).decode("utf-8")
+#     url_png = upload_image_to_imgbb(encoded_data)
+#     if url_png == "ko":
+#         error = "Upload servers are down, try again later"
+#         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
+#     try:
+#         tags, author, crew, price = extract_tags_v2(url_png)
+#     except Exception:
+#         error = "API tag extractor is down, try again later"
+#         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
+#     if price == "unknown" or crew == "unknown":
+#         error = "unable to decode file provided, check upload guide below"
+#         return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
+#     file_name = file.filename
+#     authorized_chars = re.sub(r"[^\w\-_.]", "_", file_name)
+#     shipname = authorized_chars
+#     if ".png" in shipname:
+#         shipname = authorized_chars.replace(".png", "")
+#     if ".ship" in shipname:
+#         shipname = shipname.replace(".ship", "")
+#     # brand check
+#     brand = request.session.get("brand")
+#     if not brand:
+#         brand = request.session.get("discord_server")
+#     data = {
+#         "name": authorized_chars,
+#         "url_png": url_png,
+#         "author": author,
+#         "shipname": shipname,
+#         "price": price,
+#         "crew": crew,
+#         "brand": brand,
+#     }
+#     request.session["upload_data"] = data
+#     return templates.TemplateResponse(
+#         "upload.html",
+#         {"request": request, "data": data, "tags": tags, "crew": crew, "brand": brand},
+#     )
 
 
-@app.get("/download/{image_id}")
-async def download_ship(image_id: str):
-    result = db_manager.download_ship_png(image_id)
-    if result:
-        image_url, filename = result
-        response = requests.get(image_url, timeout=30)
-        if response.status_code == 200:
-            content_type = response.headers.get("content-type", "application/octet-stream")
-            # Encode the filename properly
-            quoted_filename = quote(filename)
-            headers = {
-                "Content-Disposition": f"attachment; filename*=UTF-8''{quoted_filename}"
-            }
-            return Response(content=response.content, media_type=content_type, headers=headers)
-        return "Failed to fetch the image from the URL"
-    return "Image not found"
+# @app.post("/upload")  # DONE
+# async def upload(request: Request):
+#     """
+#     Uploads an image to the server.
+
+#     Parameters:
+#         request (Request): The HTTP request object.
+
+#     Returns:
+#         RedirectResponse: A redirect response to the root URL ("/").
+#     """
+#     user = request.session.get("discord_user")
+#     form_data = await request.form()
+#     db_manager.upload_image(form_data, user)
+#     return RedirectResponse(url="/", status_code=303)
 
 
-@app.get("/")  # DONE
-async def index(request: Request):
-    """
-    Handle the root route ("/") and render the appropriate template based on the user's brand.
-
-    Parameters:
-        request (Request): The HTTP request object.
-
-    Returns:
-        TemplateResponse: The rendered template with the appropriate images and user information.
-    """
-    user = request.session.get("discord_user")
-    if not user:
-        user = "Guest"
-    images = db_manager.get_index()
-    rows = db_manager.get_pages()
-    pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
-    return templates.TemplateResponse(
-        "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
-    )
+# @app.get("/download/{image_id}")
+# async def download_ship(image_id: str):
+#     result = db_manager.download_ship_png(image_id)
+#     if result:
+#         image_url, filename = result
+#         response = requests.get(image_url, timeout=30)
+#         if response.status_code == 200:
+#             content_type = response.headers.get("content-type", "application/octet-stream")
+#             # Encode the filename properly
+#             quoted_filename = quote(filename)
+#             headers = {
+#                 "Content-Disposition": f"attachment; filename*=UTF-8''{quoted_filename}"
+#             }
+#             return Response(content=response.content, media_type=content_type, headers=headers)
+#         return "Failed to fetch the image from the URL"
+#     return "Image not found"
 
 
-@app.get("/myships")
-async def index_get(request: Request):
-    """
-    A function to handle the "/myships" route, retrieves user information, images, and brand to
-    render the appropriate template.
-    """
-    user = request.session.get("discord_user")
-    if not user:
-        return RedirectResponse("/login?button=myships")
-    images = db_manager.get_my_ships(user)
-    rows = db_manager.get_my_ships_pages(user)
-    pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
-    return templates.TemplateResponse(
-        "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
-    )
 
 
-@app.post("/")
-async def home(request: Request):
-    """
-    A function to handle the "/" route, processes form input to build a SQL query
-    based on search tags, constructs a redirect URL with query parameters, and redirects
-    the user to the search route.
 
-    Parameters:
-    - request: Request object containing information about the incoming request.
-
-    Return Type:
-    - RedirectResponse: Redirects the user to the search route with the constructed
-    query parameters.
-    """
-    user = request.session.get("discord_user")
-    fulltext = None
-    ftauthor = None
-    exlstrip = None
-    if not user:
-        user = "Guest"
-    tags_list = [
-        "cannon",
-        "deck_cannon",
-        "emp_missiles",
-        "flak_battery",
-        "he_missiles",
-        "large_cannon",
-        "mines",
-        "nukes",
-        "railgun",
-        "ammo_factory",
-        "emp_factory",
-        "he_factory",
-        "mine_factory",
-        "nuke_factory",
-        "disruptors",
-        "heavy_laser",
-        "ion_beam",
-        "ion_prism",
-        "laser",
-        "mining_laser",
-        "point_defense",
-        "boost_thruster",
-        "airlock",
-        "campaign_factories",
-        "explosive_charges",
-        "fire_extinguisher",
-        "no_fire_extinguishers",
-        "chaingun",
-        "large_reactor",
-        "large_shield",
-        "medium_reactor",
-        "sensor",
-        "small_hyperdrive",
-        "large_hyperdrive",
-        "rocket_thruster",
-        "small_reactor",
-        "small_shield",
-        "tractor_beams",
-        "hyperdrive_relay",
-        "bidirectional_thrust",
-        "mono_thrust",
-        "multi_thrust",
-        "omni_thrust",
-        "no_thrust",
-        "armor_defenses",
-        "mixed_defenses",
-        "shield_defenses",
-        "no_defenses",
-        "kiter",
-        "diagonal",
-        "avoider",
-        "mixed_weapons",
-        "painted",
-        "unpainted",
-        "splitter",
-        "utility_weapons",
-        "rammer",
-        "orbiter",
-        "campaign_ship",
-        "builtin",
-        "elimination_ship",
-        "domination_ship",
-        "scout/racer",
-        "broadsider",
-        "waste_ship",
-        "debugging_tool",
-        "sundiver",
-        "cargo_ship",
-        "spinner",
-    ]
-    form_input = await request.form()
-    query: str = form_input.get("query").strip()
-    authorstrip: str = form_input.get("author").strip()
-    orderstrip: str = form_input.get("order").strip()
-    words = query.lower().split(" ")
-    descstrip: str = form_input.get("desc").strip()
-    minstrip: int = form_input.get("min-price").strip()
-    maxstrip: int = form_input.get("max-price").strip()
-    crewstrip: int = form_input.get("max-crew").strip()
-    if form_input.get("exl-only"):
-        exlstrip = form_input.get("exl-only").strip()
-    query_tags = []
-    for word in words:
-        if word.startswith("-"):
-            tag = word[1:]
-            value = 0
-            if tag in tags_list:
-                query_tags.append((tag, value))
-        elif word.startswith("fulltext="):
-            fulltext = word[9:]
-        elif word.startswith("ftauthor="):
-            ftauthor = word[9:]
-        else:
-            tag = word
-            value = 1
-            if tag in tags_list:
-                query_tags.append((tag, value))
-    if fulltext:
-        query_tags.append(("fulltext", fulltext))
-    if ftauthor:
-        query_tags.append(("ftauthor", ftauthor))
-    if authorstrip:
-        query_tags.append(("author", authorstrip))
-    if descstrip:
-        query_tags.append(("desc", descstrip))
-    if orderstrip:
-        query_tags.append(("order", orderstrip))
-    if not orderstrip:
-        query_tags.append(("order", "new"))
-    if crewstrip:
-        query_tags.append(("max-crew", crewstrip))
-    if exlstrip:
-        query_tags.append(("brand", "exl"))
-    query_tags.append(("minprice", minstrip))
-    query_tags.append(("maxprice", maxstrip))
-    query_params = {}
-    for tag, value in query_tags:
-        query_params[tag] = str(value)
-    base_url = request.url_for("search")
-    redirect_url = f"{base_url}?"
-    redirect_url += urlencode(query_params)
-    redirect_url += "#results"
-    return RedirectResponse(redirect_url, status_code=307)
+# @app.get("/myships")
+# async def index_get(request: Request):
+#     """
+#     A function to handle the "/myships" route, retrieves user information, images, and brand to
+#     render the appropriate template.
+#     """
+#     user = request.session.get("discord_user")
+#     if not user:
+#         return RedirectResponse("/login?button=myships")
+#     images = db_manager.get_my_ships(user)
+#     rows = db_manager.get_my_ships_pages(user)
+#     pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
+#     return templates.TemplateResponse(
+#         "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
+#     )
 
 
-@app.get("/search")
-async def search(request: Request):
-    """
-    Handle the "/search" route to retrieve and display search results based on query parameters.
+# @app.post("/")
+# async def home(request: Request):
+#     """
+#     A function to handle the "/" route, processes form input to build a SQL query
+#     based on search tags, constructs a redirect URL with query parameters, and redirects
+#     the user to the search route.
 
-    Parameters:
-        request (Request): The HTTP request object containing session and query parameters.
+#     Parameters:
+#     - request: Request object containing information about the incoming request.
 
-    Returns:
-        TemplateResponse: The rendered template with search results and user information.
-    """
-    user = request.session.get("discord_user")
-    if not user:
-        user = "Guest"
-    query_params = request.query_params
-    images = db_manager.get_search(query_params)
-    rows = db_manager.get_pages_search(query_params)
-    pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
-    return templates.TemplateResponse(
-        "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
-    )
+#     Return Type:
+#     - RedirectResponse: Redirects the user to the search route with the constructed
+#     query parameters.
+#     """
+#     user = request.session.get("discord_user")
+#     fulltext = None
+#     ftauthor = None
+#     exlstrip = None
+#     if not user:
+#         user = "Guest"
+#     tags_list = [
+#         "cannon",
+#         "deck_cannon",
+#         "emp_missiles",
+#         "flak_battery",
+#         "he_missiles",
+#         "large_cannon",
+#         "mines",
+#         "nukes",
+#         "railgun",
+#         "ammo_factory",
+#         "emp_factory",
+#         "he_factory",
+#         "mine_factory",
+#         "nuke_factory",
+#         "disruptors",
+#         "heavy_laser",
+#         "ion_beam",
+#         "ion_prism",
+#         "laser",
+#         "mining_laser",
+#         "point_defense",
+#         "boost_thruster",
+#         "airlock",
+#         "campaign_factories",
+#         "explosive_charges",
+#         "fire_extinguisher",
+#         "no_fire_extinguishers",
+#         "chaingun",
+#         "large_reactor",
+#         "large_shield",
+#         "medium_reactor",
+#         "sensor",
+#         "small_hyperdrive",
+#         "large_hyperdrive",
+#         "rocket_thruster",
+#         "small_reactor",
+#         "small_shield",
+#         "tractor_beams",
+#         "hyperdrive_relay",
+#         "bidirectional_thrust",
+#         "mono_thrust",
+#         "multi_thrust",
+#         "omni_thrust",
+#         "no_thrust",
+#         "armor_defenses",
+#         "mixed_defenses",
+#         "shield_defenses",
+#         "no_defenses",
+#         "kiter",
+#         "diagonal",
+#         "avoider",
+#         "mixed_weapons",
+#         "painted",
+#         "unpainted",
+#         "splitter",
+#         "utility_weapons",
+#         "rammer",
+#         "orbiter",
+#         "campaign_ship",
+#         "builtin",
+#         "elimination_ship",
+#         "domination_ship",
+#         "scout/racer",
+#         "broadsider",
+#         "waste_ship",
+#         "debugging_tool",
+#         "sundiver",
+#         "cargo_ship",
+#         "spinner",
+#     ]
+#     form_input = await request.form()
+#     query: str = form_input.get("query").strip()
+#     authorstrip: str = form_input.get("author").strip()
+#     orderstrip: str = form_input.get("order").strip()
+#     words = query.lower().split(" ")
+#     descstrip: str = form_input.get("desc").strip()
+#     minstrip: int = form_input.get("min-price").strip()
+#     maxstrip: int = form_input.get("max-price").strip()
+#     crewstrip: int = form_input.get("max-crew").strip()
+#     if form_input.get("exl-only"):
+#         exlstrip = form_input.get("exl-only").strip()
+#     query_tags = []
+#     for word in words:
+#         if word.startswith("-"):
+#             tag = word[1:]
+#             value = 0
+#             if tag in tags_list:
+#                 query_tags.append((tag, value))
+#         elif word.startswith("fulltext="):
+#             fulltext = word[9:]
+#         elif word.startswith("ftauthor="):
+#             ftauthor = word[9:]
+#         else:
+#             tag = word
+#             value = 1
+#             if tag in tags_list:
+#                 query_tags.append((tag, value))
+#     if fulltext:
+#         query_tags.append(("fulltext", fulltext))
+#     if ftauthor:
+#         query_tags.append(("ftauthor", ftauthor))
+#     if authorstrip:
+#         query_tags.append(("author", authorstrip))
+#     if descstrip:
+#         query_tags.append(("desc", descstrip))
+#     if orderstrip:
+#         query_tags.append(("order", orderstrip))
+#     if not orderstrip:
+#         query_tags.append(("order", "new"))
+#     if crewstrip:
+#         query_tags.append(("max-crew", crewstrip))
+#     if exlstrip:
+#         query_tags.append(("brand", "exl"))
+#     query_tags.append(("minprice", minstrip))
+#     query_tags.append(("maxprice", maxstrip))
+#     query_params = {}
+#     for tag, value in query_tags:
+#         query_params[tag] = str(value)
+#     base_url = request.url_for("search")
+#     redirect_url = f"{base_url}?"
+#     redirect_url += urlencode(query_params)
+#     redirect_url += "#results"
+#     return RedirectResponse(redirect_url, status_code=307)
 
 
-@app.post("/search")
-async def search_post(request: Request):
-    """
-    Handle the "/search" route to retrieve and display search results based on query parameters.
-
-    Parameters:
-        request (Request): The HTTP request object containing session and query parameters.
-
-    Returns:
-        TemplateResponse: The rendered template with search results and user information.
-    """
-    user = request.session.get("discord_user")
-    if not user:
-        user = "Guest"
-    query_params = request.query_params
-    images = db_manager.get_search(query_params)
-    rows = db_manager.get_pages_search(query_params)
-    # pages is number of row / 60 int up
-    pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
-    return templates.TemplateResponse(
-        "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
-    )
 
 
-@app.get("/seo_tags")
-async def get_seo_tags(request: Request):
-    """display seo tags"""
-    user = request.session.get("discord_user")
-    if not user:
-        user = "Guest"
-    tags = generate_url_tags()
-    authors = generate_url_authors()
-    return templates.TemplateResponse(
-        "seo_tags.html", {"request": request, "user": user, "tags": tags, "authors": authors}
-    )
+
+# @app.post("/search")
+# async def search_post(request: Request):
+#     """
+#     Handle the "/search" route to retrieve and display search results based on query parameters.
+
+#     Parameters:
+#         request (Request): The HTTP request object containing session and query parameters.
+
+#     Returns:
+#         TemplateResponse: The rendered template with search results and user information.
+#     """
+#     user = request.session.get("discord_user")
+#     if not user:
+#         user = "Guest"
+#     query_params = request.query_params
+#     images = db_manager.get_search(query_params)
+#     rows = db_manager.get_pages_search(query_params)
+#     # pages is number of row / 60 int up
+#     pages = math.ceil(rows[0][0] / MAX_SHIPS_PER_PAGE)
+#     return templates.TemplateResponse(
+#         "indexpop.html", {"request": request, "images": images, "user": user, "maxpage": pages}
+#     )
+
+
+# @app.get("/seo_tags")
+# async def get_seo_tags(request: Request):
+#     """display seo tags"""
+#     user = request.session.get("discord_user")
+#     if not user:
+#         user = "Guest"
+#     tags = generate_url_tags()
+#     authors = generate_url_authors()
+#     return templates.TemplateResponse(
+#         "seo_tags.html", {"request": request, "user": user, "tags": tags, "authors": authors}
+#     )
 
 
 @app.get("/seo_about")
@@ -806,21 +760,21 @@ async def get_seo_about(request: Request):
     return templates.TemplateResponse("seo_about.html", {"request": request, "user": user})
 
 
-@app.get("/authors")
-async def get_authors():
-    """
-    Retrieves a list of authors from the database.
+# @app.get("/authors")
+# async def get_authors():
+#     """
+#     Retrieves a list of authors from the database.
 
-    Returns:
-        dict: A dictionary containing the list of authors.
+#     Returns:
+#         dict: A dictionary containing the list of authors.
 
-    Example:
-        >>> await get_authors()
-        {'authors': ['John Doe', 'Jane Smith', 'Alice Johnson']}
-    """
-    query_result = db_manager.get_authors()
-    authors = [author for (author,) in query_result["authors"]]
-    return {"authors": authors}
+#     Example:
+#         >>> await get_authors()
+#         {'authors': ['John Doe', 'Jane Smith', 'Alice Johnson']}
+#     """
+#     query_result = db_manager.get_authors()
+#     authors = [author for (author,) in query_result["authors"]]
+#     return {"authors": authors}
 
 
 @app.get("/analyze")
@@ -865,7 +819,7 @@ async def serve_files(request: Request):
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("secret_session"))
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
-app.add_middleware(HTTPSRedirectMiddleware)
+# app.add_middleware(HTTPSRedirectMiddleware)
 # start server
 if __name__ == "__main__":
     # uvicorn.run(app, host="0.0.0.0", port=8000, proxy_headers=True, forwarded_allow_ips="*")

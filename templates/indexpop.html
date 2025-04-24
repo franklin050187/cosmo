@@ -10,6 +10,7 @@
             font-weight: bold;
             text-align: center;
         }
+
         .ui-widget.ui-widget-content {
             border: none;
             background: none;
@@ -20,7 +21,35 @@
     <script defer src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
     <script defer src="/static/js/search.js"></script>
     <script defer src="/static/js/index.js"></script>
-    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" media="print"
+        onload="this.media='all'">
+    <script>
+    function updateOrderParam(order) {
+        if (!order) return; // guard clause to prevent null
+
+        // Set the value of the hidden input (if the form uses it)
+        const orderInput = document.getElementById('order');
+        if (orderInput) {
+            orderInput.value = order;
+        }
+
+        // Build and redirect to new URL
+        const url = new URL(window.location.href);
+
+        // Force path to include /search
+        if (!url.pathname.includes('/search')) {
+            url.pathname = '/search';
+        }
+
+        url.searchParams.set('order', order);
+        url.hash = 'results';
+
+        // Go to updated URL
+        // window.location.href = url.toString();
+    }
+
+
+    </script>
 </head>
 
 
@@ -34,13 +63,13 @@
             <div class="tabs-container">
                 <button id="search-btn" class="active blue-btn" type="button">Search the Library</button>
                 <button id="tags-btn" class="blue-btn" type="button" style="display: none;">Select Tags</button>
-                <form action="/" method="post" enctype="multipart/form-data">
+                <form action="/search" method="get" enctype="multipart/form-data">
                     <div id="search-tab" class="tab active">
                         <input type="text" id="authorinput" name="author" placeholder="  Search by author...">
                         <input type="text" id="desc" name="desc" placeholder="  Search by name or description...">
                         <div class="item-price">
                             <div style="display: flex; align-items: center;width: 91%;">
-                                <input type="text" name="min-price" id="min-price" value="0">
+                                <input type="text" name="min-price" id="min-price" value="1">
                                 <span for="price-slider"
                                     style="display: flow-root;margin-bottom: 5px;font-style: italic; text-align: center;    width: 100%;">Price
                                     Range</span>
@@ -105,13 +134,13 @@
                         {% set total_images = images | length %}
                         {% for image in images %}
                         <li class="ship-card">
-                            <button type="button" class="stars" title="Give it a star">{{ image[11] }}</button>
-                            <button type="button" class="likes" title="Like it">{{ image[8] }}</button>
-                            <a href="/ship/{{ image[0] }}">
-                                <img src="{{ image[2] }}" alt="{{ image[5] }}">
+                            <button type="button" class="stars" title="Give it a star">{{ image.number_fav }}</button>
+                            <button type="button" class="likes" title="Like it">{{ image.ship_popularity }}</button>
+                            <a href="/ship/{{ image.ship_id }}">
+                                <img src="{{ image.ship_png }}" alt="{{ image.ship_name }}">
                             </a>
                             <div class="ship-data">
-                                <span class="data"><span>Ship name:</span> {{ image[5] }}</span>
+                                <span class="data"><span>Ship name:</span> {{ image.ship_name }}</span>
                                 <span class="data"><span>Ship tags:</span><span class="data">{% set tagList = [
                                         'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery',
                                         'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'factories',
@@ -122,7 +151,8 @@
                                         'splitter', 'chaingun',
                                         'scout/racer', 'broadsider', 'waste_ship', 'debugging_tool', 'sundiver',
                                         'cargo_ship', 'spinner' ] %} {%
-                                        set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'",
+                                        set image_tags = image.ship_tags | replace("[", "") | replace("]", "") |
+                                        replace("'",
                                         "") | replace(" ", "")
                                         %} {% set image_tags_list = image_tags.split(",") %} {% for tag in
                                         image_tags_list %} {% if tag in
@@ -130,10 +160,11 @@
                                         <span class="selected-tag"> <a href="/search?{{ tag }}=1">{{ tag }}</a></span>
                                         {% endif %} {% endfor
                                         %}</span></span>
-                                <span class="data credits"><span>Cost:</span> {{ image[7] }}₡</span>
-                                <span class="data"><span>Crew : {{ image[13] }}</span></span>
-                                <span class="data"><span>Creator:</span> <a href="/search?author={{ image[6] }}"> {{
-                                        image[6] }}</a></span>
+                                <span class="data credits"><span>Cost:</span> {{ image.ship_cost }}₡</span>
+                                <span class="data"><span>Crew : {{ image.ship_crew }}</span></span>
+                                <span class="data"><span>Creator:</span> <a
+                                        href="/search?author={{ image.ship_author }}"> {{
+                                        image.ship_author }}</a></span>
                             </div>
                         </li>
                         {% endfor %}
@@ -203,16 +234,6 @@
         window.lazySizesConfig = window.lazySizesConfig || {};
         window.lazySizesConfig.init = false;
     </script>
-    <!-- <script defer src="https://cdn.scaleflex.it/filerobot/js-cloudimage-responsive/lazysizes.min.js"></script>
-    <script defer src="https://cdn.scaleflex.it/plugins/js-cloudimage-responsive/4.8.4/js-cloudimage-responsive.min.js"></script>
-    <script>
-        const ciResponsive = new window.CIResponsive({
-            token: 'cnfyupteqa',
-            apiVersion: null,
-            lazyLoading: true
-        });
-        window.lazySizes.init();
-    </script> -->
 </body>
 <script type="module">
     // Defer initialization until after page load
@@ -282,17 +303,42 @@
     }
 
     function updateOrderParam(order) {
+        if (!order) return; // guard clause to prevent null
+
+        // Set the value of the hidden input (if the form uses it)
         const orderInput = document.getElementById('order');
         if (orderInput) {
             orderInput.value = order;
-            const urlParams = new URLSearchParams(window.location.search);
-            urlParams.set('order', order);
         }
+
+        // Build and redirect to new URL
+        const url = new URL(window.location.href);
+
+        // Force path to include /search
+        if (!url.pathname.includes('/search')) {
+            url.pathname = '/search';
+        }
+
+        url.searchParams.set('order', order);
+        url.hash = 'results';
+
+        // Go to updated URL
+        // window.location.href = url.toString();
     }
 
     // Initialize page state
     document.addEventListener('DOMContentLoaded', () => {
-        updateOrderParam(getParameterValue('order'));
+        const order = getParameterValue('order') || 'new';
+
+        document.querySelectorAll('#order-new-btn, #order-pop-btn, #order-fav-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        const activeBtn = document.getElementById(`order-${order}-btn`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+        }
+
         showPreviousButton();
     });
 </script>

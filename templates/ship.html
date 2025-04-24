@@ -30,41 +30,41 @@
     </header>
 
     <main>
-        <h1 id="title" style="overflow: hidden; text-overflow: ellipsis;">Datasheet for {{ image[0][5] }}</h1>
-        <h2 style="display: none;">{{ image[0][4] | safe}}</h2>
+        <h1 id="title" style="overflow: hidden; text-overflow: ellipsis;">Datasheet for {{ data.ship_name | replace(".ship.png", "") }}</h1>
+        <!-- <h2 style="display: none;">{{ data }}</h2> -->
         <section id="results" class="content-container">
             <div class="tabs-container">
                 <div id="elim-competitive-tab" class="tab active">
                     <ul class="ships-list" style="grid-template-columns: repeat(1, 1fr);">
                         <li class="ship-card">
                             <div class="intro">
-                                <img src="{{ url_png }}">
+                                <img src="{{ data.ship_png }}">
                             </div>
                             <div class="ship-data">
                                 <p>Ship name : </p>
-                                <p style="color: antiquewhite;">{{ image[0][5] }}</p>
-                                {% if "exl" in image[0][12] and "gen" in brand %}
+                                <p style="color: antiquewhite;">{{ data.ship_name | replace(".ship.png", "") }}</p>
+                                {% if "exl" in data.brand %}
                                 <p>WARNING : This ship is from the Excelsior library, it requires piloting skills.
                                 </p>
                                 {% endif %}
                                 <p>Author : </p>
-                                <p style="color: antiquewhite;">{{ image[0][6] }}</p>
+                                <p style="color: antiquewhite;">{{ data.ship_author }}</p>
                                 <p>Ship description : </p>
-                                <span class="data">{{ image[0][4] | safe}}</span>
+                                <span class="data">{{ data.ship_description | safe }}</span>
                                 <p></p>
-                                <p><span class="data credits"><span>Cost:</span> {{ image[0][7] }}₡</span>
+                                <p><span class="data credits"><span>Cost:</span> {{ data.ship_cost }}₡</span>
                                 </p>
                                 <p>
-                                    <span class="data"><span>Crew : {{ image[0][13] }} 웃</span></span>
+                                    <span class="data"><span>Crew : {{ data.ship_crew }} 웃</span></span>
                                 </p>
-                                <P class="data"><span>Popularity :</span> {{ image[0][8] }}</P>
-                                <P class="data"><span>Date of submission :</span> {{ image[0][9] }}</P>
+                                <P class="data"><span>Popularity :</span> {{ data.ship_popularity }}</P>
+                                <P class="data"><span>Date of submission :</span> {{ data.ship_date_submitted }}</P>
                                 <p></p>
-                                <p class="data" style="font-size: 12px;">Submitted by : {{ image[0][3] }}</p>
+                                <p class="data" style="font-size: 12px;">Submitted by : {{ data.ship_submitted_by }}</p>
                                 <ul class="ships-list">
                                     <span class="data">
                                         <span>Ship tags:</span>
-                                        {% set image_tags = image[0][10] | replace("[", "") | replace("]", "") |
+                                        {% set image_tags = data.ship_tags | replace("[", "") | replace("]", "") |
                                         replace("'", "") |
                                         replace(" ", "") %} {% set image_tags_list = image_tags.split(",") %} {%
                                         for
@@ -80,7 +80,7 @@
                             <div class="ship-data">
                                 <p id="conditional-content">
                                     <a title="Show stats" class="blue-btn register" id="fetch-button"
-                                        onclick="fetchData('{{ url_png }}')">
+                                        onclick="fetchData('{{ data.ship_png }}')">
                                         <span>Show stats</span>
                                     </a>
                                 </p>
@@ -91,26 +91,26 @@
                                 <ul><a title="Favorite" class="blue-btn register"
                                         href="/login?button=myfavorite"><span>Login to add
                                             favorite</span></a></ul>
-                                {% elif fav == 1 %}
+                                {% elif is_in_user_fav == 1 %}
                                 <ul><a title="Favorite" class="blue-btn register"
-                                        href="/rmfavorite/{{ image[0][0] }}"><span>Remove
+                                        href="/rmfavorite/{{ ship_id }}"><span>Remove
                                             from
                                             favorite</span></a></ul>
                                 {% else %}
                                 <ul><a title="Favorite" class="blue-btn register"
-                                        href="/favorite/{{ image[0][0] }}"><span>Add to
+                                        href="/favorite/{{ ship_id }}"><span>Add to
                                             favorite</span></a></ul>
                                 {% endif %}
                                 <ul><a title="Download" class="blue-btn register"
-                                        onclick="downloadShip('{{ image[0][0] }}')"><span>Download</span></a>
+                                        onclick="downloadShip('{{ data }}')"><span>Download</span></a>
                                 </ul>
-                                {% if user == image[0][3] or user in modlist %}
+                                {% if data.is_owner == 1 or user in modlist %}
                                 <ul><a title="Edit" class="blue-btn register"
-                                        href="/edit/{{ image[0][0] }}"><span>Edit</span></a>
+                                        href="/edit/{{ ship_id }}"><span>Edit</span></a>
                                 </ul>
                                 <ul><a title="Delete" class="blue-btn " style="
                                         background: brown;
-                                    " href="/delete/{{ image[0][0] }}"><span>Delete</span></a>
+                                    " href="/delete/{{ ship_id }}"><span>Delete</span></a>
                                 </ul>
                                 {% endif %}
                             </div>
