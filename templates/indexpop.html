@@ -15,6 +15,34 @@
             border: none;
             background: none;
         }
+
+        /* Loading overlay styles */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
     <!-- Defer non-critical JavaScript -->
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -44,8 +72,6 @@
         url.searchParams.set('order', order);
         url.hash = 'results';
 
-        // Go to updated URL
-        // window.location.href = url.toString();
     }
 
 
@@ -58,6 +84,9 @@
         {% include "header.html" %}
     </header>
     <main>
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loader"></div>
+        </div>
         <h1 id="title" class="title">Explore and share ship designs with the community !</h1>
         <section id="search" class="content-container">
             <div class="tabs-container">
@@ -238,6 +267,14 @@
 <script type="module">
     // Defer initialization until after page load
     document.addEventListener('DOMContentLoaded', () => {
+        // Add form submission handler
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', () => {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            });
+        }
+
         // URL path handling
         const path = window.location.pathname;
         const search = document.getElementById('search');
@@ -266,68 +303,42 @@
             title.textContent = 'My favorites';
             orderText.innerHTML = 'Ships you added to your favorites. <br> {% if total_images > 1 %} You found {{ total_images }} amazing ships, awesome ! {% else %} Start adding ships to your collection now ! {% endif %}';
         }
-    });
 
-    // URL parameter handling
-    function getParameterValue(param) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(param);
-    }
-
-    // Navigation functions
-    function nextPage() {
-        const currentPage = Number(getParameterValue('page')) || 1;
-        const nextPage = currentPage + 1;
-        const url = new URL(window.location.href);
-        if (url.pathname === '/' || !url.pathname.includes('/search')) {
-            url.pathname = '/search';
-        }
-        url.searchParams.set('page', nextPage.toString());
-        window.location.href = url.href;
-    }
-
-    function previousPage() {
-        const currentPage = Number(getParameterValue('page')) || 1;
-        const previousPage = currentPage - 1;
-        const url = new URL(window.location.href);
-        url.searchParams.set('page', previousPage.toString());
-        window.location.href = url.href;
-    }
-
-    function showPreviousButton() {
-        const page = Number(getParameterValue('page')) || 1;
-        const previousButton = document.getElementById('previous');
-        if (previousButton) {
-            previousButton.style.display = page > 1 ? 'block' : 'none';
-        }
-    }
-
-    function updateOrderParam(order) {
-        if (!order) return; // guard clause to prevent null
-
-        // Set the value of the hidden input (if the form uses it)
-        const orderInput = document.getElementById('order');
-        if (orderInput) {
-            orderInput.value = order;
+        // URL parameter handling
+        function getParameterValue(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
         }
 
-        // Build and redirect to new URL
-        const url = new URL(window.location.href);
-
-        // Force path to include /search
-        if (!url.pathname.includes('/search')) {
-            url.pathname = '/search';
+        // Navigation functions
+        function nextPage() {
+            const currentPage = Number(getParameterValue('page')) || 1;
+            const nextPage = currentPage + 1;
+            const url = new URL(window.location.href);
+            if (url.pathname === '/' || !url.pathname.includes('/search')) {
+                url.pathname = '/search';
+            }
+            url.searchParams.set('page', nextPage.toString());
+            window.location.href = url.href;
         }
 
-        url.searchParams.set('order', order);
-        url.hash = 'results';
+        function previousPage() {
+            const currentPage = Number(getParameterValue('page')) || 1;
+            const previousPage = currentPage - 1;
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', previousPage.toString());
+            window.location.href = url.href;
+        }
 
-        // Go to updated URL
-        // window.location.href = url.toString();
-    }
+        function showPreviousButton() {
+            const page = Number(getParameterValue('page')) || 1;
+            const previousButton = document.getElementById('previous');
+            if (previousButton) {
+                previousButton.style.display = page > 1 ? 'block' : 'none';
+            }
+        }
 
-    // Initialize page state
-    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize page state
         const order = getParameterValue('order') || 'new';
 
         document.querySelectorAll('#order-new-btn, #order-pop-btn, #order-fav-btn').forEach(btn => {
