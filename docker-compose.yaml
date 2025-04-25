@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    networks:
+      - internal
+
+  varnish:
+    image: varnish:7.4
+    volumes:
+      - ./default.vcl:/etc/varnish/default.vcl
+    expose:
+      - "80"
+    depends_on:
+      - app
+    environment:
+      - VARNISH_LISTEN_PORT=80
+    command: ["varnishd", "-F", "-f", "/etc/varnish/default.vcl", "-s", "malloc,256m"]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.varnish.rule=Host(`cosmoship.hport.dev`)"
+      - "traefik.http.routers.varnish.entrypoints=websecure"
+      - "traefik.http.routers.varnish.tls=true"
+      - "traefik.http.services.varnish.loadbalancer.server.port=80"
+    networks:
+      - internal
+
+
+networks:
+  internal:
+
