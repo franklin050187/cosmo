@@ -269,22 +269,60 @@ async def get_seo_about(request: Request):
     return templates.TemplateResponse("seo_about.html", {"request": request, "user": user})
 
 
-# @app.get("/authors")
-# async def get_authors():
-#     """
-#     Retrieves a list of authors from the database.
+@app.get("/authors")
+async def get_authors():
+    base_path = "/authors"
+    target = urljoin(API_URL, base_path)
+    response = requests.get(url=target)
+    data = json.loads(response.content)
+    authors = []
+    for author in data:
+        authors.append(author["author"])
+    return {"authors": authors}
 
-#     Returns:
-#         dict: A dictionary containing the list of authors.
+@app.get("/myships")
+async def get_myships(request: Request):
+    user = request.session.get("discord_user")
 
-#     Example:
-#         >>> await get_authors()
-#         {'authors': ['John Doe', 'Jane Smith', 'Alice Johnson']}
-#     """
-#     query_result = db_manager.get_authors()
-#     authors = [author for (author,) in query_result["authors"]]
-#     return {"authors": authors}
+    if user:
+        token = create_token(user=user)
 
+    if not user:
+        user = "Guest"
+    query_params = {'token': token} if token else {}
+    base_path = "/myships"
+    target = urljoin(API_URL, base_path)
+    if query_params:
+        target = f"{target}?{urlencode(query_params)}"
+    response = requests.get(url=target)
+    data = json.loads(response.content)
+    page_info = data['data']
+    pages = data['max_page']
+    return templates.TemplateResponse(
+        "indexpop.html", {"request": request, "images": page_info, "user": user, "maxpage": pages}
+    )
+
+@app.get("/myfavorite")
+async def get_myfavorite(request: Request):
+    user = request.session.get("discord_user")
+
+    if user:
+        token = create_token(user=user)
+
+    if not user:
+        user = "Guest"
+    query_params = {'token': token} if token else {}
+    base_path = "/myfavorite"
+    target = urljoin(API_URL, base_path)
+    if query_params:
+        target = f"{target}?{urlencode(query_params)}"
+    response = requests.get(url=target)
+    data = json.loads(response.content)
+    page_info = data['data']
+    pages = data['max_page']
+    return templates.TemplateResponse(
+        "indexpop.html", {"request": request, "images": page_info, "user": user, "maxpage": pages}
+    )
 
 @app.get("/analyze")
 async def get_analyze(request: Request):
@@ -306,6 +344,57 @@ async def get_analyze(request: Request):
     except Exception:
         return {"datadata": "Error"}
 
+
+@app.post("/ship/{ship_id}/addfav")
+async def add_to_favorite(request: Request, ship_id: int = Path(...), token: str = Query(None)):
+    user = request.session.get("discord_user")
+    if not request.session.get("shipidsession"):
+        request.session["shipidsession"] = []
+    
+    if user:
+        token = create_token(user=user)
+    else:
+        user = "Guest"
+
+    # Call API to add to favorites
+    base_path = f"/ship/{ship_id}/addfav"
+    query_params = {'token': token} if token else {}
+    target = urljoin(API_URL, base_path)
+    if query_params:
+        target += f"?{urlencode(query_params)}"
+    if token and user:
+        requests.post(url=target)
+
+    # Redirect to ship detail page
+    redirect_url = f"/ship/{ship_id}"
+    return RedirectResponse(url=redirect_url, status_code=303)
+
+  
+
+@app.post("/ship/{ship_id}/rmfav")
+async def remove_from_favorite(request: Request, ship_id: int = Path(...), token: str = Query(None)):
+    user = request.session.get("discord_user")
+    if not request.session.get("shipidsession"):
+        request.session["shipidsession"] = []
+    
+    if user:
+        token = create_token(user=user)
+    else:
+        user = "Guest"
+
+    # Call API to remove from favorites
+    base_path = f"/ship/{ship_id}/rmfav"
+    query_params = {'token': token} if token else {}
+    target = urljoin(API_URL, base_path)
+    if query_params:
+        target += f"?{urlencode(query_params)}"
+    if token and user:
+        requests.post(url=target)
+
+    # Redirect to ship detail page
+    redirect_url = f"/ship/{ship_id}"
+    return RedirectResponse(url=redirect_url, status_code=303)
+ 
 
 @app.get("/{catchall:path}")
 async def serve_files(request: Request):

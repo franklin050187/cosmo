@@ -1,29 +1,39 @@
+function downloadShip(ship_png, ship_name, ship_id) {
+    // Ensure the ship_name ends with .ship.png
+    if (!ship_name.endsWith(".ship.png")) {
+        ship_name += ".ship.png";
+    }
 
-function downloadShip(imageId) {
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", "/download/" + imageId, true);
-    xhr.responseType = "blob";
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            var contentDisposition = xhr.getResponseHeader("Content-Disposition");
-            var filename = "downloaded_file"; // fallback
-
-            if (contentDisposition) {
-                // Extract filename*=UTF-8''encoded_name from header
-                var match = contentDisposition.match(/filename\*=(?:UTF-8'')?([^;]+)/i);
-                if (match && match[1]) {
-                    filename = decodeURIComponent(match[1]);
+    // Step 1: Send XHR to update download count
+    var countXhr = new XMLHttpRequest();
+    countXhr.open("GET", "/download/" + ship_id, true);
+    countXhr.onreadystatechange = function () {
+        if (countXhr.readyState === 4 && countXhr.status === 200) {
+            // Step 2: After successful update, fetch the ship_png
+            var fileXhr = new XMLHttpRequest();
+            fileXhr.open("GET", ship_png, true);
+            fileXhr.responseType = "blob";
+            fileXhr.onload = function () {
+                if (fileXhr.status === 200) {
+                    var blob = fileXhr.response;
+                    var link = document.createElement("a");
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = ship_name;
+                    document.body.appendChild(link); // required for Firefox
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    console.error("Failed to download ship image:", fileXhr.statusText);
                 }
-            }
-
-            var link = document.createElement("a");
-            link.href = window.URL.createObjectURL(xhr.response);
-            link.download = filename;
-            link.click();
+            };
+            fileXhr.send();
+        } else if (countXhr.readyState === 4) {
+            console.error("Failed to update download count:", countXhr.statusText);
         }
     };
-    xhr.send();
+    countXhr.send();
 }
+
 
 // Get all the submission number elements
 var numberElements = document.querySelectorAll('.number');

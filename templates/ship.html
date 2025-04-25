@@ -7,6 +7,39 @@
 </head>
 
 <style>
+    /* Loading overlay styles */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .loader {
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
     .spinner {
         border: 4px solid rgba(0, 0, 0, 0.1);
         width: 24px;
@@ -30,7 +63,11 @@
     </header>
 
     <main>
-        <h1 id="title" style="overflow: hidden; text-overflow: ellipsis;">Datasheet for {{ data.ship_name | replace(".ship.png", "") }}</h1>
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loader"></div>
+        </div>
+        <h1 id="title" style="overflow: hidden; text-overflow: ellipsis;">Datasheet for {{ data.ship_name |
+            replace(".ship.png", "") }}</h1>
         <!-- <h2 style="display: none;">{{ data }}</h2> -->
         <section id="results" class="content-container">
             <div class="tabs-container">
@@ -87,22 +124,35 @@
                                 <p id="output"></p>
                             </div>
                             <div class="ship-data">
+                                <!-- <p>user fav : {{data.is_in_user_fav}}</p> -->
                                 {% if user == "Guest" %}
                                 <ul><a title="Favorite" class="blue-btn register"
                                         href="/login?button=myfavorite"><span>Login to add
                                             favorite</span></a></ul>
-                                {% elif is_in_user_fav == 1 %}
-                                <ul><a title="Favorite" class="blue-btn register"
-                                        href="/rmfavorite/{{ ship_id }}"><span>Remove
-                                            from
-                                            favorite</span></a></ul>
+                                {% elif data.is_in_user_fav == 1 %}
+                                <ul>
+                                    <form method="POST" action="/ship/{{ ship_id }}/rmfav">
+                                        <!-- CSRF token if needed, e.g., in Django or Flask -->
+                                        <button type="submit" title="Favorite" class="blue-btn register">
+                                            <span>Remove from favorite</span>
+                                        </button>
+                                    </form>
+                                </ul>
                                 {% else %}
-                                <ul><a title="Favorite" class="blue-btn register"
-                                        href="/favorite/{{ ship_id }}"><span>Add to
-                                            favorite</span></a></ul>
+                                <ul>
+                                    <form method="POST" action="/ship/{{ ship_id }}/addfav">
+                                        <!-- CSRF token if needed, e.g., in Django or Flask -->
+                                        <button type="submit" title="Favorite" class="blue-btn register">
+                                            <span>Add to favorite</span>
+                                        </button>
+                                    </form>
+                                </ul>
                                 {% endif %}
-                                <ul><a title="Download" class="blue-btn register"
-                                        onclick="downloadShip('{{ data }}')"><span>Download</span></a>
+                                <ul>
+                                    <a title="Download" class="blue-btn register"
+                                       onclick="downloadShip('{{ data.ship_png }}', '{{ data.ship_name }}', '{{ data.ship_id }}')">
+                                        <span>Download</span>
+                                    </a>
                                 </ul>
                                 {% if data.is_owner == 1 or user in modlist %}
                                 <ul><a title="Edit" class="blue-btn register"
@@ -126,5 +176,17 @@
         {% include "footer.html" %}
     </footer>
 </body>
+<script type="module">
+    // Defer initialization until after page load
+    document.addEventListener('DOMContentLoaded', () => {
+        // Add form submission handler
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', () => {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            });
+        }
+    });
+</script>
 
 </html>

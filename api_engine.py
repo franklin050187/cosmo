@@ -6,10 +6,11 @@ FIFO
 
 import requests
 import os
+from dotenv import load_dotenv
 
-API_URL = "https://api.cosmoship.duckdns.org/"
-API_URL_FALLBACK = os.getenv("API_URL")
+load_dotenv()
 
+API_URL = os.getenv("API_URL")
 
 def extract_tags_v2(png_file, analyze=False):
     """
@@ -17,10 +18,10 @@ def extract_tags_v2(png_file, analyze=False):
     """
     try:
         if analyze:
-            analyze_endpoint = "analyze?draw=1&analyze=1&url="
+            analyze_endpoint = "/analyze?draw=1&analyze=1&url="
         else:
-            analyze_endpoint = "analyze?draw=&analyze=&url="
-        rq = f"{API_URL_FALLBACK}{analyze_endpoint}{png_file}"
+            analyze_endpoint = "/analyze?draw=&analyze=&url="
+        rq = f"{API_URL}{analyze_endpoint}{png_file}"
         file_response = requests.get(rq, timeout=10)
     except requests.RequestException as e:
         print("send_file", e)
