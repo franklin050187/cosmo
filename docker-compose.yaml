@@ -23,7 +23,7 @@ services:
     command: ["varnishd", "-F", "-f", "/etc/varnish/default.vcl", "-s", "malloc,256m"]
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.varnish.rule=Host(`cosmoship.hport.dev`)"
+      - "traefik.http.routers.varnish.rule=Host(`cosmoship-cdn.hport.dev`)"
       - "traefik.http.routers.varnish.entrypoints=websecure"
       - "traefik.http.routers.varnish.tls=true"
       - "traefik.http.services.varnish.loadbalancer.server.port=80"
