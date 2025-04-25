@@ -1,5 +1,5 @@
 # Use debian:latest-slim as the base image for building
-FROM debian:trixie-slim AS build
+FROM python:3.12-slim-bookworm AS build
 
 # Install necessary build dependencies and set up Python virtual environment
 RUN apt-get update && \
