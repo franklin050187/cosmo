@@ -49,7 +49,7 @@ $(function() {
 
 $(document).ready(function() {
   let jsonData = null; // Variable to store the JSON data
-
+  const baseUrl = window.location.origin;
   // Function to fetch the JSON data
   function fetchAuthorsData(callback) {
     if (jsonData) {
@@ -57,7 +57,7 @@ $(document).ready(function() {
       callback(jsonData);
     } else {
       $.ajax({
-        url: "/authors",
+        url: baseUrl + "/authors",
         dataType: "json",
         success: function(data) {
           jsonData = data; // Store the fetched JSON data
