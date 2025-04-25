@@ -1,5 +1,5 @@
 # Use debian:latest-slim as the base image for building
-FROM al3xos/python-builder:3.12-debian12 AS build
+FROM debian:trixie-slim AS build
 
 # Install necessary build dependencies and set up Python virtual environment
 RUN apt-get update && \
