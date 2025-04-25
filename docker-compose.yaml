@@ -1,36 +1,38 @@
 version: '3.8'
 
 services:
-  app:
+  appf:
     build:
       context: .
       dockerfile: Dockerfile
     expose:
       - "8000"
     networks:
-      - internal
+      - appfront
 
   varnish:
-    image: varnish:7.4
-    volumes:
-      - ./default.vcl:/etc/varnish/default.vcl
+    image: varnish:7.3
+    depends_on:
+      - appf
     expose:
       - "80"
-    depends_on:
-      - app
+    volumes:
+      - ./default.vcl:/etc/varnish/default.vcl:ro
     environment:
       - VARNISH_LISTEN_PORT=80
-    command: ["varnishd", "-F", "-f", "/etc/varnish/default.vcl", "-s", "malloc,256m"]
+    command: >
+      varnishd -F 
+      -f /etc/varnish/default.vcl 
+      -s malloc,256m
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.varnish.rule=Host(`cosmoship-cdn.hport.dev`)"
-      - "traefik.http.routers.varnish.entrypoints=websecure"
-      - "traefik.http.routers.varnish.tls=true"
-      - "traefik.http.services.varnish.loadbalancer.server.port=80"
+      - "traefik.http.routers.cosmo-front.rule=Host(`cosmoship-cdn.hport.dev`)"
+      - "traefik.http.routers.cosmo-front.entrypoints=websecure"
+      - "traefik.http.routers.cosmo-front.tls=true"
+      - "traefik.http.services.cosmo-front.loadbalancer.server.port=80"
     networks:
-      - internal
-
+      - appfront
 
 networks:
-  internal:
+  appfront:
 
