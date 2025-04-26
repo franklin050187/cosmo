@@ -9,6 +9,10 @@ sub vcl_recv {
     if (req.url ~ "^/(myships|login|callback|myfavorite|logoff)") {
         return (pass);
     }
+    # Cache static assets like CSS and JS
+    if (req.url ~ "\.(css|js)(\?.*)?$") {
+        unset req.http.Cookie;
+    }
 }
 
 sub vcl_backend_response {
@@ -16,7 +20,11 @@ sub vcl_backend_response {
         set beresp.ttl = 0s;
         return (pass);
     }
-    set beresp.ttl = 5m;
+    set beresp.ttl = 45m;
+    if (bereq.url ~ "\.(css|js)(\?.*)?$") {
+        set beresp.ttl = 1h;  # or whatever cache time you prefer
+        unset beresp.http.Set-Cookie;
+    }
 }
 
 sub vcl_deliver {
