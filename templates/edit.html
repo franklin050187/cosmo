@@ -98,18 +98,18 @@
         <h1>Ship Edit</h1>
         <section id="results" class="content-container">
             <div class="tabs-container">
-                <form action="/edit/{{ image[0] }}" method="post" enctype="multipart/form-data">
+                <form action="/edit/{{ image.ship_id }}" method="post" enctype="multipart/form-data">
                     <div id="elim-competitive-tab" class="tab active">
-                        <a title="Replace image" class="blue-btn register" href="/update/{{ image[0] }}">
+                        <!-- <a title="Replace image" class="blue-btn register" href="/update/{{ image[0] }}">
                             <span>Replace image</span>
-                        </a>
-                        {% set image_tags = image[10] | replace("[", "") | replace("]", "") | replace("'", "") |
+                        </a> # FIXME: need to be a filepicker -->
+                        {% set image_tags = image.ship_tags | replace("[", "") | replace("]", "") | replace("'", "") |
                         replace(" ", "") %}
                         {% set image_tags_list = image_tags.split(",") %}
                         <ul class="ships-list">
                             <li class="ship-card">
-                                <p>{{ image[1] }}</p>
-                                <img src="{{ image[2] }}">
+                                <p>{{ image.ship_name }}</p>
+                                <img src="{{ image.ship_png }}">
                                 <div>
                                     <p>Thrust arrangements</p>
                                     <div>
@@ -266,16 +266,10 @@
                                 </div>
                             </li>
                             <li class="ship-card">
-                                <!-- <table style="width:100%">
-                                    <tr>
-                                        <td> -->
                                 <div>
                                     <button type="submit" class="blue-btn register">Valid
                                         modification</button>
                                 </div>
-                                <!-- </td>
-
-                                        <td> -->
                                 <div>
                                     <div {% if "gen" in brand %}style="display: none;" {% endif %}>
                                         <input type="checkbox" name="brand" id="exl" value="exl" {% if "exl" in brand
@@ -283,33 +277,26 @@
                                         <label for="exl">Upload to Excelsior section</label>
                                     </div>
                                     <label for="author">Author:</label>
-                                    <input type="text" name="author" id="author" value="{{ image[6] }}">
+                                    <input type="text" name="author" id="author" value="{{ image.ship_author }}">
                                     <label for="ship_name">Ship name:</label>
-                                    <input type="text" name="ship_name" id="ship_name" value="{{ image[5] }}">
+                                    <input type="text" name="ship_name" id="ship_name" value="{{ image.ship_name }}">
                                     <label for="submitted_by">Submitted by (/!\ use Discord
                                         Username):</label>
-                                    <input type="text" name="submitted_by" id="submitted_by" value="{{ image[3] }}">
+                                    <input type="text" name="submitted_by" id="submitted_by" value="{{ image.ship_submitted_by }}">
                                 </div>
-                                <!-- </td>
-                                    </tr>
-                                    <tr>
-                                        <td> -->
                                 <div>
                                     <label for="price">Price :</label>
                                     <input type="text" name="price" id="price" pattern="[0-9]+" required
-                                        value="{{ image[7] }}">
+                                        value="{{ image.ship_cost }}">
                                     <div class="form-group">
                                         <label for="description">Description:</label>
-                                        <textarea name="description" id="description">{{ image[4] }}</textarea>
+                                        <textarea name="description" id="description">{{ image.ship_description }}</textarea>
                                     </div>
-                                    <input type="hidden" name="filename" id="filename" value="{{ image[1] }}">
-                                    <input type="hidden" name="url_png" id="url_png" value="{{ image[2] }}">
-                                    <input type="hidden" name="tags" id="tags" value="{{ tags }}">
-                                    <input type="hidden" name="crew" id="crew" value="{{ crew }}">
+                                    <input type="hidden" name="filename" id="filename" value="{{ image.ship_name }}">
+                                    <input type="hidden" name="url_png" id="url_png" value="{{ image.ship_png }}">
+                                    <input type="hidden" name="tags" id="tags" value="{{ image.ship_tags }}">
+                                    <input type="hidden" name="crew" id="crew" value="{{ image.ship_crew }}">
                                 </div>
-                                <!-- </td>
-                                    </tr>
-                                </table> -->
                             </li>
                         </ul>
                     </div>

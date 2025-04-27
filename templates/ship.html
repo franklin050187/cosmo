@@ -141,7 +141,6 @@
                                 {% else %}
                                 <ul>
                                     <form method="POST" action="/ship/{{ ship_id }}/addfav">
-                                        <!-- CSRF token if needed, e.g., in Django or Flask -->
                                         <button type="submit" title="Favorite" class="blue-btn register">
                                             <span>Add to favorite</span>
                                         </button>
@@ -150,7 +149,7 @@
                                 {% endif %}
                                 <ul>
                                     <a title="Download" class="blue-btn register"
-                                       onclick="downloadShip('{{ data.ship_png }}', '{{ data.ship_name }}', '{{ data.ship_id }}')">
+                                        onclick="downloadShip('{{ data.ship_png }}', '{{ data.ship_name }}', '{{ data.ship_id }}')">
                                         <span>Download</span>
                                     </a>
                                 </ul>
@@ -158,9 +157,13 @@
                                 <ul><a title="Edit" class="blue-btn register"
                                         href="/edit/{{ ship_id }}"><span>Edit</span></a>
                                 </ul>
-                                <ul><a title="Delete" class="blue-btn " style="
-                                        background: brown;
-                                    " href="/delete/{{ ship_id }}"><span>Delete</span></a>
+                                <ul>
+                                    <form method="POST" action="/delete/{{ ship_id }}">
+                                        <button type="submit" title="Delete" class="blue-btn "
+                                            style="background: brown;">
+                                            <span>Delete</span>
+                                        </button>
+                                    </form>
                                 </ul>
                                 {% endif %}
                             </div>

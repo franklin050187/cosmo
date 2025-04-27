@@ -102,7 +102,10 @@ async def get_ship(request: Request, ship_id: int = Path(..., description="Id if
 
     response = requests.get(url=target)
     data = json.loads(response.content)
-    page_info = data['data'][0]
+    try :
+        page_info = data["data"][0]
+    except :
+        return RedirectResponse("/")
 
     # if ship_id not in shipidsession: # FIXME
     #     request.session["shipidsession"].append(ship_id)
@@ -240,15 +243,8 @@ async def logoff(request: Request):
     return RedirectResponse("/")
 
 
-@app.get("/initupload", response_class=FileResponse)  # DONE
+@app.get("/initupload", response_class=FileResponse) # show upload page
 async def upload_page(request: Request):
-    """
-    A function to handle the "/initupload" route.
-    Retrieves user and brand information from the request's session,
-    checks and assigns the brand if not present, redirects to the login page
-    if the user is not logged in, and returns a TemplateResponse with the "initupload.html"
-    template along with the request, user, and brand data.
-    """
     user = request.session.get("discord_user")
     if not user:
         return RedirectResponse("/login?button=upload")
@@ -259,6 +255,106 @@ async def upload_page(request: Request):
         "initupload.html", {"request": request, "user": user, "brand": brand}
     )
 
+@app.post("/initupload", response_class=FileResponse) # FIXME: redirect to edit page
+async def upload_api(request: Request, file: UploadFile = File(...)):
+    user = request.session.get("discord_user")
+    if not user:
+        return RedirectResponse("/login?button=upload")
+    brand = request.session.get("brand")
+    if not brand:
+        brand = request.session.get("discord_server")
+    contents = await file.read() # get the file
+    encoded_data = base64.b64encode(contents).decode("utf-8") # convert to base64
+    token = create_token(user=user) # get a token to use for the api call
+    # call the api and read response
+    base_path = "/insert_ship"
+    json_data = {'token': token, 'image': encoded_data}
+
+    # Build the full URL
+    target = urljoin(API_URL, base_path)
+
+
+    response = requests.post(url=target, json=json_data)
+    # print("content", response.content)
+    data = json.loads(response.content)
+    # print("data", data)
+    try :
+        ship_id = data["data"]["ship_id"]
+    except :
+        ship_id = None
+    # print("ship_id", ship_id)
+    # if ok redirect to edit
+    if ship_id:
+        return RedirectResponse(url=f"/edit/{ship_id}", status_code=303)
+    #     base_path = f"/ship/{ship_id}"
+    #     # Build the full URL
+    #     target = urljoin(API_URL, base_path)
+    #     response = requests.get(url=target)
+    #     data = json.loads(response.content)
+    #     page_info = data['data']
+    #     return templates.TemplateResponse(
+    #     "edit.html", {"request": request, "image": page_info, "user": user, "brand": brand}
+    # )
+    # if not redirect to error
+    error = "unable to decode file provided, check upload guide below"
+    return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
+
+@app.get("/edit/{ship_id}")
+async def edit_ship(request: Request, ship_id: int = Path(..., description="Id if the ship"), token: str = Query(None, description="Token for auth")):
+    user = request.session.get("discord_user")
+    if user:
+        token = create_token(user=user)
+    if not user:
+        # send to home as not the owner
+        return RedirectResponse(url="/", status_code=303)
+
+    base_path = f"/ship/{ship_id}"
+    query_params = {'token': token} if token else {}
+
+    # Build the full URL
+    target = urljoin(API_URL, base_path)
+    if query_params:
+        target = f"{target}?{urlencode(query_params)}"
+
+    response = requests.get(url=target)
+    data = json.loads(response.content)
+    try :
+        page_info = data["data"][0]
+    except :
+        return RedirectResponse("/")
+    if page_info["is_owner"] == 0:
+        return RedirectResponse(f"/ship/{ship_id}")
+    return templates.TemplateResponse("edit.html", {"request": request, "image":page_info, "user":user, "ship_id":ship_id})
+
+@app.post("/edit/{ship_id}")
+async def send_edit(request: Request, ship_id: int = Path(..., description="Id if the ship")):
+    user = request.session.get("discord_user")
+    if not user: # if no user return to ship page
+        return RedirectResponse(f"/ship/{ship_id}", status_code=303)
+    
+    # send data from the form
+    form_data = await request.form()
+    token = create_token(user=user) # get a token to use for the api call
+    
+    # Convert form data to dict and prepare for API
+    form_dict = dict(form_data)
+    # Ensure tags are properly formatted as a list
+    if 'tags' in form_dict:
+        form_dict['tags'] = form_dict['tags'].strip("[]").replace("'", "").split(", ")
+    
+    # Prepare API request
+    base_path = f"/edit/{ship_id}"
+    json_data = {
+        'token': token,
+        'data': form_dict
+    }
+
+    # Build the full URL and make request
+    target = urljoin(API_URL, base_path)
+    response = requests.post(url=target, json=json_data)
+    data = json.loads(response.content)
+    return RedirectResponse(f"/ship/{ship_id}", status_code=303)
+
 
 @app.get("/seo_about")
 async def get_seo_about(request: Request):
@@ -267,7 +363,6 @@ async def get_seo_about(request: Request):
     if not user:
         user = "Guest"
     return templates.TemplateResponse("seo_about.html", {"request": request, "user": user})
-
 
 @app.get("/authors")
 async def get_authors():
@@ -344,7 +439,6 @@ async def get_analyze(request: Request):
     except Exception:
         return {"datadata": "Error"}
 
-
 @app.post("/ship/{ship_id}/addfav")
 async def add_to_favorite(request: Request, ship_id: int = Path(...), token: str = Query(None)):
     user = request.session.get("discord_user")
@@ -369,8 +463,6 @@ async def add_to_favorite(request: Request, ship_id: int = Path(...), token: str
     redirect_url = f"/ship/{ship_id}"
     return RedirectResponse(url=redirect_url, status_code=303)
 
-  
-
 @app.post("/ship/{ship_id}/rmfav")
 async def remove_from_favorite(request: Request, ship_id: int = Path(...), token: str = Query(None)):
     user = request.session.get("discord_user")
@@ -394,7 +486,30 @@ async def remove_from_favorite(request: Request, ship_id: int = Path(...), token
     # Redirect to ship detail page
     redirect_url = f"/ship/{ship_id}"
     return RedirectResponse(url=redirect_url, status_code=303)
- 
+
+@app.post("/delete/{ship_id}")
+async def remove_from_db(request: Request, ship_id: int = Path(...), token: str = Query(None)):
+    user = request.session.get("discord_user")
+    if not request.session.get("shipidsession"):
+        request.session["shipidsession"] = []
+    
+    if user:
+        token = create_token(user=user)
+    else:
+        user = "Guest"
+
+    # Call API to remove from favorites
+    base_path = f"/delete/{ship_id}"
+    query_params = {'token': token} if token else {}
+    target = urljoin(API_URL, base_path)
+    if query_params:
+        target += f"?{urlencode(query_params)}"
+    if token and user:
+        requests.post(url=target)
+
+    # Redirect to ship detail page
+    redirect_url = "/"
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 @app.get("/{catchall:path}")
 async def serve_files(request: Request):
@@ -411,7 +526,6 @@ async def serve_files(request: Request):
     if not user:
         user = "Guest"
     return RedirectResponse(url="/", status_code=303)
-
 
 # session settings
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("secret_session"))
