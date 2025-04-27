@@ -7,3 +7,4 @@ uvicorn
 itsdangerous
 PyJWT
 Jinja2
+python-multipart
