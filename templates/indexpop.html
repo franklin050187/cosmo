@@ -93,9 +93,20 @@
         let shipJsonPromise = null;
 
         function loadShipJson() {
-            // get API URL from .env
             const baseAPIUrl = "{{ API_URL }}";
 
+            if (shipjson) {
+                return Promise.resolve(shipjson);
+            }
+
+            // Try to get from sessionStorage
+            const cachedData = sessionStorage.getItem('shipjson');
+            if (cachedData) {
+                shipjson = JSON.parse(cachedData);
+                return Promise.resolve(shipjson);
+            }
+
+            // Otherwise fetch and cache
             if (!shipJsonPromise) {
                 shipJsonPromise = new Promise((resolve, reject) => {
                     $.ajax({
@@ -103,6 +114,7 @@
                         dataType: "json",
                         success: function (data) {
                             shipjson = data;
+                            sessionStorage.setItem('shipjson', JSON.stringify(data));
                             resolve(data);
                         },
                         error: function (xhr, status, error) {
@@ -114,6 +126,7 @@
 
             return shipJsonPromise;
         }
+
 
         async function handleForm(event) {
             event.preventDefault();
