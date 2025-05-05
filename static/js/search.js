@@ -31,25 +31,25 @@ if (exlOnly != 0) {
   document.getElementById('exl-only').checked = true;
 }
 
-$(function() {
+$(function () {
   // Initialize the price slider
   $("#price-slider").slider({
-      range: true,
-      min: 0,
-      max: 2500000,
-      values: [minPrice, maxPrice],
-      slide: function(event, ui) {
-          // Update the hidden input fields with the selected values
-          $("#min-price").val(ui.values[0]);
-          $("#max-price").val(ui.values[1]);
-      }
+    range: true,
+    min: 0,
+    max: 2500000,
+    values: [minPrice, maxPrice],
+    slide: function (event, ui) {
+      // Update the hidden input fields with the selected values
+      $("#min-price").val(ui.values[0]);
+      $("#max-price").val(ui.values[1]);
+    }
   });
 });
 
 
-$(document).ready(function() {
+$(document).ready(function () {
   let jsonData = null; // Variable to store the JSON data
-  const baseUrl = window.location.origin;
+  const baseUrl = "{{ API_URL }}"; // Base URL for the API
   // Function to fetch the JSON data
   function fetchAuthorsData(callback) {
     if (jsonData) {
@@ -59,7 +59,7 @@ $(document).ready(function() {
       $.ajax({
         url: baseUrl + "/authors",
         dataType: "json",
-        success: function(data) {
+        success: function (data) {
           jsonData = data; // Store the fetched JSON data
           callback(jsonData); // Invoke the callback function with the data
         }
@@ -67,44 +67,44 @@ $(document).ready(function() {
     }
   }
 
-    // Function to filter the authors based on the typed characters
-    function filterAuthors(request, callback) {
-      const filteredAuthors = jsonData.authors.filter(function(author) {
-        return author.toLowerCase().includes(request.term.toLowerCase());
-      });
-      callback(filteredAuthors);
-    }
-
-    $("#authorinput").autocomplete({
-      source: function(request, response) {
-        fetchAuthorsData(function(data) {
-          filterAuthors(request, response);
-        });
-      },
-      minLength: 1
+  // Function to filter the authors based on the typed characters
+  function filterAuthors(request, callback) {
+    const filteredAuthors = jsonData.authors.filter(function (author) {
+      return author.toLowerCase().includes(request.term.toLowerCase());
     });
+    callback(filteredAuthors);
+  }
+
+  $("#authorinput").autocomplete({
+    source: function (request, response) {
+      fetchAuthorsData(function (data) {
+        filterAuthors(request, response);
+      });
+    },
+    minLength: 1
   });
+});
 
-      // Function to retrieve the value from the request parameter
-      function getParameterValue(param) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(param);
-      }
+// Function to retrieve the value from the request parameter
+function getParameterValue(param) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(param);
+}
 
-      // Fill the value in the author input if present in the request parameter
-      const authorParam = getParameterValue('author');
-      if (authorParam) {
-        $('#authorinput').val(authorParam);
-      }
-    
+// Fill the value in the author input if present in the request parameter
+const authorParam = getParameterValue('author');
+if (authorParam) {
+  $('#authorinput').val(authorParam);
+}
+
 
 function selectAuthor() {
   const authorInput = document.getElementById('authorinput');
   const author = authorInput.value;
   addTag('author', author);
-}  
+}
 
-const tagList = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust','no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kiter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'domination_ship', 'elimination_ship', 'orbiter', 'campaign_ship', 'builtin', 'chaingun', 'large_hyperdrive', 'rocket_thruster', 'scout/racer', 'broadsider', 'waste_ship', 'debugging_tool', 'sundiver', 'cargo_ship', 'spinner']; // Predefined list of tags
+const tagList = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kiter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'domination_ship', 'elimination_ship', 'orbiter', 'campaign_ship', 'builtin', 'chaingun', 'large_hyperdrive', 'rocket_thruster', 'scout/racer', 'broadsider', 'waste_ship', 'debugging_tool', 'sundiver', 'cargo_ship', 'spinner']; // Predefined list of tags
 // const infoIcon = document.querySelector('.info-icon');
 // infoIcon.setAttribute('data-tags', tagList.join('\n'));
 
@@ -133,12 +133,12 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
-
   updateSelectedTagsDisplay();
   updateExcludedTagsDisplay();
   updateFinalSearchQuery();
   filterTags();
   toggleTableVisibility();
+
 });
 
 tagInput.addEventListener('input', filterTags);
@@ -187,6 +187,7 @@ function filterTags() {
 }
 
 
+
 $(tagInput).autocomplete({
   source: function (request, response) {
     const query = request.term.trim();
@@ -207,7 +208,7 @@ $(tagInput).autocomplete({
       return (isNegativeQuery ? '-' : '') + tag;
     }));
   },
- 
+
   select: function (event, ui) {
     const selectedTag = ui.item.value;
     const isExcluded = selectedTag.startsWith('-');
@@ -261,6 +262,16 @@ function addTag(tag, isExcluded) {
     toggleTableVisibility();
     updateFinalSearchQuery();
   }
+}
+
+function resettag() {
+  selectedTags = [];
+  excludedTags = [];
+  updateSelectedTagsDisplay();
+  updateExcludedTagsDisplay();
+  updateFinalSearchQuery();
+  filterTags();
+  toggleTableVisibility();
 }
 
 function removeTag(event) {
@@ -326,7 +337,7 @@ function updateFinalSearchQuery() {
     tagInput.value = '';
   }
 
-  // console.log(finalSearchQuery.value);
+  // console.log(finalSearchQuery);
 }
 
 function appendSearchInput() {

@@ -29,7 +29,6 @@ load_dotenv()
 
 print("loading")
 
-MAX_SHIPS_PER_PAGE = 24
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 API_URL = os.getenv("API_URL")
@@ -79,75 +78,67 @@ async def get_sitemap():
 
 @app.get("/ship/{ship_id}")
 async def get_ship(request: Request, ship_id: int = Path(..., description="Id if the ship"), token: str = Query(None, description="Token for auth")):
-# async def get_image(ship_id: int, request: Request): # API : need to pass user and ship_id and return ship data, fav + push on download and view
-    user = request.session.get("discord_user")
-    if not request.session.get("shipidsession"):
-        shipidsession = []
-        request.session["shipidsession"] = shipidsession
-    else:
-        shipidsession = request.session.get("shipidsession")
-
-    if user:
-        token = create_token(user=user)
-    if not user:
-        user = "Guest"
-
-    base_path = f"/ship/{ship_id}"
-    query_params = {'token': token} if token else {}
-
-    # Build the full URL
-    target = urljoin(API_URL, base_path)
-    if query_params:
-        target = f"{target}?{urlencode(query_params)}"
-
-    response = requests.get(url=target)
-    data = json.loads(response.content)
     try :
-        page_info = data["data"][0]
-    except :
-        return RedirectResponse("/")
+        user = request.session.get("discord_user")
+        if not request.session.get("shipidsession"):
+            shipidsession = []
+            request.session["shipidsession"] = shipidsession
+        else:
+            shipidsession = request.session.get("shipidsession")
 
-    # if ship_id not in shipidsession: # FIXME
-    #     request.session["shipidsession"].append(ship_id)
-    #     db_manager.update_downloads(ship_id) # migrate
-    # {"request": request, "images": images, "user": user, "maxpage": pages}
-    return templates.TemplateResponse("ship.html", {"request": request, "data":page_info, "user":user, "ship_id":ship_id})
+        if user:
+            token = create_token(user=user)
+        if not user:
+            user = "Guest"
+
+        base_path = f"/ship/{ship_id}"
+        query_params = {'token': token} if token else {}
+
+        # Build the full URL
+        target = urljoin(API_URL, base_path)
+        if query_params:
+            target = f"{target}?{urlencode(query_params)}"
+
+        response = requests.get(url=target)
+        data = json.loads(response.content)
+        try :
+            page_info = data["data"][0]
+        except :
+            return RedirectResponse("/")
+
+        if ship_id not in shipidsession: # FIXME
+            request.session["shipidsession"].append(ship_id)
+            base_path = f"/ship/{ship_id}/adddl"
+            target = urljoin(API_URL, base_path)
+            requests.post(url=target)
+            return templates.TemplateResponse("ship.html", {"request": request, "data":page_info, "user":user, "ship_id":ship_id})
+    except Exception:
+        return templates.TemplateResponse("error.html", {"request": request}, status_code=500)
 
 
 @app.get("/")  # DONE
 async def index(request: Request):
-    user = request.session.get("discord_user")
-    if not user:
-        user = "Guest"
-
-    base_path = "/search"
-    target = urljoin(API_URL, base_path)
-    response = requests.get(url=target)
-    data = json.loads(response.content)
-    page_info = data['data']
-    pages = data['max_page']
-
-    return templates.TemplateResponse(
-        "indexpop.html", {"request": request, "images": page_info, "user": user, "maxpage": pages}
-    )
+    try :
+        user = request.session.get("discord_user")
+        if not user:
+            user = "Guest"
+        return templates.TemplateResponse(
+            "indexpop.html", {"request": request, "user": user, "API_URL": API_URL}
+        )
+    except Exception:
+        return templates.TemplateResponse("error.html", {"request": request}, status_code=500)
 
 @app.get("/search")
 async def search(request: Request):
-    user = request.session.get("discord_user")
-    if not user:
-        user = "Guest"
-    query_params = request.query_params
-    base_path = "/search"
-    target = urljoin(API_URL, base_path)
-    if query_params:
-        target = f"{target}?{urlencode(query_params)}"
-    response = requests.get(url=target)
-    data = json.loads(response.content)
-    page_info = data['data']
-    pages = data['max_page']
-    return templates.TemplateResponse(
-        "indexpop.html", {"request": request, "images": page_info, "user": user, "maxpage": pages}
-    )
+    try :
+        user = request.session.get("discord_user")
+        if not user:
+            user = "Guest"
+        return templates.TemplateResponse(
+            "indexpop.html", {"request": request, "user": user, "API_URL": API_URL}
+        )
+    except Exception:
+        return templates.TemplateResponse("error.html", {"request": request}, status_code=500)
 
 @app.route("/login")
 async def start_login(request: Request):
@@ -177,7 +168,6 @@ async def start_login(request: Request):
         return RedirectResponse("/myfavorite")  # Redirect to the same login route
     request.session["button_clicked"] = "login"  # Store button state in the session
     return client.redirect("/login")  # Redirect to the same login route
-
 
 @app.get("/callback")
 async def finish_login(request: Request):
@@ -227,7 +217,6 @@ async def finish_login(request: Request):
                 return RedirectResponse(redirect_url)
     return templates.TemplateResponse("auth.html", {"request": request, "user": None})
 
-
 @app.get("/logoff")
 async def logoff(request: Request):
     """
@@ -241,7 +230,6 @@ async def logoff(request: Request):
     """
     request.session.pop("discord_user", None)
     return RedirectResponse("/")
-
 
 @app.get("/initupload", response_class=FileResponse) # show upload page
 async def upload_page(request: Request):
@@ -272,30 +260,17 @@ async def upload_api(request: Request, file: UploadFile = File(...)):
 
     # Build the full URL
     target = urljoin(API_URL, base_path)
-
-
     response = requests.post(url=target, json=json_data)
-    # print("content", response.content)
     data = json.loads(response.content)
-    # print("data", data)
     try :
         ship_id = data["data"]["ship_id"]
     except :
         ship_id = None
-    # print("ship_id", ship_id)
-    # if ok redirect to edit
+
     if ship_id:
+        # add purge
         return RedirectResponse(url=f"/edit/{ship_id}", status_code=303)
-    #     base_path = f"/ship/{ship_id}"
-    #     # Build the full URL
-    #     target = urljoin(API_URL, base_path)
-    #     response = requests.get(url=target)
-    #     data = json.loads(response.content)
-    #     page_info = data['data']
-    #     return templates.TemplateResponse(
-    #     "edit.html", {"request": request, "image": page_info, "user": user, "brand": brand}
-    # )
-    # if not redirect to error
+
     error = "unable to decode file provided, check upload guide below"
     return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
 
@@ -355,7 +330,6 @@ async def send_edit(request: Request, ship_id: int = Path(..., description="Id i
     data = json.loads(response.content)
     return RedirectResponse(f"/ship/{ship_id}", status_code=303)
 
-
 @app.get("/seo_about")
 async def get_seo_about(request: Request):
     """display seo about page"""
@@ -363,17 +337,6 @@ async def get_seo_about(request: Request):
     if not user:
         user = "Guest"
     return templates.TemplateResponse("seo_about.html", {"request": request, "user": user})
-
-@app.get("/authors")
-async def get_authors():
-    base_path = "/authors"
-    target = urljoin(API_URL, base_path)
-    response = requests.get(url=target)
-    data = json.loads(response.content)
-    authors = []
-    for author in data["authors"]:
-        authors.append(author)
-    return {"authors": authors}
 
 @app.get("/myships")
 async def get_myships(request: Request):
@@ -509,6 +472,7 @@ async def remove_from_db(request: Request, ship_id: int = Path(...), token: str 
 
     # Redirect to ship detail page
     redirect_url = "/"
+    # add purge
     return RedirectResponse(url=redirect_url, status_code=303)
 
 @app.get("/{catchall:path}")

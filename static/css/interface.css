@@ -368,6 +368,7 @@ main .content-container {
     box-shadow: inset 0px 0px 8px rgba(0, 126, 255, 0.35), 0px 0px 5px rgba(0, 126, 255, 0.35);
     width: 100%;
     overflow: hidden;
+    aspect-ratio: 1/2;
 }
 
 .ship-card .stars {
@@ -381,6 +382,7 @@ main .content-container {
     line-height: 25px;
     width: auto;
     transition: color 150ms;
+    z-index: 1;
 }
 
 .ship-card .stars:hover {
@@ -411,6 +413,7 @@ main .content-container {
     font-size: 18px;
     width: auto;
     transition: color 150ms;
+    z-index: 1;
 }
 
 .ship-card .likes:hover {
@@ -433,26 +436,28 @@ main .content-container {
 
 .ship-card img {
     display: block;
-    float: left;
     width: 100%;
+    height: auto;
+    aspect-ratio: 1/1;
+    object-fit: contain;
+    background-color: rgba(2, 21, 38, 0.5);
 }
 
 .ship-card .ship-data {
     display: block;
-    float: left;
     margin-top: 10px;
     border-top: 1px solid #1C598C;
-    padding: 0px 8px;
+    padding: 10px 8px 0;
     width: 100%;
 }
 
 .ship-data .data {
     display: block;
-    float: left;
     margin-top: 10px;
     color: #fff;
     font-size: 14px;
     width: 100%;
+    line-height: 1.4;
 }
 
 .ship-data .data.credits {
@@ -474,6 +479,32 @@ main .content-container {
 .ship-data .data a:hover {
     color: #BBE0FF;
     text-decoration: none;
+}
+
+.content-container .ships-list {
+    display: grid;
+    gap: 20px;
+    padding: 0 15px;
+    width: 100%;
+    margin-top: 25px;
+}
+
+@media(min-width:640px) {
+    .content-container .ships-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media(min-width:1024px) {
+    .content-container .ships-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media(min-width:1360px) {
+    .content-container .ships-list {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
 }
 
 .ship-card .actions-container {
@@ -542,24 +573,15 @@ main .content-container {
 
 body footer {
     display: block;
-    float: left;
-    margin-top: 50px;
+    width: 100%;
     border-top: 1px solid #1C598C;
     background-color: #000;
-    padding: 5px 15px;
-    width: 100%;
-
+    padding: 15px;
+    margin-top: 50px;
 }
 
 @media(min-width:768px) {
     body footer {
-        display: block;
-        float: left;
-        margin-top: 50px;
-        border-top: 1px solid #1C598C;
-        background-color: #000;
-        padding: 15px 15px;
-        width: 100%;
         position: fixed;
         left: 0;
         bottom: 0;
@@ -567,87 +589,73 @@ body footer {
 }
 
 footer .footer-content {
-    display: block;
-    margin: auto;
-    width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 auto;
+    max-width: 1360px;
+    width: 100%;
 }
 
 @media(min-width:768px) {
     footer .footer-content {
-        padding: 0px 15px;
-        width: 100%;
-        max-width: 1360px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 15px;
     }
 }
 
 .footer-content img {
-    display: block;
-    float: left;
-    margin: 0px 40px;
     width: 120px;
-}
-
-@media(min-width:768px) {
-    .footer-content img {
-        margin: 0px;
-    }
+    height: auto;
+    margin: 0;
 }
 
 .footer-content ul {
-    display: block;
-    float: right;
-    margin-top: 20px;
-    padding: 5px 0px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
 }
 
 @media(min-width:768px) {
     .footer-content ul {
-        margin-top: 0px;
+        flex-direction: row;
+        margin: 0;
     }
 }
 
 .footer-content ul li {
-    display: block;
-    float: left;
-    margin-top: 15px;
     color: #fff;
     text-align: center;
-    width: 100%;
+    margin: 15px 0 0;
 }
 
 @media(min-width:768px) {
     .footer-content ul li {
-        margin-top: 0px;
-        font-size: 16px;
-        width: auto;
+        margin: 0;
     }
-}
-
-@media(min-width:768px) {
-    .footer-content ul li+li:before {
-        display: block;
-        float: left;
-        color: inherit;
-        font-size: inherit;
+    
+    .footer-content ul li + li {
+        margin-left: 14px;
+        position: relative;
+    }
+    
+    .footer-content ul li + li:before {
         content: '-';
-        padding: 0px 7px;
+        position: absolute;
+        left: -7px;
     }
 }
 
 .footer-content ul li a {
-    display: block;
-    float: left;
     color: inherit;
     font-size: inherit;
-    text-align: center;
     text-decoration: none;
-    width: 100%;
-}
-
-@media(min-width:768px) {
-    .footer-content ul li a {
-        width: auto;
-    }
+    transition: border-color 150ms;
 }
 
 .footer-content ul li a:hover {
