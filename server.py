@@ -106,11 +106,14 @@ async def get_ship(request: Request, ship_id: int = Path(..., description="Id if
         except :
             return RedirectResponse("/")
 
-        if ship_id not in shipidsession: # FIXME
-            request.session["shipidsession"].append(ship_id)
-            base_path = f"/ship/{ship_id}/adddl"
-            target = urljoin(API_URL, base_path)
-            requests.post(url=target)
+        try :
+            if ship_id not in shipidsession: # FIXME
+                request.session["shipidsession"].append(ship_id)
+                base_path = f"/ship/{ship_id}/adddl"
+                target = urljoin(API_URL, base_path)
+                requests.post(url=target)
+        except :
+            pass
         return templates.TemplateResponse("ship.html", {"request": request, "data":page_info, "user":user, "ship_id":ship_id})
     except Exception:
         return templates.TemplateResponse("error.html", {"request": request}, status_code=500)
