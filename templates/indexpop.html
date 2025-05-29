@@ -236,35 +236,43 @@
                 // console.log("query_split_negative_remove", query_split_negative_remove);
                 // console.log("query_split_positive_remove", query_split_positive_remove_remove_unique_filtered);
                 // console.log("fulltext_remove", fulltext_remove);
-                filteredShips = filteredShips.filter((ship) => {
-                    let match = false; // all conditions must be true for a ship to be included
-                    if (query_split_positive_remove_remove_unique_filtered.length > 0) {
-                        match = query_split_positive_remove_remove_unique_filtered.every(tag =>
-                            ship.ship_tags.includes(tag)
-                        );
-                    }
-                    if (fulltext_remove.length > 0) {
-                        fulltext_remove.forEach((tag) => { // add ship with tag containing this string
-                            for (let i = 0; i < ship.ship_tags.length; i++) {
-                                if (ship.ship_tags[i].includes(tag)) {
-                                    match = true;
+                // Only filter if there's something to filter by
+                const shouldFilter = (
+                    query_split_positive_remove_remove_unique_filtered.length > 0 ||
+                    fulltext_remove.length > 0 ||
+                    query_split_negative_remove_unique.length > 0
+                );
+                if (shouldFilter) {
+                    filteredShips = filteredShips.filter((ship) => {
+                        let match = false; // all conditions must be true for a ship to be included
+                        if (query_split_positive_remove_remove_unique_filtered.length > 0) {
+                            match = query_split_positive_remove_remove_unique_filtered.every(tag =>
+                                ship.ship_tags.includes(tag)
+                            );
+                        }
+                        if (fulltext_remove.length > 0) {
+                            fulltext_remove.forEach((tag) => { // add ship with tag containing this string
+                                for (let i = 0; i < ship.ship_tags.length; i++) {
+                                    if (ship.ship_tags[i].includes(tag)) {
+                                        match = true;
+                                    }
                                 }
-                            }
-                        });
-                    }
+                            });
+                        }
 
-                    if (query_split_negative_remove_unique.length > 0) {
-                        query_split_negative_remove_unique.forEach((tag) => { // remove ship with this tag
-                            for (let i = 0; i < ship.ship_tags.length; i++) {
-                                if (ship.ship_tags[i] === tag) {
-                                    match = false;
+                        if (query_split_negative_remove_unique.length > 0) {
+                            query_split_negative_remove_unique.forEach((tag) => { // remove ship with this tag
+                                for (let i = 0; i < ship.ship_tags.length; i++) {
+                                    if (ship.ship_tags[i] === tag) {
+                                        match = false;
+                                    }
                                 }
-                            }
-                        });
-                    }
+                            });
+                        }
 
-                    return match;
-                });
+                        return match;
+                    });
+                }
             }
             // console.log("filteredShips query", filteredShips); // result of query
             // count number of ships
