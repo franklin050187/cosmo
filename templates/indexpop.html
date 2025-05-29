@@ -83,19 +83,13 @@
                 callback(filteredAuthors);
             }
 
-            const authorInput = document.getElementById('authorinput');
-            authorInput.addEventListener('input', function () {
-                fetchAuthorsData(function (data) {
-                    const filteredAuthors = filterAuthors({ term: authorInput.value }, function (authors) {
-                        const list = document.createElement('ul');
-                        authors.forEach(function (author) {
-                            const item = document.createElement('li');
-                            item.textContent = author;
-                            list.appendChild(item);
-                        });
-                        authorInput.parentElement.insertBefore(list, authorInput.nextSibling);
+            $("#authorinput").autocomplete({
+                source: function (request, response) {
+                    fetchAuthorsData(function (data) {
+                        filterAuthors(request, response);
                     });
-                });
+                },
+                minLength: 1
             });
         });
 
