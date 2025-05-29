@@ -47,43 +47,7 @@ $(function () {
 });
 
 
-$(document).ready(function () {
-  let jsonData = null; // Variable to store the JSON data
-  const baseUrl = "{{ API_URL }}"; // Base URL for the API
-  // Function to fetch the JSON data
-  function fetchAuthorsData(callback) {
-    if (jsonData) {
-      // If the JSON data is already fetched, invoke the callback function
-      callback(jsonData);
-    } else {
-      $.ajax({
-        url: baseUrl + "/authors",
-        dataType: "json",
-        success: function (data) {
-          jsonData = data; // Store the fetched JSON data
-          callback(jsonData); // Invoke the callback function with the data
-        }
-      });
-    }
-  }
 
-  // Function to filter the authors based on the typed characters
-  function filterAuthors(request, callback) {
-    const filteredAuthors = jsonData.authors.filter(function (author) {
-      return author.toLowerCase().includes(request.term.toLowerCase());
-    });
-    callback(filteredAuthors);
-  }
-
-  $("#authorinput").autocomplete({
-    source: function (request, response) {
-      fetchAuthorsData(function (data) {
-        filterAuthors(request, response);
-      });
-    },
-    minLength: 1
-  });
-});
 
 // Function to retrieve the value from the request parameter
 function getParameterValue(param) {
