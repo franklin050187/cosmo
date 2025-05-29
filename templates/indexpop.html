@@ -57,8 +57,7 @@
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" media="print"
         onload="this.media='all'">
     <script>
-
-        $(document).ready(function () {
+        window.addEventListener('load', function () {
             let jsonData = null; // Variable to store the JSON data
             const baseUrl = "{{ API_URL }}"; // Base URL for the API
             // Function to fetch the JSON data
@@ -67,14 +66,12 @@
                     // If the JSON data is already fetched, invoke the callback function
                     callback(jsonData);
                 } else {
-                    $.ajax({
-                        url: baseUrl + "/authors",
-                        dataType: "json",
-                        success: function (data) {
+                    fetch(baseUrl + "/authors")
+                        .then(response => response.json())
+                        .then(data => {
                             jsonData = data; // Store the fetched JSON data
                             callback(jsonData); // Invoke the callback function with the data
-                        }
-                    });
+                        });
                 }
             }
 
@@ -86,13 +83,19 @@
                 callback(filteredAuthors);
             }
 
-            $("#authorinput").autocomplete({
-                source: function (request, response) {
-                    fetchAuthorsData(function (data) {
-                        filterAuthors(request, response);
+            const authorInput = document.getElementById('authorinput');
+            authorInput.addEventListener('input', function () {
+                fetchAuthorsData(function (data) {
+                    const filteredAuthors = filterAuthors({ term: authorInput.value }, function (authors) {
+                        const list = document.createElement('ul');
+                        authors.forEach(function (author) {
+                            const item = document.createElement('li');
+                            item.textContent = author;
+                            list.appendChild(item);
+                        });
+                        authorInput.parentElement.insertBefore(list, authorInput.nextSibling);
                     });
-                },
-                minLength: 1
+                });
             });
         });
 
