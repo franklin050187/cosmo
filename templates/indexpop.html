@@ -119,6 +119,7 @@
 
 
         function updateOrderParam(order) {
+            // console.log("updateOrderParam");
             if (!order) return; // guard clause to prevent null
 
             // Set the value of the hidden input (if the form uses it)
@@ -248,244 +249,260 @@
         }
 
         loadTagsJson();
-        loadShipJson();
 
+        // URL path handling
+        const path = window.location.pathname;
+        const search = document.getElementById('search');
+        const orderNewBtn = document.getElementById('order-new-btn');
+        const orderPopBtn = document.getElementById('order-pop-btn');
+        const orderFavBtn = document.getElementById('order-fav-btn');
+        const pagination = document.getElementById('pagination');
+        const title = document.getElementById('title');
+        const orderText = document.getElementById('order-text');
 
-        async function handleForm(event) {
-            event.preventDefault();
-            // get form content
-            const form = document.querySelector('form');
-            const formData = new FormData(form);
-            // get order from url
-            const urlParamsform = new URLSearchParams(window.location.search);
-            const order = urlParamsform.get('order') || 'new';
-            const tagInput = formData.get('tag-input');
-            const finalSearchQuery = document.getElementById('final_search_query');
-            // get page number from url
-            let page = urlParamsform.get('page') || 1;
-            page = parseInt(page);
-            // ensure page is 1 or greater
-            if (page < 1) {
-                page = 1;
-            }
-            finalSearchQuery.value = tagInput;
-            appendSearchInput();
-            updateFinalSearchQuery();
-            // read shipjson
-            const shiptofilter = await loadShipJson();
-            // console.log("shiptofilter", shiptofilter);
-            // init filter
-            let filteredShips = [];
-            // using formdata filter ship json
-            // filter by author
-            const author = formData.get('author');
-            if (author) {
-                filteredShips = shiptofilter.filter((ship) => ship.ship_author === author);
-            } else {
-                filteredShips = shiptofilter;
-            }
-            // console.log("filteredShips author", filteredShips);
-            // filter by description
-            const desc = formData.get('desc');
-            if (desc) {
-                filteredShips = filteredShips.filter((ship) => ship.ship_description.includes(desc));
-            }
-            // console.log("filteredShips desc", filteredShips);
-            // min price
-            const minprice = formData.get('min-price');
-            if (minprice) {
-                filteredShips = filteredShips.filter((ship) => ship.ship_cost >= minprice);
-            }
-            // console.log("filteredShips minprice", filteredShips);
-            // max price
-            const maxprice = formData.get('max-price');
-            if (maxprice) {
-                filteredShips = filteredShips.filter((ship) => ship.ship_cost <= maxprice);
-            }
-            // console.log("filteredShips maxprice", filteredShips);
-            // max crew
-            const maxcrew = formData.get('max-crew');
-            if (maxcrew) {
-                filteredShips = filteredShips.filter((ship) => ship.ship_crew <= maxcrew);
-            }
-            // console.log("filteredShips maxcrew", filteredShips);
-            // exl-only
-            const exlonly = formData.get('exl-only');
-            if (exlonly) {
-                filteredShips = filteredShips.filter((ship) => ship.brand === 'exl');
-            }
-            // console.log("filteredShips exlonly", filteredShips);
-            // order
-            const orderlist = formData.get('order'); // default to new
-            if (orderlist) {
-                filteredShips = filteredShips.sort((a, b) => {
-                    if (orderlist === 'pop') {
-                        // sort by ship_popularity
-                        return b.ship_popularity - a.ship_popularity;
-                    } else if (orderlist === 'fav') {
-                        // sort by number_fav
-                        return b.number_fav - a.number_fav;
-                    } else if (orderlist === 'new') {
-                        // sort by ship_date_submitted
-                        return b.ship_date_submitted - a.ship_date_submitted;
-                    }
-                });
-            } else { // default to new
-                filteredShips = filteredShips.sort((a, b) => {
-                    return b.ship_date_submitted - a.ship_date_submitted;
-                });
-            }
-            // console.log("filteredShips order", filteredShips);
-            // parse query 
-            const query = formData.get('query');
-            // console.log("query", query);
-            if (query) {
-                let allowed_tags = [];
-
-                allowed_tags = tagjson.tags;
-
-                // console.log("allowed_tags", allowed_tags);
-                const query_split = query.split(' ');
-                const query_split_negative = query_split.filter((tag) => tag.startsWith('-'));
-                const query_split_negative_remove = query_split_negative.map((tag) => tag.substring(1));
-                // ensure all tag are unique
-                const query_split_negative_remove_unique = [...new Set(query_split_negative_remove)];
-                const query_split_positive = query_split.filter((tag) => !tag.startsWith('-')); // do not include fulltext= in query_split_positive
-                const query_split_positive_remove = query_split_positive.filter((tag) => !tag.startsWith('fulltext=')); // do not include "" in query_split_positive_remove
-                const query_split_positive_remove_remove = query_split_positive_remove.filter((tag) => tag !== ''); // remove empty strings
-                // ensure all tag are unique
-                const query_split_positive_remove_remove_unique = [...new Set(query_split_positive_remove_remove)];
-                // remove tag that are not in the allowed_tags
-                const query_split_positive_remove_remove_unique_filtered = query_split_positive_remove_remove_unique.filter((tag) => allowed_tags.includes(tag));
-                const fulltext = query_split.filter((tag) => tag.startsWith('fulltext='));
-                const fulltext_remove = fulltext.map((tag) => tag.substring(9));
-                // Only filter if there's something to filter by
-                // console.log("query_split_positive_remove_remove_unique_filtered", query_split_positive_remove_remove_unique_filtered);
-                // console.log("fulltext_remove", fulltext_remove);
-                // console.log("query_split_negative_remove_unique", query_split_negative_remove_unique);
-                const shouldFilter = (
-                    query_split_positive_remove_remove_unique_filtered.length > 0 ||
-                    fulltext_remove.length > 0 ||
-                    query_split_negative_remove_unique.length > 0
-                );
-                // console.log("shouldFilter", shouldFilter);
-                if (shouldFilter) {
-                    filteredShips = filteredShips.filter((ship) => {
-                        let match = false; // all conditions must be true for a ship to be included
-                        if (query_split_positive_remove_remove_unique_filtered.length > 0) {
-                            match = query_split_positive_remove_remove_unique_filtered.every(tag =>
-                                ship.ship_tags.includes(tag)
-                            );
-                        }
-                        if (fulltext_remove.length > 0) {
-                            fulltext_remove.forEach((tag) => { // add ship with tag containing this string
-                                for (let i = 0; i < ship.ship_tags.length; i++) {
-                                    if (ship.ship_tags[i].includes(tag)) {
-                                        match = true;
-                                    }
-                                }
-                            });
-                        }
-
-                        if (query_split_negative_remove_unique.length > 0) {
-                            query_split_negative_remove_unique.forEach((tag) => { // remove ship with this tag
-                                for (let i = 0; i < ship.ship_tags.length; i++) {
-                                    if (ship.ship_tags[i] === tag) {
-                                        match = false;
-                                    }
-                                }
-                            });
-                        }
-
-                        return match;
-                    });
-                }
-            }
-            // console.log("filteredShips query", filteredShips); // result of query
-            // count number of ships
-            const numberOfShips = filteredShips.length;
-            // console.log("number of ships", numberOfShips);
-            // add a p under elim-competitive-tab with number of ships before the order text
-            // check if p already exists and update it
-            const numberOfShipsP = document.getElementById('number-of-ships');
-            if (numberOfShipsP) {
-                numberOfShipsP.textContent = "Number of ships found : " + numberOfShips;
-            } else {
-                const elimCompetitiveTab = document.getElementById('order-text');
-                const elimCompetitiveTabP = document.createElement('p');
-                // set an id to the p
-                elimCompetitiveTabP.id = 'number-of-ships';
-                elimCompetitiveTabP.textContent = "Number of ships found : " + numberOfShips;
-                elimCompetitiveTab.appendChild(elimCompetitiveTabP);
-            }
-            // limit to 24 ships
-            // set slice based on page number
-            // if page is greater than max page, set page to max page
-            const maxPage = Math.ceil(numberOfShips / 24);
-            if (page > maxPage) {
-                page = maxPage;
-            }
-            // last page may have less than 24 ships
-            if (page === maxPage) {
-                const sliceStart = (page - 1) * 24;
-                const sliceEnd = numberOfShips;
-                filteredShips = filteredShips.slice(sliceStart, sliceEnd);
-            } else {
-                const sliceStart = (page - 1) * 24;
-                const sliceEnd = page * 24;
-                filteredShips = filteredShips.slice(sliceStart, sliceEnd);
-            }
-
-            display_results(filteredShips);
-            // update url with search parameters
-            const urlParams = new URLSearchParams(window.location.search);
-            if (author) {
-                urlParams.set('author', author);
-            }
-            if (fulltext) {
-                urlParams.set('fulltext', fulltext);
-            }
-            if (selectedTags.length > 0) {
-                selectedTags.forEach((tag) => {
-                    urlParams.set(tag, '1');
-                });
-            }
-            if (excludedTags.length > 0) {
-                excludedTags.forEach((tag) => {
-                    urlParams.set(tag, '0');
-                });
-            }
-            if (orderlist) {
-                urlParams.set('order', orderlist);
-            }
-            if (minprice) {
-                urlParams.set('minprice', minprice);
-            }
-            if (maxprice) {
-                urlParams.set('maxprice', maxprice);
-            }
-            if (maxcrew) {
-                urlParams.set('maxcrew', maxcrew);
-            }
-            if (exlonly) {
-                urlParams.set('exlonly', exlonly);
-            }
-            urlParams.set('page', page);
-            const url = new URL(window.location.href);
-
-            // Check if '/search' is in the pathname; if not, append it
-            if (!url.pathname.includes('/search')) {
-                url.pathname += (url.pathname.endsWith('/') ? '' : '/') + 'search';
-            }
-
-            // Set or update the query string
-            url.search = urlParams.toString();
-
-            // Update the URL without reloading the page
-            window.history.replaceState(null, '', url.toString());
-            display_pagination(numberOfShips);
+        if (path === '/myships' || path === '/myfavorite') {
+            if (search) search.style.display = 'none';
+            if (orderNewBtn) orderNewBtn.style.display = 'none';
+            if (orderPopBtn) orderPopBtn.style.display = 'none';
+            if (orderFavBtn) orderFavBtn.style.display = 'none';
+            if (pagination) pagination.style.display = 'none';
+            // use data from server instead of json
+            // console.log("path", path);
+        } else {
+            loadShipJson();
+            // console.log("pathloadship", path);
         }
 
+            // console.log("path2", path);
+            async function handleForm(event) {
+                // console.log("handleForm");
+                event.preventDefault();
+                // get form content
+                const form = document.querySelector('form');
+                const formData = new FormData(form);
+                // get order from url
+                const urlParamsform = new URLSearchParams(window.location.search);
+                const order = urlParamsform.get('order') || 'new';
+                const tagInput = formData.get('tag-input');
+                const finalSearchQuery = document.getElementById('final_search_query');
+                // get page number from url
+                let page = urlParamsform.get('page') || 1;
+                page = parseInt(page);
+                // ensure page is 1 or greater
+                if (page < 1) {
+                    page = 1;
+                }
+                finalSearchQuery.value = tagInput;
+                appendSearchInput();
+                updateFinalSearchQuery();
+                // read shipjson
+                const shiptofilter = await loadShipJson();
+                // console.log("shiptofilter", shiptofilter);
+                // init filter
+                let filteredShips = [];
+                // using formdata filter ship json
+                // filter by author
+                const author = formData.get('author');
+                if (author) {
+                    filteredShips = shiptofilter.filter((ship) => ship.ship_author === author);
+                } else {
+                    filteredShips = shiptofilter;
+                }
+                // console.log("filteredShips author", filteredShips);
+                // filter by description
+                const desc = formData.get('desc');
+                if (desc) {
+                    filteredShips = filteredShips.filter((ship) => ship.ship_description.includes(desc));
+                }
+                // console.log("filteredShips desc", filteredShips);
+                // min price
+                const minprice = formData.get('min-price');
+                if (minprice) {
+                    filteredShips = filteredShips.filter((ship) => ship.ship_cost >= minprice);
+                }
+                // console.log("filteredShips minprice", filteredShips);
+                // max price
+                const maxprice = formData.get('max-price');
+                if (maxprice) {
+                    filteredShips = filteredShips.filter((ship) => ship.ship_cost <= maxprice);
+                }
+                // console.log("filteredShips maxprice", filteredShips);
+                // max crew
+                const maxcrew = formData.get('max-crew');
+                if (maxcrew) {
+                    filteredShips = filteredShips.filter((ship) => ship.ship_crew <= maxcrew);
+                }
+                // console.log("filteredShips maxcrew", filteredShips);
+                // exl-only
+                const exlonly = formData.get('exl-only');
+                if (exlonly) {
+                    filteredShips = filteredShips.filter((ship) => ship.brand === 'exl');
+                }
+                // console.log("filteredShips exlonly", filteredShips);
+                // order
+                const orderlist = formData.get('order'); // default to new
+                if (orderlist) {
+                    filteredShips = filteredShips.sort((a, b) => {
+                        if (orderlist === 'pop') {
+                            // sort by ship_popularity
+                            return b.ship_popularity - a.ship_popularity;
+                        } else if (orderlist === 'fav') {
+                            // sort by number_fav
+                            return b.number_fav - a.number_fav;
+                        } else if (orderlist === 'new') {
+                            // sort by ship_date_submitted
+                            return b.ship_date_submitted - a.ship_date_submitted;
+                        }
+                    });
+                } else { // default to new
+                    filteredShips = filteredShips.sort((a, b) => {
+                        return b.ship_date_submitted - a.ship_date_submitted;
+                    });
+                }
+                // console.log("filteredShips order", filteredShips);
+                // parse query 
+                const query = formData.get('query');
+                // console.log("query", query);
+                if (query) {
+                    let allowed_tags = [];
+                    allowed_tags = tagjson.tags;
+                    const query_split = query.split(' ');
+                    const query_split_negative = query_split.filter((tag) => tag.startsWith('-'));
+                    const query_split_negative_remove = query_split_negative.map((tag) => tag.substring(1));
+                    // ensure all tag are unique
+                    const query_split_negative_remove_unique = [...new Set(query_split_negative_remove)];
+                    const query_split_positive = query_split.filter((tag) => !tag.startsWith('-')); // do not include fulltext= in query_split_positive
+                    const query_split_positive_remove = query_split_positive.filter((tag) => !tag.startsWith('fulltext=')); // do not include "" in query_split_positive_remove
+                    const query_split_positive_remove_remove = query_split_positive_remove.filter((tag) => tag !== ''); // remove empty strings
+                    // ensure all tag are unique
+                    const query_split_positive_remove_remove_unique = [...new Set(query_split_positive_remove_remove)];
+                    // remove tag that are not in the allowed_tags
+                    const query_split_positive_remove_remove_unique_filtered = query_split_positive_remove_remove_unique.filter((tag) => allowed_tags.includes(tag));
+                    const fulltext = query_split.filter((tag) => tag.startsWith('fulltext='));
+                    const fulltext_remove = fulltext.map((tag) => tag.substring(9));
+                    // Only filter if there's something to filter by
+                    const shouldFilter = (
+                        query_split_positive_remove_remove_unique_filtered.length > 0 ||
+                        fulltext_remove.length > 0 ||
+                        query_split_negative_remove_unique.length > 0
+                    );
+                    // console.log("shouldFilter", shouldFilter);
+                    if (shouldFilter) {
+                        filteredShips = filteredShips.filter((ship) => {
+                            let match = false; // all conditions must be true for a ship to be included
+                            if (query_split_positive_remove_remove_unique_filtered.length > 0) {
+                                match = query_split_positive_remove_remove_unique_filtered.every(tag =>
+                                    ship.ship_tags.includes(tag)
+                                );
+                            }
+                            if (fulltext_remove.length > 0) {
+                                fulltext_remove.forEach((tag) => { // add ship with tag containing this string
+                                    for (let i = 0; i < ship.ship_tags.length; i++) {
+                                        if (ship.ship_tags[i].includes(tag)) {
+                                            match = true;
+                                        }
+                                    }
+                                });
+                            }
+
+                            if (query_split_negative_remove_unique.length > 0) {
+                                query_split_negative_remove_unique.forEach((tag) => { // remove ship with this tag
+                                    for (let i = 0; i < ship.ship_tags.length; i++) {
+                                        if (ship.ship_tags[i] === tag) {
+                                            match = false;
+                                        }
+                                    }
+                                });
+                            }
+
+                            return match;
+                        });
+                    }
+                }
+                // count number of ships
+                const numberOfShips = filteredShips.length;
+                // add a p under elim-competitive-tab with number of ships before the order text
+                // check if p already exists and update it
+                const numberOfShipsP = document.getElementById('number-of-ships');
+                if (numberOfShipsP) {
+                    numberOfShipsP.textContent = "Number of ships found : " + numberOfShips;
+                } else {
+                    const elimCompetitiveTab = document.getElementById('order-text');
+                    const elimCompetitiveTabP = document.createElement('p');
+                    // set an id to the p
+                    elimCompetitiveTabP.id = 'number-of-ships';
+                    elimCompetitiveTabP.textContent = "Number of ships found : " + numberOfShips;
+                    elimCompetitiveTab.appendChild(elimCompetitiveTabP);
+                }
+                // limit to 24 ships
+                // set slice based on page number
+                // if page is greater than max page, set page to max page
+                const maxPage = Math.ceil(numberOfShips / 24);
+                if (page > maxPage) {
+                    page = maxPage;
+                }
+                // last page may have less than 24 ships
+                if (page === maxPage) {
+                    const sliceStart = (page - 1) * 24;
+                    const sliceEnd = numberOfShips;
+                    filteredShips = filteredShips.slice(sliceStart, sliceEnd);
+                } else {
+                    const sliceStart = (page - 1) * 24;
+                    const sliceEnd = page * 24;
+                    filteredShips = filteredShips.slice(sliceStart, sliceEnd);
+                }
+
+                display_results(filteredShips);
+                // update url with search parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                if (author) {
+                    urlParams.set('author', author);
+                }
+                if (fulltext) {
+                    urlParams.set('fulltext', fulltext);
+                }
+                if (selectedTags.length > 0) {
+                    selectedTags.forEach((tag) => {
+                        urlParams.set(tag, '1');
+                    });
+                }
+                if (excludedTags.length > 0) {
+                    excludedTags.forEach((tag) => {
+                        urlParams.set(tag, '0');
+                    });
+                }
+                if (orderlist) {
+                    urlParams.set('order', orderlist);
+                }
+                if (minprice) {
+                    urlParams.set('minprice', minprice);
+                }
+                if (maxprice) {
+                    urlParams.set('maxprice', maxprice);
+                }
+                if (maxcrew) {
+                    urlParams.set('maxcrew', maxcrew);
+                }
+                if (exlonly) {
+                    urlParams.set('exlonly', exlonly);
+                }
+                urlParams.set('page', page);
+                const url = new URL(window.location.href);
+
+                // Check if '/search' is in the pathname; if not, append it unless myships or myfavorite
+                if (!path === '/myships' || !path === '/myfavorite') {
+                    if (!url.pathname.includes('/search')) {
+                        url.pathname += (url.pathname.endsWith('/') ? '' : '/') + 'search';
+                    }
+                }
+
+                // Set or update the query string
+                url.search = urlParams.toString();
+
+                // Update the URL without reloading the page
+                window.history.replaceState(null, '', url.toString());
+                display_pagination(numberOfShips);
+            }
 
         function display_pagination(numberOfShips) {
             const paginationContainer = document.getElementById('pagination');
@@ -509,10 +526,6 @@
                 // set class blue-btn
                 pageButton.classList.add('blue-btn');
                 pageButton.textContent = i;
-                // console.log("i", i);
-                // console.log("currentPage", currentPage);
-                // console.log("numberOfPages", numberOfPages);
-                // console.log("is currentPage", i === currentPage);
                 if (i === currentPage) {
                     pageButton.classList.add('selected');
                     // add style style="font-weight: bold;font-size: x-large; color: currentcolor;"
@@ -521,6 +534,7 @@
                     pageButton.style.color = 'currentcolor';
                 }
                 pageButton.addEventListener('click', () => {
+                    // console.log("display_pagination");
                     // display_results(filteredShips);
                     // update url with page parameter
                     const urlParams = new URLSearchParams(window.location.search);
@@ -544,6 +558,7 @@
         }
 
         function handleTagClick(tag) {
+            // console.log("handleTagClick");
             // Create a new URLSearchParams with only one parameter
             const urlParams = new URLSearchParams();
             urlParams.set(tag, 1); // set tag=selectedTag
@@ -563,6 +578,7 @@
         }
 
         function handleAuthorClick(author) {
+            // console.log("handleAuthorClick");
             // Create a new URLSearchParams with only one parameter
             const urlParams = new URLSearchParams();
             urlParams.set('author', author); // set author=selectedAuthor
@@ -580,7 +596,7 @@
             handleForm(event);
         }
 
-        function display_results(filteredShips) {
+        function display_results(filteredShips) { // TODO : fix me
             const tagList_to_display = [
                 'cannon', 'deck_cannon', 'emp_missiles', 'flak_battery',
                 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'factories',
@@ -796,7 +812,8 @@
         window.lazySizesConfig.init = false;
     </script>
 </body>
-<script type="module">
+<!-- <script type="module"> -->
+<script>
     // Defer initialization until after page load
     document.addEventListener('DOMContentLoaded', () => {
 
@@ -842,7 +859,7 @@
 
         }
         // Add form submission handler
-        handleForm(event);
+        // handleForm(event);
 
         // URL path handling
         const path = window.location.pathname;
@@ -860,6 +877,12 @@
             if (orderPopBtn) orderPopBtn.style.display = 'none';
             if (orderFavBtn) orderFavBtn.style.display = 'none';
             if (pagination) pagination.style.display = 'none';
+            // console.log("pathmyshipbottom", path);
+        } else {
+            // Add form submission handler
+            // console.log("NOT pathmyshipbottom", path);
+
+            handleForm(event);
         }
 
         // Update page content based on path
