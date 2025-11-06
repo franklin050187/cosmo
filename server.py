@@ -32,6 +32,7 @@ print("loading")
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 API_URL = os.getenv("API_URL")
+GIST_ID = os.getenv("GIST_ID")
 
 # discord
 client_id = os.getenv("discord_id")
@@ -76,7 +77,7 @@ async def get_sitemap():
     return FileResponse("static/sitemap.xml", media_type="application/xml")
 
 
-@app.get("/ship/{ship_id}")
+@app.get("/ship/{ship_id}") # TODO : use json instead of api
 async def get_ship(request: Request, ship_id: int = Path(..., description="Id if the ship"), token: str = Query(None, description="Token for auth")):
     try :
         user = request.session.get("discord_user")
@@ -99,7 +100,7 @@ async def get_ship(request: Request, ship_id: int = Path(..., description="Id if
         if query_params:
             target = f"{target}?{urlencode(query_params)}"
 
-        response = requests.get(url=target)
+        response = requests.get(url=target) # TODO : update to use json data instead of api
         data = json.loads(response.content)
         try :
             page_info = data["data"][0]
@@ -126,7 +127,7 @@ async def index(request: Request):
         if not user:
             user = "Guest"
         return templates.TemplateResponse(
-            "indexpop.html", {"request": request, "user": user, "API_URL": API_URL}
+            "indexpop.html", {"request": request, "user": user, "API_URL": API_URL, "GIST_ID": GIST_ID} # TODO : update to use json data instead of api - this one is done in js in the template
         )
     except Exception:
         return templates.TemplateResponse("error.html", {"request": request}, status_code=500)
@@ -138,7 +139,7 @@ async def search(request: Request):
         if not user:
             user = "Guest"
         return templates.TemplateResponse(
-            "indexpop.html", {"request": request, "user": user, "API_URL": API_URL}
+            "indexpop.html", {"request": request, "user": user, "API_URL": API_URL, "GIST_ID": GIST_ID} # TODO : update to use json data instead of api - should be fixed with get / route
         )
     except Exception:
         return templates.TemplateResponse("error.html", {"request": request}, status_code=500)
@@ -355,12 +356,12 @@ async def get_myships(request: Request):
     target = urljoin(API_URL, base_path)
     if query_params:
         target = f"{target}?{urlencode(query_params)}"
-    response = requests.get(url=target)
+    response = requests.get(url=target) # TODO : update to use json data instead of api
     data = json.loads(response.content)
     page_info = data['data']
     pages = data['max_page']
     return templates.TemplateResponse(
-        "indexpop.html", {"request": request, "images": page_info, "user": user, "maxpage": pages}
+        "indexpop.html", {"request": request, "images": page_info, "user": user, "maxpage": pages, "API_URL": API_URL, "GIST_ID": GIST_ID}
     )
 
 @app.get("/myfavorite")
@@ -377,12 +378,12 @@ async def get_myfavorite(request: Request):
     target = urljoin(API_URL, base_path)
     if query_params:
         target = f"{target}?{urlencode(query_params)}"
-    response = requests.get(url=target)
+    response = requests.get(url=target) # TODO : update to use json data instead of api
     data = json.loads(response.content)
     page_info = data['data']
     pages = data['max_page']
     return templates.TemplateResponse(
-        "indexpop.html", {"request": request, "images": page_info, "user": user, "maxpage": pages}
+        "indexpop.html", {"request": request, "images": page_info, "user": user, "maxpage": pages, "API_URL": API_URL, "GIST_ID": GIST_ID}
     )
 
 @app.get("/analyze")
