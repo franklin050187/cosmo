@@ -247,6 +247,8 @@
             return tagJsonPromise;
         }
 
+        loadTagsJson();
+
 
         async function handleForm(event) {
             event.preventDefault();
@@ -270,7 +272,7 @@
             updateFinalSearchQuery();
             // read shipjson
             const shiptofilter = await loadShipJson();
-            console.log(shiptofilter);
+            // console.log("shiptofilter", shiptofilter);
             // init filter
             let filteredShips = [];
             // using formdata filter ship json
@@ -335,21 +337,13 @@
             // console.log("filteredShips order", filteredShips);
             // parse query 
             const query = formData.get('query');
+            // console.log("query", query);
             if (query) {
                 let allowed_tags = [];
 
-                loadTagsJson()
-                    .then(data => {
-                        allowed_tags = data.tags;
-                        console.log(`Loaded ${allowed_tags.length} tags from Gist`);
-                        // continue your logic here (e.g. filtering ships, populating UI, etc.)
-                    })
-                    .catch(err => {
-                        console.error("Failed to load tags:", err);
-                        // fallback to hardcoded list if desired
-                        allowed_tags = ['test1', 'test2', 'railgun', 'ion_beam'];
-                    });
+                allowed_tags = tagjson.tags;
 
+                // console.log("allowed_tags", allowed_tags);
                 const query_split = query.split(' ');
                 const query_split_negative = query_split.filter((tag) => tag.startsWith('-'));
                 const query_split_negative_remove = query_split_negative.map((tag) => tag.substring(1));
@@ -365,11 +359,15 @@
                 const fulltext = query_split.filter((tag) => tag.startsWith('fulltext='));
                 const fulltext_remove = fulltext.map((tag) => tag.substring(9));
                 // Only filter if there's something to filter by
+                // console.log("query_split_positive_remove_remove_unique_filtered", query_split_positive_remove_remove_unique_filtered);
+                // console.log("fulltext_remove", fulltext_remove);
+                // console.log("query_split_negative_remove_unique", query_split_negative_remove_unique);
                 const shouldFilter = (
                     query_split_positive_remove_remove_unique_filtered.length > 0 ||
                     fulltext_remove.length > 0 ||
                     query_split_negative_remove_unique.length > 0
                 );
+                // console.log("shouldFilter", shouldFilter);
                 if (shouldFilter) {
                     filteredShips = filteredShips.filter((ship) => {
                         let match = false; // all conditions must be true for a ship to be included
