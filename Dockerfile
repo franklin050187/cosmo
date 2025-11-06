@@ -45,5 +45,9 @@ WORKDIR /venv
 # Expose port 
 EXPOSE 8000
 
+# Define healthcheck — adjust endpoint as needed
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
+
 # Set the entrypoint to run the app
 ENTRYPOINT ["/venv/bin/python3", "/app/server.py"]
