@@ -368,7 +368,7 @@ main .content-container {
     box-shadow: inset 0px 0px 8px rgba(0, 126, 255, 0.35), 0px 0px 5px rgba(0, 126, 255, 0.35);
     width: 100%;
     overflow: hidden;
-    aspect-ratio: 1/2;
+    /* aspect-ratio: 1/2; */
 }
 
 .ship-card .stars {
