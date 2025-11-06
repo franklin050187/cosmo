@@ -154,39 +154,48 @@
         let shipJsonPromise = null;
 
         function loadShipJson() {
-            const baseAPIUrl = "{{ API_URL }}";
+            const gistId = "{{ GIST_ID }}"; 
+            const fileName = "cosmoteer_ships.json";
+            const cacheKey = "shipjson";
 
+            // Return cached in-memory data if available
             if (shipjson) {
                 return Promise.resolve(shipjson);
             }
 
-            // Try to get from sessionStorage
-            const cachedData = sessionStorage.getItem('shipjson');
-            if (cachedData) {
-                shipjson = JSON.parse(cachedData);
-                return Promise.resolve(shipjson);
+            // Check sessionStorage cache
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+                try {
+                    shipjson = JSON.parse(cached);
+                    return Promise.resolve(shipjson);
+                } catch (err) {
+                    console.warn("Failed to parse cached ship data, refetching...", err);
+                    sessionStorage.removeItem(cacheKey);
+                }
             }
 
-            // Otherwise fetch and cache
+            // Prevent multiple parallel fetches
             if (!shipJsonPromise) {
-                shipJsonPromise = new Promise((resolve, reject) => {
-                    $.ajax({
-                        url: baseAPIUrl + "/search?page=-1",
-                        dataType: "json",
-                        success: function (data) {
-                            shipjson = data;
-                            sessionStorage.setItem('shipjson', JSON.stringify(data));
-                            resolve(data);
-                        },
-                        error: function (xhr, status, error) {
-                            reject(error);
-                        }
+                shipJsonPromise = fetch(`https://gist.githubusercontent.com/raw/${gistId}/${fileName}`)
+                    .then(res => {
+                        if (!res.ok) throw new Error(`Failed to load ship JSON: ${res.status}`);
+                        return res.json();
+                    })
+                    .then(data => {
+                        shipjson = data;
+                        sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                        return data;
+                    })
+                    .catch(err => {
+                        console.error("Error fetching ship data:", err);
+                        throw err;
                     });
-                });
             }
 
             return shipJsonPromise;
         }
+
 
 
         async function handleForm(event) {
@@ -194,14 +203,12 @@
             // get form content
             const form = document.querySelector('form');
             const formData = new FormData(form);
-            // const order = formData.get('order');
             // get order from url
             const urlParamsform = new URLSearchParams(window.location.search);
             const order = urlParamsform.get('order') || 'new';
             const tagInput = formData.get('tag-input');
             const finalSearchQuery = document.getElementById('final_search_query');
             // get page number from url
-            // const urlParamsform = new URLSearchParams(window.location.search);
             let page = urlParamsform.get('page') || 1;
             page = parseInt(page);
             // ensure page is 1 or greater
@@ -213,16 +220,16 @@
             updateFinalSearchQuery();
             // read shipjson
             const shiptofilter = await loadShipJson();
-            // console.log(shiptofilter);
+            console.log(shiptofilter);
             // init filter
             let filteredShips = [];
             // using formdata filter ship json
             // filter by author
             const author = formData.get('author');
             if (author) {
-                filteredShips = shiptofilter.data.filter((ship) => ship.ship_author === author);
+                filteredShips = shiptofilter.filter((ship) => ship.ship_author === author);
             } else {
-                filteredShips = shiptofilter.data;
+                filteredShips = shiptofilter;
             }
             // console.log("filteredShips author", filteredShips);
             // filter by description
