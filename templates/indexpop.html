@@ -58,40 +58,65 @@
         onload="this.media='all'">
     <script>
         window.addEventListener('load', function () {
-            let jsonData = null; // Variable to store the JSON data
-            const baseUrl = "{{ API_URL }}"; // Base URL for the API
-            // Function to fetch the JSON data
+            const gistId = "{{ GIST_ID }}";
+            const fileName = "cosmoteer_authors.json";
+            const cacheKey = "cosmoteer_authors_data";
+            const cacheTTL = 24 * 60 * 60 * 1000; // 24h cache duration
+
+            let jsonData = null;
+
             function fetchAuthorsData(callback) {
-                if (jsonData) {
-                    // If the JSON data is already fetched, invoke the callback function
-                    callback(jsonData);
-                } else {
-                    fetch(baseUrl + "/authors")
-                        .then(response => response.json())
-                        .then(data => {
-                            jsonData = data; // Store the fetched JSON data
-                            callback(jsonData); // Invoke the callback function with the data
-                        });
+                // Try to read from cache
+                const cached = sessionStorage.getItem(cacheKey);
+                if (cached) {
+                    try {
+                        const { data, timestamp } = JSON.parse(cached);
+                        if (Date.now() - timestamp < cacheTTL) {
+                            jsonData = data;
+                            callback(jsonData);
+                            return;
+                        }
+                    } catch (e) {
+                        console.warn("Cache parse error, refetching...");
+                    }
                 }
+
+                // Otherwise, fetch fresh data
+                fetch(`https://gist.githubusercontent.com/raw/${gistId}/${fileName}`)
+                    .then(res => {
+                        if (!res.ok) throw new Error(`Failed to load JSON: ${res.status}`);
+                        return res.json();
+                    })
+                    .then(data => {
+                        jsonData = data;
+                        sessionStorage.setItem(cacheKey, JSON.stringify({ data, timestamp: Date.now() }));
+                        callback(jsonData);
+                    })
+                    .catch(err => {
+                        console.error("Error fetching authors JSON:", err);
+                        callback({ authors: [] });
+                    });
             }
 
-            // Function to filter the authors based on the typed characters
-            function filterAuthors(request, callback) {
-                const filteredAuthors = jsonData.authors.filter(function (author) {
-                    return author.toLowerCase().includes(request.term.toLowerCase());
-                });
-                callback(filteredAuthors);
+            function filterAuthors(data, request, callback) {
+                if (!data || !data.authors) {
+                    callback([]);
+                    return;
+                }
+                const term = request.term.toLowerCase();
+                const filtered = data.authors.filter(a => a.toLowerCase().includes(term));
+                callback(filtered);
             }
 
             $("#authorinput").autocomplete({
                 source: function (request, response) {
-                    fetchAuthorsData(function (data) {
-                        filterAuthors(request, response);
-                    });
+                    fetchAuthorsData(data => filterAuthors(data, request, response));
                 },
                 minLength: 1
             });
         });
+
+
 
         function updateOrderParam(order) {
             if (!order) return; // guard clause to prevent null
@@ -269,9 +294,6 @@
                 const query_split_positive_remove_remove_unique_filtered = query_split_positive_remove_remove_unique.filter((tag) => allowed_tags.includes(tag));
                 const fulltext = query_split.filter((tag) => tag.startsWith('fulltext='));
                 const fulltext_remove = fulltext.map((tag) => tag.substring(9));
-                // console.log("query_split_negative_remove", query_split_negative_remove);
-                // console.log("query_split_positive_remove", query_split_positive_remove_remove_unique_filtered);
-                // console.log("fulltext_remove", fulltext_remove);
                 // Only filter if there's something to filter by
                 const shouldFilter = (
                     query_split_positive_remove_remove_unique_filtered.length > 0 ||
