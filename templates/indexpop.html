@@ -154,7 +154,7 @@
         let shipJsonPromise = null;
 
         function loadShipJson() {
-            const gistId = "{{ GIST_ID }}"; 
+            const gistId = "{{ GIST_ID }}";
             const fileName = "cosmoteer_ships.json";
             const cacheKey = "shipjson";
 
@@ -196,6 +196,56 @@
             return shipJsonPromise;
         }
 
+
+        // --- Tag Loader Helper ---
+        let tagjson = null;
+        let tagJsonPromise = null;
+
+        function loadTagsJson() {
+            const gistId = "{{ GIST_ID }}"; // replace with actual or templated Gist ID
+            const fileName = "cosmoteer_tags.json";
+            const cacheKey = "tagjson";
+
+            // Return cached in-memory data if available
+            if (tagjson) {
+                return Promise.resolve(tagjson);
+            }
+
+            // Check sessionStorage cache
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+                try {
+                    tagjson = JSON.parse(cached);
+                    return Promise.resolve(tagjson);
+                } catch (err) {
+                    console.warn("Failed to parse cached tag data, refetching...", err);
+                    sessionStorage.removeItem(cacheKey);
+                }
+            }
+
+            // Prevent multiple parallel fetches
+            if (!tagJsonPromise) {
+                tagJsonPromise = fetch(`https://gist.githubusercontent.com/raw/${gistId}/${fileName}`)
+                    .then(res => {
+                        if (!res.ok) throw new Error(`Failed to load tag JSON: ${res.status}`);
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (!data || !Array.isArray(data.tags)) {
+                            throw new Error("Invalid tag data format (missing 'tags' array)");
+                        }
+                        tagjson = data;
+                        sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                        return data;
+                    })
+                    .catch(err => {
+                        console.error("Error fetching tag data:", err);
+                        throw err;
+                    });
+            }
+
+            return tagJsonPromise;
+        }
 
 
         async function handleForm(event) {
@@ -286,7 +336,20 @@
             // parse query 
             const query = formData.get('query');
             if (query) {
-                const allowed_tags = ['cannon', 'deck_cannon', 'emp_missiles', 'flak_battery', 'he_missiles', 'large_cannon', 'mines', 'nukes', 'railgun', 'ammo_factory', 'emp_factory', 'he_factory', 'mine_factory', 'nuke_factory', 'disruptors', 'heavy_laser', 'ion_beam', 'ion_prism', 'laser', 'mining_laser', 'point_defense', 'boost_thruster', 'airlock', 'campaign_factories', 'explosive_charges', 'fire_extinguisher', 'no_fire_extinguishers', 'large_reactor', 'large_shield', 'medium_reactor', 'sensor', 'small_hyperdrive', 'small_reactor', 'small_shield', 'tractor_beams', 'hyperdrive_relay', 'bidirectional_thrust', 'mono_thrust', 'multi_thrust', 'omni_thrust', 'no_thrust', 'armor_defenses', 'mixed_defenses', 'shield_defenses', 'no_defenses', 'kiter', 'diagonal', 'avoider', 'mixed_weapons', 'painted', 'unpainted', 'splitter', 'utility_weapons', 'rammer', 'domination_ship', 'elimination_ship', 'orbiter', 'campaign_ship', 'builtin', 'chaingun', 'large_hyperdrive', 'rocket_thruster', 'scout/racer', 'broadsider', 'waste_ship', 'debugging_tool', 'sundiver', 'cargo_ship', 'spinner'];
+                let allowed_tags = [];
+
+                loadTagsJson()
+                    .then(data => {
+                        allowed_tags = data.tags;
+                        console.log(`Loaded ${allowed_tags.length} tags from Gist`);
+                        // continue your logic here (e.g. filtering ships, populating UI, etc.)
+                    })
+                    .catch(err => {
+                        console.error("Failed to load tags:", err);
+                        // fallback to hardcoded list if desired
+                        allowed_tags = ['test1', 'test2', 'railgun', 'ion_beam'];
+                    });
+
                 const query_split = query.split(' ');
                 const query_split_negative = query_split.filter((tag) => tag.startsWith('-'));
                 const query_split_negative_remove = query_split_negative.map((tag) => tag.substring(1));
