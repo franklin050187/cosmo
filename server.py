@@ -351,6 +351,8 @@ async def get_myships(request: Request):
 
     if not user:
         user = "Guest"
+        # redirect to login
+        return RedirectResponse("/login?button=myships")
     query_params = {'token': token} if token else {}
     base_path = "/myships"
     target = urljoin(API_URL, base_path)
@@ -373,6 +375,7 @@ async def get_myfavorite(request: Request):
 
     if not user:
         user = "Guest"
+        return RedirectResponse("/login?button=myfavorite")
     query_params = {'token': token} if token else {}
     base_path = "/myfavorite"
     target = urljoin(API_URL, base_path)
