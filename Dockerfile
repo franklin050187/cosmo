@@ -39,6 +39,9 @@ COPY --from=build /venv /venv
 # Copy the application code from the build stage
 COPY --from=build /app/cosmo /app
 
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 # Set the working directory
 WORKDIR /venv
 
