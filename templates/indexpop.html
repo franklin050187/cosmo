@@ -66,37 +66,22 @@
             let jsonData = null;
 
             function fetchAuthorsData(callback) {
-                // Try to read from cache
-                // const cached = sessionStorage.getItem(cacheKey);
-                // if (cached) {
-                //     try {
-                //         const { data, timestamp } = JSON.parse(cached);
-                //         if (Date.now() - timestamp < cacheTTL) {
-                //             jsonData = data;
-                //             callback(jsonData);
-                //             return;
-                //         }
-                //     } catch (e) {
-                //         console.warn("Cache parse error, refetching...");
-                //     }
-                // }
+                const gistId = "{{ GIST_ID }}";
+                const fileName = "cosmoteer_authors.json";
 
-                // Otherwise, fetch fresh data
-                fetch(`https://gist.githubusercontent.com/raw/${gistId}/${fileName}`)
+                // Add cache-busting parameter to ensure fresh data
+                fetch(`https://gist.githubusercontent.com/raw/${gistId}/${fileName}?t=${Date.now()}`)
                     .then(res => {
                         if (!res.ok) throw new Error(`Failed to load JSON: ${res.status}`);
                         return res.json();
                     })
-                    .then(data => {
-                        jsonData = data;
-                        sessionStorage.setItem(cacheKey, JSON.stringify({ data, timestamp: Date.now() }));
-                        callback(jsonData);
-                    })
+                    .then(data => callback(data))
                     .catch(err => {
                         console.error("Error fetching authors JSON:", err);
                         callback({ authors: [] });
                     });
             }
+
 
             function filterAuthors(data, request, callback) {
                 if (!data || !data.authors) {
@@ -157,44 +142,16 @@
         function loadShipJson() {
             const gistId = "{{ GIST_ID }}";
             const fileName = "cosmoteer_ships.json";
-            const cacheKey = "shipjson";
 
-            // Return cached in-memory data if available
-            if (shipjson) {
-                return Promise.resolve(shipjson);
-            }
-
-            // Check sessionStorage cache
-            // const cached = sessionStorage.getItem(cacheKey);
-            // if (cached) {
-            //     try {
-            //         shipjson = JSON.parse(cached);
-            //         return Promise.resolve(shipjson);
-            //     } catch (err) {
-            //         console.warn("Failed to parse cached ship data, refetching...", err);
-            //         sessionStorage.removeItem(cacheKey);
-            //     }
-            // }
-
-            // Prevent multiple parallel fetches
-            if (!shipJsonPromise) {
-                shipJsonPromise = fetch(`https://gist.githubusercontent.com/raw/${gistId}/${fileName}`)
-                    .then(res => {
-                        if (!res.ok) throw new Error(`Failed to load ship JSON: ${res.status}`);
-                        return res.json();
-                    })
-                    .then(data => {
-                        shipjson = data;
-                        sessionStorage.setItem(cacheKey, JSON.stringify(data));
-                        return data;
-                    })
-                    .catch(err => {
-                        console.error("Error fetching ship data:", err);
-                        throw err;
-                    });
-            }
-
-            return shipJsonPromise;
+            return fetch(`https://gist.githubusercontent.com/raw/${gistId}/${fileName}?t=${Date.now()}`)
+                .then(res => {
+                    if (!res.ok) throw new Error(`Failed to load ship JSON: ${res.status}`);
+                    return res.json();
+                })
+                .catch(err => {
+                    console.error("Error fetching ship data:", err);
+                    throw err;
+                });
         }
 
 
@@ -203,49 +160,24 @@
         let tagJsonPromise = null;
 
         function loadTagsJson() {
-            const gistId = "{{ GIST_ID }}"; // replace with actual or templated Gist ID
+            const gistId = "{{ GIST_ID }}";
             const fileName = "cosmoteer_tags.json";
-            const cacheKey = "tagjson";
 
-            // Return cached in-memory data if available
-            if (tagjson) {
-                return Promise.resolve(tagjson);
-            }
-
-            // Check sessionStorage cache
-            // const cached = sessionStorage.getItem(cacheKey);
-            // if (cached) {
-            //     try {
-            //         tagjson = JSON.parse(cached);
-            //         return Promise.resolve(tagjson);
-            //     } catch (err) {
-            //         console.warn("Failed to parse cached tag data, refetching...", err);
-            //         sessionStorage.removeItem(cacheKey);
-            //     }
-            // }
-
-            // Prevent multiple parallel fetches
-            if (!tagJsonPromise) {
-                tagJsonPromise = fetch(`https://gist.githubusercontent.com/raw/${gistId}/${fileName}`)
-                    .then(res => {
-                        if (!res.ok) throw new Error(`Failed to load tag JSON: ${res.status}`);
-                        return res.json();
-                    })
-                    .then(data => {
-                        if (!data || !Array.isArray(data.tags)) {
-                            throw new Error("Invalid tag data format (missing 'tags' array)");
-                        }
-                        tagjson = data;
-                        sessionStorage.setItem(cacheKey, JSON.stringify(data));
-                        return data;
-                    })
-                    .catch(err => {
-                        console.error("Error fetching tag data:", err);
-                        throw err;
-                    });
-            }
-
-            return tagJsonPromise;
+            return fetch(`https://gist.githubusercontent.com/raw/${gistId}/${fileName}?t=${Date.now()}`)
+                .then(res => {
+                    if (!res.ok) throw new Error(`Failed to load tag JSON: ${res.status}`);
+                    return res.json();
+                })
+                .then(data => {
+                    if (!data || !Array.isArray(data.tags)) {
+                        throw new Error("Invalid tag data format (missing 'tags' array)");
+                    }
+                    return data;
+                })
+                .catch(err => {
+                    console.error("Error fetching tag data:", err);
+                    throw err;
+                });
         }
 
         loadTagsJson();
@@ -273,236 +205,236 @@
             // console.log("pathloadship", path);
         }
 
-            // console.log("path2", path);
-            async function handleForm(event) {
-                // console.log("handleForm");
-                event.preventDefault();
-                // get form content
-                const form = document.querySelector('form');
-                const formData = new FormData(form);
-                // get order from url
-                const urlParamsform = new URLSearchParams(window.location.search);
-                const order = urlParamsform.get('order') || 'new';
-                const tagInput = formData.get('tag-input');
-                const finalSearchQuery = document.getElementById('final_search_query');
-                // get page number from url
-                let page = urlParamsform.get('page') || 1;
-                page = parseInt(page);
-                // ensure page is 1 or greater
-                if (page < 1) {
-                    page = 1;
-                }
-                finalSearchQuery.value = tagInput;
-                appendSearchInput();
-                updateFinalSearchQuery();
-                // read shipjson
-                const shiptofilter = await loadShipJson();
-                // console.log("shiptofilter", shiptofilter);
-                // init filter
-                let filteredShips = [];
-                // using formdata filter ship json
-                // filter by author
-                const author = formData.get('author');
-                if (author) {
-                    filteredShips = shiptofilter.filter((ship) => ship.ship_author === author);
-                } else {
-                    filteredShips = shiptofilter;
-                }
-                // console.log("filteredShips author", filteredShips);
-                // filter by description
-                const desc = formData.get('desc');
-                if (desc) {
-                    filteredShips = filteredShips.filter((ship) => ship.ship_description.includes(desc));
-                }
-                // console.log("filteredShips desc", filteredShips);
-                // min price
-                const minprice = formData.get('min-price');
-                if (minprice) {
-                    filteredShips = filteredShips.filter((ship) => ship.ship_cost >= minprice);
-                }
-                // console.log("filteredShips minprice", filteredShips);
-                // max price
-                const maxprice = formData.get('max-price');
-                if (maxprice) {
-                    filteredShips = filteredShips.filter((ship) => ship.ship_cost <= maxprice);
-                }
-                // console.log("filteredShips maxprice", filteredShips);
-                // max crew
-                const maxcrew = formData.get('max-crew');
-                if (maxcrew) {
-                    filteredShips = filteredShips.filter((ship) => ship.ship_crew <= maxcrew);
-                }
-                // console.log("filteredShips maxcrew", filteredShips);
-                // exl-only
-                const exlonly = formData.get('exl-only');
-                if (exlonly) {
-                    filteredShips = filteredShips.filter((ship) => ship.brand === 'exl');
-                }
-                // console.log("filteredShips exlonly", filteredShips);
-                // order
-                const orderlist = formData.get('order'); // default to new
-                if (orderlist) {
-                    filteredShips = filteredShips.sort((a, b) => {
-                        if (orderlist === 'pop') {
-                            // sort by ship_popularity
-                            return b.ship_popularity - a.ship_popularity;
-                        } else if (orderlist === 'fav') {
-                            // sort by number_fav
-                            return b.number_fav - a.number_fav;
-                        } else if (orderlist === 'new') {
-                            // sort by ship_date_submitted
-                            return b.ship_date_submitted - a.ship_date_submitted;
-                        }
-                    });
-                } else { // default to new
-                    filteredShips = filteredShips.sort((a, b) => {
-                        return b.ship_date_submitted - a.ship_date_submitted;
-                    });
-                }
-                // console.log("filteredShips order", filteredShips);
-                // parse query 
-                const query = formData.get('query');
-                // console.log("query", query);
-                if (query) {
-                    let allowed_tags = [];
-                    allowed_tags = tagjson.tags;
-                    const query_split = query.split(' ');
-                    const query_split_negative = query_split.filter((tag) => tag.startsWith('-'));
-                    const query_split_negative_remove = query_split_negative.map((tag) => tag.substring(1));
-                    // ensure all tag are unique
-                    const query_split_negative_remove_unique = [...new Set(query_split_negative_remove)];
-                    const query_split_positive = query_split.filter((tag) => !tag.startsWith('-')); // do not include fulltext= in query_split_positive
-                    const query_split_positive_remove = query_split_positive.filter((tag) => !tag.startsWith('fulltext=')); // do not include "" in query_split_positive_remove
-                    const query_split_positive_remove_remove = query_split_positive_remove.filter((tag) => tag !== ''); // remove empty strings
-                    // ensure all tag are unique
-                    const query_split_positive_remove_remove_unique = [...new Set(query_split_positive_remove_remove)];
-                    // remove tag that are not in the allowed_tags
-                    const query_split_positive_remove_remove_unique_filtered = query_split_positive_remove_remove_unique.filter((tag) => allowed_tags.includes(tag));
-                    const fulltext = query_split.filter((tag) => tag.startsWith('fulltext='));
-                    const fulltext_remove = fulltext.map((tag) => tag.substring(9));
-                    // Only filter if there's something to filter by
-                    const shouldFilter = (
-                        query_split_positive_remove_remove_unique_filtered.length > 0 ||
-                        fulltext_remove.length > 0 ||
-                        query_split_negative_remove_unique.length > 0
-                    );
-                    // console.log("shouldFilter", shouldFilter);
-                    if (shouldFilter) {
-                        filteredShips = filteredShips.filter((ship) => {
-                            let match = false; // all conditions must be true for a ship to be included
-                            if (query_split_positive_remove_remove_unique_filtered.length > 0) {
-                                match = query_split_positive_remove_remove_unique_filtered.every(tag =>
-                                    ship.ship_tags.includes(tag)
-                                );
-                            }
-                            if (fulltext_remove.length > 0) {
-                                fulltext_remove.forEach((tag) => { // add ship with tag containing this string
-                                    for (let i = 0; i < ship.ship_tags.length; i++) {
-                                        if (ship.ship_tags[i].includes(tag)) {
-                                            match = true;
-                                        }
-                                    }
-                                });
-                            }
-
-                            if (query_split_negative_remove_unique.length > 0) {
-                                query_split_negative_remove_unique.forEach((tag) => { // remove ship with this tag
-                                    for (let i = 0; i < ship.ship_tags.length; i++) {
-                                        if (ship.ship_tags[i] === tag) {
-                                            match = false;
-                                        }
-                                    }
-                                });
-                            }
-
-                            return match;
-                        });
-                    }
-                }
-                // count number of ships
-                const numberOfShips = filteredShips.length;
-                // add a p under elim-competitive-tab with number of ships before the order text
-                // check if p already exists and update it
-                const numberOfShipsP = document.getElementById('number-of-ships');
-                if (numberOfShipsP) {
-                    numberOfShipsP.textContent = "Number of ships found : " + numberOfShips;
-                } else {
-                    const elimCompetitiveTab = document.getElementById('order-text');
-                    const elimCompetitiveTabP = document.createElement('p');
-                    // set an id to the p
-                    elimCompetitiveTabP.id = 'number-of-ships';
-                    elimCompetitiveTabP.textContent = "Number of ships found : " + numberOfShips;
-                    elimCompetitiveTab.appendChild(elimCompetitiveTabP);
-                }
-                // limit to 24 ships
-                // set slice based on page number
-                // if page is greater than max page, set page to max page
-                const maxPage = Math.ceil(numberOfShips / 24);
-                if (page > maxPage) {
-                    page = maxPage;
-                }
-                // last page may have less than 24 ships
-                if (page === maxPage) {
-                    const sliceStart = (page - 1) * 24;
-                    const sliceEnd = numberOfShips;
-                    filteredShips = filteredShips.slice(sliceStart, sliceEnd);
-                } else {
-                    const sliceStart = (page - 1) * 24;
-                    const sliceEnd = page * 24;
-                    filteredShips = filteredShips.slice(sliceStart, sliceEnd);
-                }
-
-                display_results(filteredShips);
-                // update url with search parameters
-                const urlParams = new URLSearchParams(window.location.search);
-                if (author) {
-                    urlParams.set('author', author);
-                }
-                if (fulltext) {
-                    urlParams.set('fulltext', fulltext);
-                }
-                if (selectedTags.length > 0) {
-                    selectedTags.forEach((tag) => {
-                        urlParams.set(tag, '1');
-                    });
-                }
-                if (excludedTags.length > 0) {
-                    excludedTags.forEach((tag) => {
-                        urlParams.set(tag, '0');
-                    });
-                }
-                if (orderlist) {
-                    urlParams.set('order', orderlist);
-                }
-                if (minprice) {
-                    urlParams.set('minprice', minprice);
-                }
-                if (maxprice) {
-                    urlParams.set('maxprice', maxprice);
-                }
-                if (maxcrew) {
-                    urlParams.set('maxcrew', maxcrew);
-                }
-                if (exlonly) {
-                    urlParams.set('exlonly', exlonly);
-                }
-                urlParams.set('page', page);
-                const url = new URL(window.location.href);
-
-                // Check if '/search' is in the pathname; if not, append it unless myships or myfavorite
-                if (!path === '/myships' || !path === '/myfavorite') {
-                    if (!url.pathname.includes('/search')) {
-                        url.pathname += (url.pathname.endsWith('/') ? '' : '/') + 'search';
-                    }
-                }
-
-                // Set or update the query string
-                url.search = urlParams.toString();
-
-                // Update the URL without reloading the page
-                window.history.replaceState(null, '', url.toString());
-                display_pagination(numberOfShips);
+        // console.log("path2", path);
+        async function handleForm(event) {
+            // console.log("handleForm");
+            event.preventDefault();
+            // get form content
+            const form = document.querySelector('form');
+            const formData = new FormData(form);
+            // get order from url
+            const urlParamsform = new URLSearchParams(window.location.search);
+            const order = urlParamsform.get('order') || 'new';
+            const tagInput = formData.get('tag-input');
+            const finalSearchQuery = document.getElementById('final_search_query');
+            // get page number from url
+            let page = urlParamsform.get('page') || 1;
+            page = parseInt(page);
+            // ensure page is 1 or greater
+            if (page < 1) {
+                page = 1;
             }
+            finalSearchQuery.value = tagInput;
+            appendSearchInput();
+            updateFinalSearchQuery();
+            // read shipjson
+            const shiptofilter = await loadShipJson();
+            // console.log("shiptofilter", shiptofilter);
+            // init filter
+            let filteredShips = [];
+            // using formdata filter ship json
+            // filter by author
+            const author = formData.get('author');
+            if (author) {
+                filteredShips = shiptofilter.filter((ship) => ship.ship_author === author);
+            } else {
+                filteredShips = shiptofilter;
+            }
+            // console.log("filteredShips author", filteredShips);
+            // filter by description
+            const desc = formData.get('desc');
+            if (desc) {
+                filteredShips = filteredShips.filter((ship) => ship.ship_description.includes(desc));
+            }
+            // console.log("filteredShips desc", filteredShips);
+            // min price
+            const minprice = formData.get('min-price');
+            if (minprice) {
+                filteredShips = filteredShips.filter((ship) => ship.ship_cost >= minprice);
+            }
+            // console.log("filteredShips minprice", filteredShips);
+            // max price
+            const maxprice = formData.get('max-price');
+            if (maxprice) {
+                filteredShips = filteredShips.filter((ship) => ship.ship_cost <= maxprice);
+            }
+            // console.log("filteredShips maxprice", filteredShips);
+            // max crew
+            const maxcrew = formData.get('max-crew');
+            if (maxcrew) {
+                filteredShips = filteredShips.filter((ship) => ship.ship_crew <= maxcrew);
+            }
+            // console.log("filteredShips maxcrew", filteredShips);
+            // exl-only
+            const exlonly = formData.get('exl-only');
+            if (exlonly) {
+                filteredShips = filteredShips.filter((ship) => ship.brand === 'exl');
+            }
+            // console.log("filteredShips exlonly", filteredShips);
+            // order
+            const orderlist = formData.get('order'); // default to new
+            if (orderlist) {
+                filteredShips = filteredShips.sort((a, b) => {
+                    if (orderlist === 'pop') {
+                        // sort by ship_popularity
+                        return b.ship_popularity - a.ship_popularity;
+                    } else if (orderlist === 'fav') {
+                        // sort by number_fav
+                        return b.number_fav - a.number_fav;
+                    } else if (orderlist === 'new') {
+                        // sort by ship_date_submitted
+                        return b.ship_date_submitted - a.ship_date_submitted;
+                    }
+                });
+            } else { // default to new
+                filteredShips = filteredShips.sort((a, b) => {
+                    return b.ship_date_submitted - a.ship_date_submitted;
+                });
+            }
+            // console.log("filteredShips order", filteredShips);
+            // parse query 
+            const query = formData.get('query');
+            // console.log("query", query);
+            if (query) {
+                let allowed_tags = [];
+                allowed_tags = tagjson.tags;
+                const query_split = query.split(' ');
+                const query_split_negative = query_split.filter((tag) => tag.startsWith('-'));
+                const query_split_negative_remove = query_split_negative.map((tag) => tag.substring(1));
+                // ensure all tag are unique
+                const query_split_negative_remove_unique = [...new Set(query_split_negative_remove)];
+                const query_split_positive = query_split.filter((tag) => !tag.startsWith('-')); // do not include fulltext= in query_split_positive
+                const query_split_positive_remove = query_split_positive.filter((tag) => !tag.startsWith('fulltext=')); // do not include "" in query_split_positive_remove
+                const query_split_positive_remove_remove = query_split_positive_remove.filter((tag) => tag !== ''); // remove empty strings
+                // ensure all tag are unique
+                const query_split_positive_remove_remove_unique = [...new Set(query_split_positive_remove_remove)];
+                // remove tag that are not in the allowed_tags
+                const query_split_positive_remove_remove_unique_filtered = query_split_positive_remove_remove_unique.filter((tag) => allowed_tags.includes(tag));
+                const fulltext = query_split.filter((tag) => tag.startsWith('fulltext='));
+                const fulltext_remove = fulltext.map((tag) => tag.substring(9));
+                // Only filter if there's something to filter by
+                const shouldFilter = (
+                    query_split_positive_remove_remove_unique_filtered.length > 0 ||
+                    fulltext_remove.length > 0 ||
+                    query_split_negative_remove_unique.length > 0
+                );
+                // console.log("shouldFilter", shouldFilter);
+                if (shouldFilter) {
+                    filteredShips = filteredShips.filter((ship) => {
+                        let match = false; // all conditions must be true for a ship to be included
+                        if (query_split_positive_remove_remove_unique_filtered.length > 0) {
+                            match = query_split_positive_remove_remove_unique_filtered.every(tag =>
+                                ship.ship_tags.includes(tag)
+                            );
+                        }
+                        if (fulltext_remove.length > 0) {
+                            fulltext_remove.forEach((tag) => { // add ship with tag containing this string
+                                for (let i = 0; i < ship.ship_tags.length; i++) {
+                                    if (ship.ship_tags[i].includes(tag)) {
+                                        match = true;
+                                    }
+                                }
+                            });
+                        }
+
+                        if (query_split_negative_remove_unique.length > 0) {
+                            query_split_negative_remove_unique.forEach((tag) => { // remove ship with this tag
+                                for (let i = 0; i < ship.ship_tags.length; i++) {
+                                    if (ship.ship_tags[i] === tag) {
+                                        match = false;
+                                    }
+                                }
+                            });
+                        }
+
+                        return match;
+                    });
+                }
+            }
+            // count number of ships
+            const numberOfShips = filteredShips.length;
+            // add a p under elim-competitive-tab with number of ships before the order text
+            // check if p already exists and update it
+            const numberOfShipsP = document.getElementById('number-of-ships');
+            if (numberOfShipsP) {
+                numberOfShipsP.textContent = "Number of ships found : " + numberOfShips;
+            } else {
+                const elimCompetitiveTab = document.getElementById('order-text');
+                const elimCompetitiveTabP = document.createElement('p');
+                // set an id to the p
+                elimCompetitiveTabP.id = 'number-of-ships';
+                elimCompetitiveTabP.textContent = "Number of ships found : " + numberOfShips;
+                elimCompetitiveTab.appendChild(elimCompetitiveTabP);
+            }
+            // limit to 24 ships
+            // set slice based on page number
+            // if page is greater than max page, set page to max page
+            const maxPage = Math.ceil(numberOfShips / 24);
+            if (page > maxPage) {
+                page = maxPage;
+            }
+            // last page may have less than 24 ships
+            if (page === maxPage) {
+                const sliceStart = (page - 1) * 24;
+                const sliceEnd = numberOfShips;
+                filteredShips = filteredShips.slice(sliceStart, sliceEnd);
+            } else {
+                const sliceStart = (page - 1) * 24;
+                const sliceEnd = page * 24;
+                filteredShips = filteredShips.slice(sliceStart, sliceEnd);
+            }
+
+            display_results(filteredShips);
+            // update url with search parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            if (author) {
+                urlParams.set('author', author);
+            }
+            if (fulltext) {
+                urlParams.set('fulltext', fulltext);
+            }
+            if (selectedTags.length > 0) {
+                selectedTags.forEach((tag) => {
+                    urlParams.set(tag, '1');
+                });
+            }
+            if (excludedTags.length > 0) {
+                excludedTags.forEach((tag) => {
+                    urlParams.set(tag, '0');
+                });
+            }
+            if (orderlist) {
+                urlParams.set('order', orderlist);
+            }
+            if (minprice) {
+                urlParams.set('minprice', minprice);
+            }
+            if (maxprice) {
+                urlParams.set('maxprice', maxprice);
+            }
+            if (maxcrew) {
+                urlParams.set('maxcrew', maxcrew);
+            }
+            if (exlonly) {
+                urlParams.set('exlonly', exlonly);
+            }
+            urlParams.set('page', page);
+            const url = new URL(window.location.href);
+
+            // Check if '/search' is in the pathname; if not, append it unless myships or myfavorite
+            if (!path === '/myships' || !path === '/myfavorite') {
+                if (!url.pathname.includes('/search')) {
+                    url.pathname += (url.pathname.endsWith('/') ? '' : '/') + 'search';
+                }
+            }
+
+            // Set or update the query string
+            url.search = urlParams.toString();
+
+            // Update the URL without reloading the page
+            window.history.replaceState(null, '', url.toString());
+            display_pagination(numberOfShips);
+        }
 
         function display_pagination(numberOfShips) {
             const paginationContainer = document.getElementById('pagination');
