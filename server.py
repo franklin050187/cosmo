@@ -297,7 +297,7 @@ async def upload_api(request: Request, file: UploadFile = File(...)):
     target = urljoin(API_URL, base_path)
 
     try:
-        response = requests.post(url=target, json=json_data, timeout=8)
+        response = requests.post(url=target, json=json_data, timeout=30)
         data = response.json()
         ship_id = data.get("data", {}).get("ship_id")
         if ship_id:
