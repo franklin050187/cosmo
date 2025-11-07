@@ -364,10 +364,13 @@ async def send_edit(request: Request, ship_id: int = Path(..., description="Id i
 
     # call /updategist with token
     base_path = "/updategist"
-    json_data = {'token': token}
-    # Build the full URL
+    query_params = {'token': token} if token else {}
     target = urljoin(API_URL, base_path)
-    response = requests.post(url=target, json=json_data)
+    if query_params:
+        target += f"?{urlencode(query_params)}"
+    if token and user:
+        requests.post(url=target)
+    ### EOF
 
     return RedirectResponse(f"/ship/{ship_id}", status_code=303)
 
@@ -471,10 +474,13 @@ async def add_to_favorite(request: Request, ship_id: int = Path(...), token: str
 
     # call /updategist with token
     base_path = "/updategist"
-    json_data = {'token': token}
-    # Build the full URL
+    query_params = {'token': token} if token else {}
     target = urljoin(API_URL, base_path)
-    response = requests.post(url=target, json=json_data)
+    if query_params:
+        target += f"?{urlencode(query_params)}"
+    if token and user:
+        requests.post(url=target)
+    ### EOF
 
     return RedirectResponse(url=redirect_url, status_code=303)
 
@@ -503,10 +509,13 @@ async def remove_from_favorite(request: Request, ship_id: int = Path(...), token
 
     # call /updategist with token
     base_path = "/updategist"
-    json_data = {'token': token}
-    # Build the full URL
+    query_params = {'token': token} if token else {}
     target = urljoin(API_URL, base_path)
-    response = requests.post(url=target, json=json_data)
+    if query_params:
+        target += f"?{urlencode(query_params)}"
+    if token and user:
+        requests.post(url=target)
+    ### EOF
 
     return RedirectResponse(url=redirect_url, status_code=303)
 
@@ -536,10 +545,13 @@ async def remove_from_db(request: Request, ship_id: int = Path(...), token: str 
 
     # call /updategist with token
     base_path = "/updategist"
-    json_data = {'token': token}
-    # Build the full URL
+    query_params = {'token': token} if token else {}
     target = urljoin(API_URL, base_path)
-    response = requests.post(url=target, json=json_data)
+    if query_params:
+        target += f"?{urlencode(query_params)}"
+    if token and user:
+        requests.post(url=target)
+    ### EOF
 
     return RedirectResponse(url=redirect_url, status_code=303)
 
