@@ -67,19 +67,19 @@
 
             function fetchAuthorsData(callback) {
                 // Try to read from cache
-                const cached = sessionStorage.getItem(cacheKey);
-                if (cached) {
-                    try {
-                        const { data, timestamp } = JSON.parse(cached);
-                        if (Date.now() - timestamp < cacheTTL) {
-                            jsonData = data;
-                            callback(jsonData);
-                            return;
-                        }
-                    } catch (e) {
-                        console.warn("Cache parse error, refetching...");
-                    }
-                }
+                // const cached = sessionStorage.getItem(cacheKey);
+                // if (cached) {
+                //     try {
+                //         const { data, timestamp } = JSON.parse(cached);
+                //         if (Date.now() - timestamp < cacheTTL) {
+                //             jsonData = data;
+                //             callback(jsonData);
+                //             return;
+                //         }
+                //     } catch (e) {
+                //         console.warn("Cache parse error, refetching...");
+                //     }
+                // }
 
                 // Otherwise, fetch fresh data
                 fetch(`https://gist.githubusercontent.com/raw/${gistId}/${fileName}`)
@@ -165,16 +165,16 @@
             }
 
             // Check sessionStorage cache
-            const cached = sessionStorage.getItem(cacheKey);
-            if (cached) {
-                try {
-                    shipjson = JSON.parse(cached);
-                    return Promise.resolve(shipjson);
-                } catch (err) {
-                    console.warn("Failed to parse cached ship data, refetching...", err);
-                    sessionStorage.removeItem(cacheKey);
-                }
-            }
+            // const cached = sessionStorage.getItem(cacheKey);
+            // if (cached) {
+            //     try {
+            //         shipjson = JSON.parse(cached);
+            //         return Promise.resolve(shipjson);
+            //     } catch (err) {
+            //         console.warn("Failed to parse cached ship data, refetching...", err);
+            //         sessionStorage.removeItem(cacheKey);
+            //     }
+            // }
 
             // Prevent multiple parallel fetches
             if (!shipJsonPromise) {
@@ -213,16 +213,16 @@
             }
 
             // Check sessionStorage cache
-            const cached = sessionStorage.getItem(cacheKey);
-            if (cached) {
-                try {
-                    tagjson = JSON.parse(cached);
-                    return Promise.resolve(tagjson);
-                } catch (err) {
-                    console.warn("Failed to parse cached tag data, refetching...", err);
-                    sessionStorage.removeItem(cacheKey);
-                }
-            }
+            // const cached = sessionStorage.getItem(cacheKey);
+            // if (cached) {
+            //     try {
+            //         tagjson = JSON.parse(cached);
+            //         return Promise.resolve(tagjson);
+            //     } catch (err) {
+            //         console.warn("Failed to parse cached tag data, refetching...", err);
+            //         sessionStorage.removeItem(cacheKey);
+            //     }
+            // }
 
             // Prevent multiple parallel fetches
             if (!tagJsonPromise) {
