@@ -241,6 +241,8 @@ async def upload_page(request: Request):
     if not user:
         return RedirectResponse("/login?button=upload")
     brand = request.session.get("brand")
+    # wakeup the api
+    requests.get(url=API_URL)
     if not brand:
         brand = request.session.get("discord_server")
     return templates.TemplateResponse(
