@@ -20,7 +20,7 @@
                     <p>All ships posted are under the CC BY 4.0 unless stated otherwise in the description</p>
                     <ul class="ships-list" style="grid-template-columns: repeat(1, 1fr);">
                         <li class="ship-card">
-                            <form action="/initupload" method="post" enctype="multipart/form-data">
+                            <form id="uploadForm">
                                 <input type="file" name="file" accept=".png" required>
                                 <button type="submit" class="blue-btn register">Next</button>
                             </form>
@@ -35,5 +35,42 @@
         {% include "footer.html" %}
     </footer>
 </body>
+
+<script>
+    document.getElementById("uploadForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const fileInput = this.querySelector('input[name="file"]');
+        if (!fileInput.files.length) return alert("Please select a file.");
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        const btn = this.querySelector('button');
+        btn.disabled = true;
+        btn.textContent = "Uploading...";
+
+        try {
+            const response = await fetch("/initupload", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.ship_id) {
+                window.location.href = `/edit/${data.ship_id}`;
+            } else {
+                alert(data.error || "Upload failed");
+            }
+        } catch (err) {
+            console.error("Upload error:", err);
+            alert("Unexpected error during upload");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Next";
+        }
+    });
+</script>
 
 </html>

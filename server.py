@@ -22,7 +22,7 @@ from starlette.responses import FileResponse, RedirectResponse, Response
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from starlette_discord.client import DiscordOAuthClient
-
+from fastapi.responses import JSONResponse, RedirectResponse
 from api_engine import extract_tags_v2
 
 load_dotenv()
@@ -249,36 +249,63 @@ async def upload_page(request: Request):
         "initupload.html", {"request": request, "user": user, "brand": brand}
     )
 
-@app.post("/initupload", response_class=FileResponse) # FIXME: redirect to edit page
+# @app.post("/initupload", response_class=FileResponse) # FIXME: redirect to edit page
+# async def upload_api(request: Request, file: UploadFile = File(...)):
+#     user = request.session.get("discord_user")
+#     if not user:
+#         return RedirectResponse("/login?button=upload")
+#     brand = request.session.get("brand")
+#     if not brand:
+#         brand = request.session.get("discord_server")
+#     contents = await file.read() # get the file
+#     encoded_data = base64.b64encode(contents).decode("utf-8") # convert to base64
+#     token = create_token(user=user) # get a token to use for the api call
+#     # call the api and read response
+#     base_path = "/insert_ship"
+#     json_data = {'token': token, 'image': encoded_data}
+
+#     # Build the full URL
+#     target = urljoin(API_URL, base_path)
+#     response = requests.post(url=target, json=json_data)
+#     data = json.loads(response.content)
+#     try :
+#         ship_id = data["data"]["ship_id"]
+#     except :
+#         ship_id = None
+
+#     if ship_id:
+#         # add purge
+#         return RedirectResponse(url=f"/edit/{ship_id}", status_code=303)
+
+#     error = "unable to decode file provided, check upload guide below"
+#     return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
+
+@app.post("/initupload")
 async def upload_api(request: Request, file: UploadFile = File(...)):
     user = request.session.get("discord_user")
     if not user:
-        return RedirectResponse("/login?button=upload")
-    brand = request.session.get("brand")
-    if not brand:
-        brand = request.session.get("discord_server")
-    contents = await file.read() # get the file
-    encoded_data = base64.b64encode(contents).decode("utf-8") # convert to base64
-    token = create_token(user=user) # get a token to use for the api call
-    # call the api and read response
+        return JSONResponse({"error": "login_required"}, status_code=401)
+
+    brand = request.session.get("brand") or request.session.get("discord_server")
+
+    contents = await file.read()
+    encoded_data = base64.b64encode(contents).decode("utf-8")
+    token = create_token(user=user)
     base_path = "/insert_ship"
-    json_data = {'token': token, 'image': encoded_data}
+    json_data = {"token": token, "image": encoded_data}
 
-    # Build the full URL
     target = urljoin(API_URL, base_path)
-    response = requests.post(url=target, json=json_data)
-    data = json.loads(response.content)
-    try :
-        ship_id = data["data"]["ship_id"]
-    except :
-        ship_id = None
 
-    if ship_id:
-        # add purge
-        return RedirectResponse(url=f"/edit/{ship_id}", status_code=303)
-
-    error = "unable to decode file provided, check upload guide below"
-    return templates.TemplateResponse("badfile.html", {"request": request, "error": error})
+    try:
+        response = requests.post(url=target, json=json_data, timeout=8)
+        data = response.json()
+        ship_id = data.get("data", {}).get("ship_id")
+        if ship_id:
+            return JSONResponse({"ship_id": ship_id})
+        else:
+            return JSONResponse({"error": "unable_to_decode"}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 @app.get("/edit/{ship_id}")
 async def edit_ship(request: Request, ship_id: int = Path(..., description="Id if the ship"), token: str = Query(None, description="Token for auth")):
