@@ -361,6 +361,14 @@ async def send_edit(request: Request, ship_id: int = Path(..., description="Id i
     target = urljoin(API_URL, base_path)
     response = requests.post(url=target, json=json_data)
     data = json.loads(response.content)
+
+    # call /updategist with token
+    base_path = "/updategist"
+    json_data = {'token': token}
+    # Build the full URL
+    target = urljoin(API_URL, base_path)
+    response = requests.post(url=target, json=json_data)
+
     return RedirectResponse(f"/ship/{ship_id}", status_code=303)
 
 @app.get("/seo_about")
@@ -460,6 +468,14 @@ async def add_to_favorite(request: Request, ship_id: int = Path(...), token: str
 
     # Redirect to ship detail page
     redirect_url = f"/ship/{ship_id}"
+
+    # call /updategist with token
+    base_path = "/updategist"
+    json_data = {'token': token}
+    # Build the full URL
+    target = urljoin(API_URL, base_path)
+    response = requests.post(url=target, json=json_data)
+
     return RedirectResponse(url=redirect_url, status_code=303)
 
 @app.post("/ship/{ship_id}/rmfav")
@@ -484,6 +500,14 @@ async def remove_from_favorite(request: Request, ship_id: int = Path(...), token
 
     # Redirect to ship detail page
     redirect_url = f"/ship/{ship_id}"
+
+    # call /updategist with token
+    base_path = "/updategist"
+    json_data = {'token': token}
+    # Build the full URL
+    target = urljoin(API_URL, base_path)
+    response = requests.post(url=target, json=json_data)
+
     return RedirectResponse(url=redirect_url, status_code=303)
 
 @app.post("/delete/{ship_id}")
@@ -509,6 +533,14 @@ async def remove_from_db(request: Request, ship_id: int = Path(...), token: str 
     # Redirect to ship detail page
     redirect_url = "/"
     # add purge
+
+    # call /updategist with token
+    base_path = "/updategist"
+    json_data = {'token': token}
+    # Build the full URL
+    target = urljoin(API_URL, base_path)
+    response = requests.post(url=target, json=json_data)
+
     return RedirectResponse(url=redirect_url, status_code=303)
 
 @app.get("/{catchall:path}")
