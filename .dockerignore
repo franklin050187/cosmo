@@ -1,0 +1,20 @@
+node_modules
+.next
+.env
+.env*.local
+.git
+.gitignore
+.vercel
+*.md
+Dockerfile
+docker-compose*.yml
+.dockerignore
+npm-debug.log*
+*.tsbuildinfo
+
+# dev/QA tooling — not part of the app image
+scripts
+.opencode
+.playwright
+.qa
+broken-links.log

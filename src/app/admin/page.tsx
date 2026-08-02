@@ -1,0 +1,170 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { DashboardData } from "@/lib/analytics-db";
+import TurnstileWidget from "@/components/TurnstileWidget";
+import { useAuth } from "@/hooks/useAuth";
+
+export default function AdminPage() {
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [turnstilePassed, setTurnstilePassed] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+
+  useEffect(() => {
+    if (!turnstilePassed) return;
+
+    const fetchData = async () => {
+      if (!isLoggedIn) {
+        setError("Not logged in");
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch("/api/analytics/dashboard", {
+          headers: {
+            "x-turnstile-token": turnstileToken,
+          },
+        });
+        if (res.status === 403) {
+          router.push("/");
+          return;
+        }
+        if (!res.ok) throw new Error("Failed to fetch");
+        const json = await res.json();
+        setData(json);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [router, turnstilePassed, isLoggedIn]);
+
+  if (!turnstilePassed) {
+    return (
+      <div className="flex flex-col items-center justify-center pt-20 gap-6">
+        <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
+        <p className="text-blue-200 text-sm">Complete the captcha to access the dashboard.</p>
+        <TurnstileWidget onVerify={(token) => { setTurnstileToken(token); setTurnstilePassed(true); }} />
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <div className="flex justify-center pt-20 text-blue-300">Loading dashboard…</div>;
+  }
+
+  if (error) {
+    return <div className="flex justify-center pt-20 text-red-400">{error}</div>;
+  }
+
+  if (!data) return null;
+
+  const maxView = Math.max(...data.views_per_day.map((d) => d.count), 1);
+
+  return (
+    <div className="pt-8 space-y-8">
+      <h1 className="text-2xl font-bold text-white">Analytics Dashboard</h1>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <SummaryCard label="Total Events" value={data.totals.total_events.toLocaleString()} />
+        <SummaryCard label="Unique Users" value={data.totals.unique_users.toLocaleString()} />
+        <SummaryCard label="Events Today" value={data.totals.events_today.toLocaleString()} />
+        <SummaryCard label="Errors Today" value={data.totals.errors_today.toLocaleString()} />
+        <SummaryCard label="Collections" value={data.totals.total_collections.toLocaleString()} />
+      </div>
+
+      {/* Views per day (bar chart) */}
+      <section>
+        <h2 className="text-lg font-semibold text-white mb-3">Page Views (last 30 days)</h2>
+        <div className="bg-[#021526] border border-[#1C598C]/30 rounded-lg p-4">
+          <div className="flex items-end gap-[2px] h-48">
+            {data.views_per_day.map((d) => (
+              <div
+                key={d.date}
+                className="flex-1 bg-cyan-500/60 hover:bg-cyan-400/80 rounded-t relative group transition-colors"
+                style={{ height: `${(d.count / maxView) * 100}%` }}
+              >
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-blue-300 opacity-0 group-hover:opacity-100 whitespace-nowrap">
+                  {d.count}
+                </div>
+              </div>
+            ))}
+          </div>
+          {data.views_per_day.length > 0 && (
+            <div className="text-[10px] text-blue-400 mt-2 text-center">
+              {data.views_per_day[0].date} – {data.views_per_day[data.views_per_day.length - 1].date}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Event type breakdown */}
+      <section className="grid md:grid-cols-2 gap-6">
+        <div>
+          <h2 className="text-lg font-semibold text-white mb-3">Event Types</h2>
+          <div className="bg-[#021526] border border-[#1C598C]/30 rounded-lg divide-y divide-[#1C598C]/20">
+            {data.event_types.map((e) => (
+              <div key={e.event_type} className="flex justify-between px-4 py-2 text-sm">
+                <span className="text-blue-200">{e.event_type}</span>
+                <span className="text-white font-mono">{e.count.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-white mb-3">Top Pages</h2>
+          <div className="bg-[#021526] border border-[#1C598C]/30 rounded-lg divide-y divide-[#1C598C]/20 max-h-80 overflow-y-auto">
+            {data.top_pages.map((p) => (
+              <div key={p.url} className="flex justify-between px-4 py-2 text-sm">
+                <span className="text-blue-200 truncate max-w-[70%]" title={p.url}>
+                  {p.url}
+                </span>
+                <span className="text-white font-mono shrink-0">{p.count.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Recent errors */}
+      <section>
+        <h2 className="text-lg font-semibold text-white mb-3">Recent Errors</h2>
+        <div className="bg-[#021526] border border-[#1C598C]/30 rounded-lg divide-y divide-[#1C598C]/20">
+          {data.recent_errors.length === 0 && (
+            <div className="px-4 py-3 text-sm text-blue-300">No errors recorded.</div>
+          )}
+          {data.recent_errors.map((e) => (
+            <div key={e.id} className="px-4 py-2.5 text-sm space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-red-400 font-medium">Error</span>
+                <span className="text-blue-300">{e.username || "anonymous"}</span>
+                <span className="text-blue-400/60 text-xs">{new Date(e.created_at).toLocaleString()}</span>
+              </div>
+              {e.url && <div className="text-blue-200/60 text-xs truncate">{e.url}</div>}
+              {typeof e.metadata?.message === "string" && (
+                <div className="text-red-300/80 text-xs font-mono">{e.metadata.message}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function SummaryCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-[#021526] border border-[#1C598C]/30 rounded-lg px-4 py-3">
+      <div className="text-xs text-blue-400 mb-1">{label}</div>
+      <div className="text-xl font-bold text-white">{value}</div>
+    </div>
+  );
+}

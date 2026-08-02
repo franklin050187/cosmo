@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+:root {
+  --background: #021526;
+  --foreground: #BBE0FF;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+body {
+  background-image: url(/background-alpha-mobile.webp), linear-gradient(90deg, #0078bd, #07b3d1, #ada270, #28c098, #0078bd);
+  background-position: center center, 0% 0%;
+  background-repeat: no-repeat, repeat;
+  background-size: cover, 200% 200%;
+  background-attachment: fixed;
+  animation: background-movement 24s linear 0s infinite;
+  will-change: background-position;
+  color: var(--foreground);
+}
+@media (min-width: 1024px) {
+  body {
+    background-image: url(/background-alpha.webp), linear-gradient(90deg, #0078bd, #07b3d1, #ada270, #28c098, #0078bd);
+  }
+}
+
+@keyframes background-movement {
+  0% {
+    background-position: center center, 0% 0%;
+  }
+  25% {
+    background-position: center center, 60% 0%;
+  }
+  50% {
+    background-position: center center, 120% 0%;
+  }
+  75% {
+    background-position: center center, 60% 0%;
+  }
+  100% {
+    background-position: center center, 0% 0%;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar for filter chips */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(28, 89, 140, 0.4);
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(28, 89, 140, 0.7);
+}
+
+.scrollbar-themed::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-themed::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-themed::-webkit-scrollbar-thumb {
+  background: rgba(28, 89, 140, 0.4);
+  border-radius: 3px;
+}
+.scrollbar-themed::-webkit-scrollbar-thumb:hover {
+  background: rgba(28, 89, 140, 0.7);
+}
+
+/* Number input: hide spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}

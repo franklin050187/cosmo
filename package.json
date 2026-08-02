@@ -1,0 +1,35 @@
+{
+  "name": "cosmo-next",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "backfill-signatures": "npx tsx scripts/backfill-signatures.ts",
+    "backfill-prices": "npx tsx --env-file=.env scripts/backfill-ship-prices.ts",
+    "import-builtins": "npx tsx --env-file=.env scripts/import-builtin-ships.ts"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.3",
+    "jszip": "^3.10.1",
+    "next": "16.2.11",
+    "pg": "^8.22.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "uploadthing": "^7.7.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.11",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

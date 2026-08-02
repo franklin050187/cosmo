@@ -1,0 +1,21 @@
+node_modules
+.next
+.env
+.env*.local
+.git
+.gitignore
+.vercel
+*.md
+Dockerfile
+docker-compose*.yml
+.vercelignore
+npm-debug.log*
+*.tsbuildinfo
+
+# dev/QA tooling — not part of the production app
+# scripts, .qa, .playwright, .opencode are dev-only and must not be compiled
+scripts
+.opencode
+.playwright
+.qa
+broken-links.log

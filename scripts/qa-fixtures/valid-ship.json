@@ -1,0 +1,5119 @@
+{
+  "Author": "ERA",
+  "BuildCenterlineNESW": null,
+  "BuildCenterlineNWSE": null,
+  "BuildCenterlineX": null,
+  "BuildCenterlineY": null,
+  "BuildMirrorAxis": 1,
+  "BuildMirrorEnabled": false,
+  "CrewSourceRoles": [
+    {
+      "Key": {
+        "FlipX": false,
+        "ID": "cosmoteer.crew_quarters_small",
+        "Location": [
+          -6,
+          1
+        ],
+        "Rotation": 1
+      },
+      "Value": 2147483648
+    },
+    {
+      "Key": {
+        "FlipX": false,
+        "ID": "cosmoteer.crew_quarters_small",
+        "Location": [
+          -3,
+          3
+        ],
+        "Rotation": 0
+      },
+      "Value": 2147483648
+    }
+  ],
+  "CrewSourceTargets": "Unset",
+  "Decals1": [
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -6,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -6,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -6,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -6,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -6,
+        3
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -6,
+        4
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -6,
+        5
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -5,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -5,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -5,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -5,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -5,
+        3
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -5,
+        4
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -5,
+        5
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -4,
+        -2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -4,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -4,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -4,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -4,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -4,
+        3
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -4,
+        4
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -4,
+        5
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -3,
+        -2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -3,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -3,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -3,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -3,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -3,
+        3
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -3,
+        4
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -3,
+        5
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        -2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        3
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        4
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        5
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        -2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        3
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        4
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        -2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        3
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        4
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        -2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    }
+  ],
+  "Decals2": [
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -3,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -3,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -3,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -3,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -3,
+        3
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -3,
+        4
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -3,
+        5
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        -2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        3
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        4
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -2,
+        5
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        -2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        3
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        -1,
+        4
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        -2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        3
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        4
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        -2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    }
+  ],
+  "Decals3": [
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -1,
+        -2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -1,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -1,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -1,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -1,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -1,
+        3
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "fade_straight",
+      "Invert": false,
+      "Location": [
+        -1,
+        4
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        -2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        3
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        0,
+        4
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        -2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        -1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        0
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        1
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": 2020565507,
+      "Invert": false,
+      "Location": [
+        1,
+        2
+      ],
+      "Rot0Size": [
+        1,
+        1
+      ],
+      "Rotation": 0
+    }
+  ],
+  "DefaultAttackFollowAngle": null,
+  "DefaultAttackRadius": null,
+  "DefaultAttackRotation": null,
+  "Description": "",
+  "Doors": [
+    {
+      "Cell": [
+        -4,
+        1
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 0
+    },
+    {
+      "Cell": [
+        -4,
+        0
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 1
+    },
+    {
+      "Cell": [
+        -2,
+        1
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 1
+    },
+    {
+      "Cell": [
+        -6,
+        3
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 0
+    },
+    {
+      "Cell": [
+        -5,
+        3
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 1
+    },
+    {
+      "Cell": [
+        -4,
+        1
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 1
+    },
+    {
+      "Cell": [
+        -3,
+        3
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 0
+    },
+    {
+      "Cell": [
+        -2,
+        2
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 1
+    },
+    {
+      "Cell": [
+        -4,
+        2
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 1
+    },
+    {
+      "Cell": [
+        -4,
+        3
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 0
+    }
+  ],
+  "FlightDirection": 2,
+  "FormationOrder": 3,
+  "Name": "Pincher",
+  "NewFlexResourceGridTypes": "Unset",
+  "PaintCenterlineNESW": null,
+  "PaintCenterlineNWSE": null,
+  "PaintCenterlineX": null,
+  "PaintCenterlineY": null,
+  "PaintMirrorAxis": 1,
+  "PaintMirrorEnabled": false,
+  "PartControlGroups": "Unset",
+  "Parts": [
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.armor_2x1",
+      "Location": [
+        -7,
+        1
+      ],
+      "Rotation": 3
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.thruster_small_2way",
+      "Location": [
+        -6,
+        3
+      ],
+      "Rotation": 1
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.thruster_small_2way",
+      "Location": [
+        -5,
+        0
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.crew_quarters_small",
+      "Location": [
+        -6,
+        1
+      ],
+      "Rotation": 1
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.airlock",
+      "Location": [
+        -6,
+        2
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.fire_extinguisher",
+      "Location": [
+        -5,
+        2
+      ],
+      "Rotation": 3
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.control_room_small",
+      "Location": [
+        -5,
+        3
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.cannon_med",
+      "Location": [
+        -4,
+        0
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.reactor_small",
+      "Location": [
+        -4,
+        1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.crew_quarters_small",
+      "Location": [
+        -3,
+        3
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.armor_wedge",
+      "Location": [
+        -2,
+        -1
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.storage_2x2",
+      "Location": [
+        -2,
+        0
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.thruster_small_2way",
+      "Location": [
+        -2,
+        2
+      ],
+      "Rotation": 0
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.armor_2x1",
+      "Location": [
+        -1,
+        -1
+      ],
+      "Rotation": 2
+    },
+    {
+      "FlipX": false,
+      "ID": "cosmoteer.armor_1x2_wedge",
+      "Location": [
+        0,
+        0
+      ],
+      "Rotation": 2
+    }
+  ],
+  "PartUIColorValues": "Unset",
+  "PartUIToggleStates": [
+    {
+      "Key": [
+        {
+          "FlipX": false,
+          "ID": "cosmoteer.cannon_med",
+          "Location": [
+            -4,
+            0
+          ],
+          "Rotation": 0
+        },
+        "on_off"
+      ],
+      "Value": 1
+    },
+    {
+      "Key": [
+        {
+          "FlipX": false,
+          "ID": "cosmoteer.cannon_med",
+          "Location": [
+            -4,
+            0
+          ],
+          "Rotation": 0
+        },
+        "fire_mode"
+      ],
+      "Value": 1
+    },
+    {
+      "Key": [
+        {
+          "FlipX": false,
+          "ID": "cosmoteer.control_room_small",
+          "Location": [
+            -5,
+            3
+          ],
+          "Rotation": 2
+        },
+        "on_off"
+      ],
+      "Value": 1
+    },
+    {
+      "Key": [
+        {
+          "FlipX": false,
+          "ID": "cosmoteer.thruster_small_2way",
+          "Location": [
+            -5,
+            0
+          ],
+          "Rotation": 2
+        },
+        "on_off"
+      ],
+      "Value": 1
+    },
+    {
+      "Key": [
+        {
+          "FlipX": false,
+          "ID": "cosmoteer.thruster_small_2way",
+          "Location": [
+            -6,
+            3
+          ],
+          "Rotation": 1
+        },
+        "on_off"
+      ],
+      "Value": 1
+    }
+  ],
+  "ResourceConsumptionToggles": [
+    {
+      "Key": [
+        {
+          "FlipX": false,
+          "ID": "cosmoteer.cannon_med",
+          "Location": [
+            -4,
+            0
+          ],
+          "Rotation": 0
+        },
+        "AmmoConsumer"
+      ],
+      "Value": true
+    }
+  ],
+  "ResourceSupplierTargets": "Unset",
+  "ResourceSupplyToggles": "Unset",
+  "Roles": [
+    {
+      "AssignmentPriority": 5,
+      "AutoFillFromLower": false,
+      "Color": {
+        "parts": [
+          "DDEE953D",
+          "00000000",
+          "9A99193E",
+          "0000803F"
+        ]
+      },
+      "ID": -2147483648,
+      "Name": "Default",
+      "Priorities": "Unset"
+    },
+    {
+      "AssignmentPriority": 8,
+      "AutoFillFromLower": true,
+      "Color": {
+        "parts": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ]
+      },
+      "ID": -2147483647,
+      "Name": "Operators",
+      "Priorities": [
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.laser_blaster_large"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.laser_blaster_small"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.laser_blaster_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.laser_blaster_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.disruptor"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.disruptor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.ion_beam_emitter"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.ion_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.cannon_med"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.cannon_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.cannon_large"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.cannon_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.cannon_deck"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.cannon_deck"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "MissileStorage",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "EMPMissilesComponents",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "NukeMissilesComponents",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "MinesComponents",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.railgun_loader"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.railgun_loader"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.railgun_accelerator"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.railgun_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.chaingun"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumerLeft",
+            "PartID": "cosmoteer.chaingun"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.chaingun_magazine"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.shield_gen_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.shield_gen_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.flak_cannon_large"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.flak_cannon_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.point_defense"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.control_room_small"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.control_room_med"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.control_room_med"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.control_room_large"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.control_room_large"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_small_2way"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_small_3way"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_huge"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_boost"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_rocket_nozzle"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_rocket_extender"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_rocket_battery"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.engine_room"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.engine_room"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "HyperiumConsumer",
+            "PartID": "cosmoteer.hyperdrive_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "HyperiumConsumer",
+            "PartID": "cosmoteer.hyperdrive_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "HyperiumConsumer",
+            "PartID": "cosmoteer.hyperdrive_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.power_storage"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "SulfurConsumer",
+            "PartID": "cosmoteer.factory_ammo"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_ammo"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_he"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "SulfurConsumer",
+            "PartID": "cosmoteer.factory_he"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_he"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_emp"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CopperConsumer",
+            "PartID": "cosmoteer.factory_emp"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_emp"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_nuke"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "UraniumConsumer",
+            "PartID": "cosmoteer.factory_nuke"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_nuke"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_mine"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.factory_mine"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_mine"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_steel"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_steel"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CopperConsumer",
+            "PartID": "cosmoteer.factory_coil"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_coil"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CoilConsumer",
+            "PartID": "cosmoteer.factory_coil2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CopperConsumer",
+            "PartID": "cosmoteer.factory_coil2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_coil2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "TritaniumConsumer",
+            "PartID": "cosmoteer.factory_tristeel"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_tristeel"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CarbonConsumer",
+            "PartID": "cosmoteer.factory_diamond"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_diamond"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CoilConsumer",
+            "PartID": "cosmoteer.factory_processor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "GoldConsumer",
+            "PartID": "cosmoteer.factory_processor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_processor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "UraniumConsumer",
+            "PartID": "cosmoteer.factory_uranium"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_uranium"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_hyperium",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_carbon",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_tritanium",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_copper",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_iron",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_sulfur",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_enriched_uranium",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_processor",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_diamond",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_tristeel",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_coil2",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_coil",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_steel",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_mine_part",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_missile_part_nuke",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_missile_part_emp",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_missile_part_he",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_bullet",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_gold",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_uranium",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.mining_laser_small"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.mining_laser_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.manipulator_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.tractor_beam_emitter"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.tractor_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "rustydios.ion_beam_emitter_shared"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.hyperdrive_beacon"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_beacon"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "SalvageJob",
+            "PartID": "cosmoteer.crew_quarters_med"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.control_room_small"
+          },
+          "Value": 9
+        }
+      ]
+    },
+    {
+      "AssignmentPriority": 8,
+      "AutoFillFromLower": true,
+      "Color": {
+        "parts": [
+          "0000803F",
+          "881FAA3E",
+          "00000000",
+          "0000803F"
+        ]
+      },
+      "ID": -2147483646,
+      "Name": "Suppliers",
+      "Priorities": [
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.laser_blaster_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.laser_blaster_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.laser_blaster_small"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.laser_blaster_large"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.disruptor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.disruptor"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.ion_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.ion_beam_emitter"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.cannon_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.cannon_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.cannon_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.cannon_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.cannon_deck"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.cannon_deck"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "MissileStorage",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "EMPMissilesComponents",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "NukeMissilesComponents",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "MinesComponents",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.railgun_loader"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.railgun_loader"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.railgun_accelerator"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.railgun_launcher"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.chaingun"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumerLeft",
+            "PartID": "cosmoteer.chaingun"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.chaingun_magazine"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.shield_gen_small"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.shield_gen_large"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.flak_cannon_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.flak_cannon_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.point_defense"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.control_room_small"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.control_room_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.control_room_med"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.control_room_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.control_room_large"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "CopperConsumer",
+            "PartID": "cosmoteer.factory_coil"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "CopperConsumer",
+            "PartID": "cosmoteer.factory_emp"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.thruster_rocket_nozzle"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_emp"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_large"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_med"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.engine_room"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "HyperiumConsumer",
+            "PartID": "cosmoteer.hyperdrive_small"
+          },
+          "Value": 6
+        },
+        {
+          "Key": {
+            "ComponentID": "HyperiumConsumer",
+            "PartID": "cosmoteer.hyperdrive_med"
+          },
+          "Value": 6
+        },
+        {
+          "Key": {
+            "ComponentID": "HyperiumConsumer",
+            "PartID": "cosmoteer.hyperdrive_large"
+          },
+          "Value": 6
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.power_storage"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_ammo"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_he"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_emp"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_nuke"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_mine"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_steel"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_coil"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "UraniumConsumer",
+            "PartID": "cosmoteer.factory_uranium"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "GoldConsumer",
+            "PartID": "cosmoteer.factory_processor"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_coil2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "CoilConsumer",
+            "PartID": "cosmoteer.factory_processor"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_tristeel"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "CarbonConsumer",
+            "PartID": "cosmoteer.factory_diamond"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_diamond"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "TritaniumConsumer",
+            "PartID": "cosmoteer.factory_tristeel"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "CopperConsumer",
+            "PartID": "cosmoteer.factory_coil2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_processor"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "CoilConsumer",
+            "PartID": "cosmoteer.factory_coil2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_uranium"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_hyperium",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_carbon",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_tritanium",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_copper",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_iron",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_sulfur",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_enriched_uranium",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_processor",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_diamond",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_tristeel",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_coil2",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_coil",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_steel",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_mine_part",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_missile_part_nuke",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_missile_part_emp",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_missile_part_he",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_bullet",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_gold",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_uranium",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "SulfurConsumer",
+            "PartID": "cosmoteer.factory_he"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.manipulator_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_he"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.tractor_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.tractor_beam_emitter"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.sensor_array"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "SulfurConsumer",
+            "PartID": "cosmoteer.factory_ammo"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.hyperdrive_beacon"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_beacon"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_steel"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.factory_mine"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.mining_laser_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.control_room_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_mine"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "UraniumConsumer",
+            "PartID": "cosmoteer.factory_nuke"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_nuke"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_small"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "rustydios.ion_beam_emitter_shared"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "rustydios.ion_beam_emitter_shared"
+          },
+          "Value": 0
+        }
+      ]
+    },
+    {
+      "AssignmentPriority": 6,
+      "AutoFillFromLower": false,
+      "Color": {
+        "parts": [
+          "66229F3D",
+          "9A99193E",
+          "00000000",
+          "0000803F"
+        ]
+      },
+      "ID": -2147483645,
+      "Name": "Loaders",
+      "Priorities": [
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.laser_blaster_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.laser_blaster_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.laser_blaster_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.laser_blaster_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.disruptor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.disruptor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.ion_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.ion_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.cannon_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.cannon_med"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.cannon_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.cannon_large"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.cannon_deck"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.cannon_deck"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 9
+        },
+        {
+          "Key": {
+            "ComponentID": "MissileStorage",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "EMPMissilesComponents",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "NukeMissilesComponents",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "MinesComponents",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.railgun_loader"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.railgun_loader"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.railgun_accelerator"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.railgun_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.chaingun"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumerLeft",
+            "PartID": "cosmoteer.chaingun"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.chaingun_magazine"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.shield_gen_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.shield_gen_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.flak_cannon_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.flak_cannon_large"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.point_defense"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.control_room_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.control_room_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.control_room_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.control_room_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.control_room_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.control_room_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_small_2way"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_small_3way"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_huge"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_boost"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.thruster_rocket_nozzle"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_rocket_nozzle"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_rocket_extender"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_rocket_battery"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.engine_room"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.engine_room"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "HyperiumConsumer",
+            "PartID": "cosmoteer.hyperdrive_small"
+          },
+          "Value": 7
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "HyperiumConsumer",
+            "PartID": "cosmoteer.hyperdrive_med"
+          },
+          "Value": 7
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "HyperiumConsumer",
+            "PartID": "cosmoteer.hyperdrive_large"
+          },
+          "Value": 7
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.power_storage"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "SulfurConsumer",
+            "PartID": "cosmoteer.factory_ammo"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_ammo"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_he"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "SulfurConsumer",
+            "PartID": "cosmoteer.factory_he"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_he"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_emp"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CopperConsumer",
+            "PartID": "cosmoteer.factory_emp"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_emp"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_nuke"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "UraniumConsumer",
+            "PartID": "cosmoteer.factory_nuke"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_nuke"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_mine"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.factory_mine"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_mine"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_steel"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_steel"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CopperConsumer",
+            "PartID": "cosmoteer.factory_coil"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_coil"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CoilConsumer",
+            "PartID": "cosmoteer.factory_coil2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CopperConsumer",
+            "PartID": "cosmoteer.factory_coil2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_coil2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "TritaniumConsumer",
+            "PartID": "cosmoteer.factory_tristeel"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_tristeel"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CarbonConsumer",
+            "PartID": "cosmoteer.factory_diamond"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_diamond"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CoilConsumer",
+            "PartID": "cosmoteer.factory_processor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "GoldConsumer",
+            "PartID": "cosmoteer.factory_processor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_processor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "UraniumConsumer",
+            "PartID": "cosmoteer.factory_uranium"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_uranium"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.mining_laser_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.mining_laser_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.manipulator_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.manipulator_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.tractor_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.tractor_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.sensor_array"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.sensor_array"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.hyperdrive_beacon"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_beacon"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_bullet",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "rustydios.ion_beam_emitter_shared"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "rustydios.ion_beam_emitter_shared"
+          },
+          "Value": 0
+        }
+      ]
+    },
+    {
+      "AssignmentPriority": 5,
+      "AutoFillFromLower": false,
+      "Color": {
+        "parts": [
+          "18227A3E",
+          "0000803F",
+          "00000000",
+          "0000803F"
+        ]
+      },
+      "ID": -2147483644,
+      "Name": "Capacitor Suppliers",
+      "Priorities": [
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.laser_blaster_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.laser_blaster_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.laser_blaster_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.laser_blaster_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.disruptor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.disruptor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.ion_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.ion_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.cannon_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.cannon_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.cannon_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.cannon_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.cannon_deck"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.cannon_deck"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "MissileStorage",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "EMPMissilesComponents",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "NukeMissilesComponents",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "MinesComponents",
+            "PartID": "cosmoteer.missile_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.railgun_loader"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.railgun_loader"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.railgun_accelerator"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.railgun_launcher"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.chaingun"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumerLeft",
+            "PartID": "cosmoteer.chaingun"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.chaingun_magazine"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.shield_gen_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.shield_gen_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.flak_cannon_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.flak_cannon_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.point_defense"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.control_room_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.control_room_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.control_room_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.control_room_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.control_room_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.control_room_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_small_2way"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_small_3way"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_huge"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_boost"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.thruster_rocket_nozzle"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_rocket_nozzle"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_rocket_extender"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.thruster_rocket_battery"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.engine_room"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.engine_room"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "HyperiumConsumer",
+            "PartID": "cosmoteer.hyperdrive_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "HyperiumConsumer",
+            "PartID": "cosmoteer.hyperdrive_med"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "HyperiumConsumer",
+            "PartID": "cosmoteer.hyperdrive_large"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "ResourceTransferJob.Collect",
+            "PartID": "cosmoteer.crew_quarters_med"
+          },
+          "Value": 7
+        },
+        {
+          "Key": {
+            "ComponentID": "SalvageJob",
+            "PartID": "cosmoteer.crew_quarters_med"
+          },
+          "Value": 7
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.power_storage"
+          },
+          "Value": 8
+        },
+        {
+          "Key": {
+            "ComponentID": "SulfurConsumer",
+            "PartID": "cosmoteer.factory_ammo"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_ammo"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_he"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "SulfurConsumer",
+            "PartID": "cosmoteer.factory_he"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_he"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_emp"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CopperConsumer",
+            "PartID": "cosmoteer.factory_emp"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_emp"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_nuke"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "UraniumConsumer",
+            "PartID": "cosmoteer.factory_nuke"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_nuke"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_mine"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "AmmoConsumer",
+            "PartID": "cosmoteer.factory_mine"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_mine"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "IronConsumer",
+            "PartID": "cosmoteer.factory_steel"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_steel"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CopperConsumer",
+            "PartID": "cosmoteer.factory_coil"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_coil"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CoilConsumer",
+            "PartID": "cosmoteer.factory_coil2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CopperConsumer",
+            "PartID": "cosmoteer.factory_coil2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_coil2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "TritaniumConsumer",
+            "PartID": "cosmoteer.factory_tristeel"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_tristeel"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CarbonConsumer",
+            "PartID": "cosmoteer.factory_diamond"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_diamond"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "CoilConsumer",
+            "PartID": "cosmoteer.factory_processor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "GoldConsumer",
+            "PartID": "cosmoteer.factory_processor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_processor"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "UraniumConsumer",
+            "PartID": "cosmoteer.factory_uranium"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.factory_uranium"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_hyperium",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_carbon",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_tritanium",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_copper",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_iron",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_sulfur",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_enriched_uranium",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_processor",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_diamond",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_tristeel",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_coil2",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_coil",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_steel",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_mine_part",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_missile_part_nuke",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_missile_part_emp",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_missile_part_he",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_bullet",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_gold",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "flex_grid_uranium",
+            "PartID": "cosmoteer.storage_2x2"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.mining_laser_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.mining_laser_small"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.manipulator_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.manipulator_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.tractor_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.tractor_beam_emitter"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.sensor_array"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.sensor_array"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "cosmoteer.hyperdrive_beacon"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "cosmoteer.hyperdrive_beacon"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "PartCrew",
+            "PartID": "rustydios.ion_beam_emitter_shared"
+          },
+          "Value": 0
+        },
+        {
+          "Key": {
+            "ComponentID": "BatteryConsumer",
+            "PartID": "rustydios.ion_beam_emitter_shared"
+          },
+          "Value": 0
+        }
+      ]
+    }
+  ],
+  "RoofBaseColor": {
+    "parts": [
+      "4F8F2D3E",
+      "00000000",
+      "69208B3D",
+      "0000803F"
+    ]
+  },
+  "RoofBaseTexture": "rusted_metal2",
+  "RoofDecalColor1": {
+    "parts": [
+      "06E6B13E",
+      "00000000",
+      "C49A0E3E",
+      "0000803F"
+    ]
+  },
+  "RoofDecalColor2": {
+    "parts": [
+      "3282063F",
+      "00000000",
+      "54A5573E",
+      "0000803F"
+    ]
+  },
+  "RoofDecalColor3": {
+    "parts": [
+      "4BD0303F",
+      "00000000",
+      "23BC8D3E",
+      "0000803F"
+    ]
+  },
+  "ShipRulesID": "cosmoteer.terran",
+  "Version": 3,
+  "WeaponDirectControlBindings": "Unset",
+  "WeaponSelfTargets": "Unset",
+  "WeaponShipRelativeTargets": "Unset"
+}
