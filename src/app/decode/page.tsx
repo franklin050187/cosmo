@@ -9,6 +9,9 @@ import { Ship } from "@/lib/cosmoShip";
 
 export default function DecodePage() {
   const router = useRouter();
+  const [decodedData, setDecodedData] = useState<object | null>(null);
+  const [priceResult, setPriceResult] = useState<{ price: number; crew: number; author: string; tags: string[] } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "development") {
@@ -19,10 +22,6 @@ export default function DecodePage() {
   if (process.env.NODE_ENV !== "development") {
     return null;
   }
-
-  const [decodedData, setDecodedData] = useState<object | null>(null);
-  const [priceResult, setPriceResult] = useState<{ price: number; crew: number; author: string; tags: string[] } | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

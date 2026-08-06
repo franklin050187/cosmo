@@ -13,10 +13,14 @@ interface AuthorFilterProps {
 
 export default function AuthorFilter({ value, onChange }: AuthorFilterProps) {
   const [input, setInput] = useState(value);
+  const [prevValue, setPrevValue] = useState(value);
   const [options, setOptions] = useState<AuthorOption[]>([]);
   const { wrapRef, showDD, setShowDD, ddPos, highlight, setHighlight } = useDropdown();
 
-  useEffect(() => { setInput(value); }, [value]);
+  if (value !== prevValue) {
+    setPrevValue(value);
+    setInput(value);
+  }
 
   useEffect(() => {
     fetch("/api/ship/authors").then(r => r.json()).then((d: AuthorOption[]) => setOptions(d)).catch((e) => console.error("Failed to fetch authors:", e));

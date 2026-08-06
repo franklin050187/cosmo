@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { NextRequest, NextResponse } from "next/server";
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -6,7 +7,7 @@ function getJwtSecret(): string {
   return secret;
 }
 
-const TOKEN_EXPIRY = "30d";
+const TOKEN_EXPIRY = "7d";
 
 export interface UserPayload {
   id: string;
@@ -50,4 +51,43 @@ export function getUserFromRequest(req: Request): UserPayload | null {
   } catch {
     return null;
   }
+}
+
+export type AuthGuard =
+  | { ok: true; user: UserPayload }
+  | { ok: false; response: NextResponse };
+
+function getAdminUsernames(): string[] {
+  return (process.env.ADMIN_USERNAMES || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+export function isAdminUsername(username: string | null | undefined): boolean {
+  if (!username) return false;
+  return getAdminUsernames().includes(username);
+}
+
+export function requireAuth(req: NextRequest): AuthGuard {
+  const user = getUserFromRequest(req);
+  if (!user) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
+  return { ok: true, user };
+}
+
+export function requireAdmin(req: NextRequest): AuthGuard {
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth;
+  if (!isAdminUsername(auth.user.username)) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+    };
+  }
+  return auth;
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import RequireAuth from "@/components/RequireAuth";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -224,9 +225,11 @@ function AddShipsSection({ collectionId, existingShipIds }: { collectionId: numb
                 className="group flex items-center gap-2 py-1.5 px-2 rounded hover:bg-[#1C598C]/20 min-w-0"
               >
                 <div className="relative shrink-0">
-                  <img
+                  <Image
                     src={ship.data}
                     alt={name}
+                    width={40}
+                    height={40}
                     className="w-10 h-10 rounded object-contain bg-[#021526] border border-[#1C598C]/30"
                     loading="lazy"
                   />

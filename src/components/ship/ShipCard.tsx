@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { type ShipRow } from "@/lib/db";
 import CollectionPicker from "@/components/collection/CollectionPicker";
 import { downloadShip } from "@/lib/download-ship";
@@ -53,7 +54,7 @@ export default function ShipCard({ ship, priority = false }: { ship: ShipRow; pr
           navigates to the ship page. The download/collection buttons are
           positioned outside this element so they don't intercept drags. */}
       <div className="relative overflow-hidden rounded-t-xl">
-        <img
+        <Image
           src={ship.data}
           alt={ship.ship_name}
           width={400}

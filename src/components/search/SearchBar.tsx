@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 
 interface SearchBarProps {
   query: string;
@@ -16,10 +16,12 @@ export default function SearchBar({
   activeFilterCount,
 }: SearchBarProps) {
   const [input, setInput] = useState(query);
+  const [prevQuery, setPrevQuery] = useState(query);
 
-  useEffect(() => {
+  if (query !== prevQuery) {
+    setPrevQuery(query);
     setInput(query);
-  }, [query]);
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

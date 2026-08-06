@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromRequest } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import { verifyTurnstileToken } from "@/lib/turnstile";
+import { getCollectionsForShip, getAllCollections, createCollection } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   const shipId = req.nextUrl.searchParams.get("shipId");
@@ -11,13 +12,11 @@ export async function GET(req: NextRequest) {
       if (isNaN(shipIdNum)) {
         return NextResponse.json({ error: "invalid shipId" }, { status: 400 });
       }
-      const { getCollectionsForShip } = await import("@/lib/db");
       const data = await getCollectionsForShip(shipIdNum);
       return NextResponse.json({ data });
     }
 
     const page = parseInt(req.nextUrl.searchParams.get("page") ?? "1", 10) || 1;
-    const { getAllCollections } = await import("@/lib/db");
     const data = await getAllCollections(page);
     return NextResponse.json(data);
   } catch (err) {
@@ -27,10 +26,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const user = getUserFromRequest(req);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const cl = req.headers.get("content-length");
   if (cl && parseInt(cl, 10) > 1_048_576) {
@@ -52,7 +50,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { createCollection } = await import("@/lib/db");
     const result = await createCollection(
       user.username,
       user.id,

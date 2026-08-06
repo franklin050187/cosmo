@@ -1,4 +1,4 @@
-import { readFileSync, copyFileSync, existsSync, writeFileSync } from "node:fs";
+import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { partsResources, resourceCost } from "../../src/lib/part-data";
 import { calculateShipPrice } from "../../src/lib/price";

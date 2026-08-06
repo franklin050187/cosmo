@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromRequest } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
+import { addShipToCollection } from "@/lib/db";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const user = getUserFromRequest(req);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const { id } = await params;
   const collectionId = parseInt(id, 10);
@@ -27,7 +27,6 @@ export async function POST(
   }
 
   try {
-    const { addShipToCollection } = await import("@/lib/db");
     const result = await addShipToCollection(collectionId, shipId, user.username, user.id);
 
     if ("error" in result) {

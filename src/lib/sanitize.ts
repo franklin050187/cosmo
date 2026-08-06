@@ -26,7 +26,7 @@ export function sanitizeHtml(html: string): string {
     let attrMatch;
     while ((attrMatch = attrRe.exec(tag)) !== null) {
       const name = attrMatch[1] || attrMatch[3] || attrMatch[5];
-      let value = attrMatch[2] ?? attrMatch[4] ?? attrMatch[6] ?? "";
+      const value = attrMatch[2] ?? attrMatch[4] ?? attrMatch[6] ?? "";
       if (!name || !ALLOWED_ATTRS.has(name)) continue;
       if (name === "href" && !isSafeUrl(value)) continue;
       attrs.push(`${name}="${value.replace(/"/g, "&quot;")}"`);

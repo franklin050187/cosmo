@@ -22,3 +22,27 @@ export async function verifyTurnstileToken(token: string, ip?: string): Promise<
 export function getTurnstileTokenFromReq(req: Request): string {
   return req.headers.get("x-turnstile-token") || "";
 }
+
+function clientIp(req: Request): string {
+  return (
+    (req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      "").replace(/^::ffff:/, "")
+  );
+}
+
+/**
+ * Verify Turnstile on a mutation request. Reads the token from the
+ * `x-turnstile-token` header (falling back to the `cf-turnstile-response`
+ * form field), so it works for JSON, form, and bodyless requests alike.
+ * Skipped entirely in development (server never enforces the captcha there).
+ */
+export async function verifyTurnstileFromRequest(
+  req: Request,
+  bodyToken?: string
+): Promise<boolean> {
+  if (process.env.NODE_ENV === "development") return true;
+  const token = getTurnstileTokenFromReq(req) || bodyToken || "";
+  if (!token) return false;
+  return verifyTurnstileToken(token, clientIp(req));
+}

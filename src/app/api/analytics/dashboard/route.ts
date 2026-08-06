@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDashboardData } from "@/lib/analytics-db";
-import { getUserFromRequest } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { verifyTurnstileToken, getTurnstileTokenFromReq } from "@/lib/turnstile";
 
-const ADMIN_USERNAMES = (process.env.ADMIN_USERNAMES || "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
-
 export async function GET(req: NextRequest) {
-  const user = getUserFromRequest(req);
-  if (!user || !ADMIN_USERNAMES.includes(user.username)) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 403 });
+  const auth = requireAdmin(req);
+  if (!auth.ok) return auth.response;
+
+  const date = req.nextUrl.searchParams.get("date") ?? undefined;
+  if (date !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return NextResponse.json({ error: "Invalid date format, expected YYYY-MM-DD" }, { status: 400 });
   }
 
   if (process.env.NODE_ENV !== "development") {
@@ -24,7 +22,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const data = await getDashboardData();
+    const data = await getDashboardData(date);
     return NextResponse.json(data);
   } catch (err) {
     console.error("analytics/dashboard error:", err);

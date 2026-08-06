@@ -1,4 +1,3 @@
-import { resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
   cliEval,
@@ -7,8 +6,10 @@ import {
   FIXTURES_DIR,
   FIXTURE_JSON,
   FIXTURE_PNG,
+  FIXTURE_REPLACE_PNG,
   FIXTURE_INVALID,
   FIXTURE_SOURCE_SHIP,
+  REPLACE_SOURCE_SHIP,
   openSession,
   q,
   readText,
@@ -39,6 +40,19 @@ export async function ensureShipPng(force = false) {
   await saveBuffer(FIXTURE_PNG, Buffer.from(new Uint8Array(await res.arrayBuffer())));
 }
 
+export async function ensureReplacePng(force = false) {
+  if (!force && fileExists(FIXTURE_REPLACE_PNG)) return;
+  const { rows } = await q<{ data: string }>(
+    "SELECT data FROM shipdb WHERE id = $1",
+    [REPLACE_SOURCE_SHIP]
+  );
+  if (rows.length === 0) throw new Error(`replace fixture source ship ${REPLACE_SOURCE_SHIP} missing from DB`);
+  const url = rows[0].data;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`failed to fetch replace fixture PNG: ${res.status}`);
+  await saveBuffer(FIXTURE_REPLACE_PNG, Buffer.from(new Uint8Array(await res.arrayBuffer())));
+}
+
 export async function ensureDecodeJson(force = false) {
   if (!force && fileExists(FIXTURE_JSON) && readText(FIXTURE_JSON).trim().length > 10) {
     return;
@@ -58,6 +72,7 @@ export async function ensureDecodeJson(force = false) {
 export async function ensureFixtures(opts: { force?: boolean } = {}) {
   await dbInit();
   await ensureShipPng(opts.force);
+  await ensureReplacePng(opts.force);
   await ensureInvalidPng();
   await ensureDecodeJson(opts.force);
 }

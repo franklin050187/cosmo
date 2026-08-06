@@ -19,8 +19,26 @@ export default function RichTextEditor({ value, onChange, placeholder, rows = 4 
   }, [value]);
 
   const exec = useCallback((cmd: string, arg?: string) => {
-    document.execCommand(cmd, false, arg);
-    editorRef.current?.focus();
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.focus();
+    try {
+      document.execCommand(cmd, false, arg);
+    } catch {
+      if (cmd === "createLink" && arg) {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+        const range = selection.getRangeAt(0);
+        const link = document.createElement("a");
+        link.href = arg;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = selection.toString() || arg;
+        range.deleteContents();
+        range.insertNode(link);
+      }
+    }
+    editor.focus();
   }, []);
 
   const handleInput = useCallback(() => {

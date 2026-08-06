@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { generateUserToken, type UserPayload, type TokenPayload } from "@/lib/auth";
 import { migrateUsernameOnLogin } from "@/lib/db";
+import { getRequiredEnv } from "@/lib/env";
 
 const DISCORD_API = "https://discord.com/api/v10";
 
 function getClientUrl(): string {
-  const url = process.env.CLIENT_URL;
-  if (!url) throw new Error("CLIENT_URL env var is required");
-  return url;
+  return getRequiredEnv("CLIENT_URL");
 }
 
 export async function GET(req: NextRequest) {
@@ -39,11 +38,11 @@ export async function GET(req: NextRequest) {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: process.env.DISCORD_CLIENT_ID!,
-        client_secret: process.env.DISCORD_CLIENT_SECRET!,
+        client_id: getRequiredEnv("DISCORD_CLIENT_ID"),
+        client_secret: getRequiredEnv("DISCORD_CLIENT_SECRET"),
         grant_type: "authorization_code",
         code,
-        redirect_uri: process.env.DISCORD_REDIRECT_URI!,
+        redirect_uri: getRequiredEnv("DISCORD_REDIRECT_URI"),
       }),
     });
 
@@ -104,7 +103,7 @@ export async function GET(req: NextRequest) {
     let prevUsername: string | null = null;
     if (prevSession) {
       try {
-        const decoded = jwt.verify(prevSession, process.env.JWT_SECRET!) as TokenPayload;
+        const decoded = jwt.verify(prevSession, getRequiredEnv("JWT_SECRET")) as TokenPayload;
         prevUsername = decoded?.user?.username ?? null;
       } catch { /* old/expired cookie — ignore */ }
     }
@@ -117,8 +116,8 @@ export async function GET(req: NextRequest) {
       path: "/",
       httpOnly: true,
       secure: true,
-      sameSite: "lax",
-      maxAge: 30 * 86400,
+      sameSite: "strict",
+      maxAge: 7 * 86400,
     });
     res.cookies.set("oauth_csrf", "", { path: "/", maxAge: 0 });
     res.cookies.set("oauth_return", "", { path: "/", maxAge: 0 });

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useShipDecode } from "@/hooks/useShipDecode";
 import { stringifyChunked } from "@/lib/serializers";
+import type { DecodedShip } from "@/hooks/useShipDecode";
 
 interface Props {
   imageUrl: string;
@@ -10,27 +11,25 @@ interface Props {
 
 export default function ShipJson({ imageUrl }: Props) {
   const { decoded, loading, error } = useShipDecode(imageUrl);
-  const [json, setJson] = useState<string | null>(null);
-  const [serializing, setSerializing] = useState(false);
+  const [result, setResult] = useState<{ decoded: DecodedShip; json: string } | null>(null);
 
   useEffect(() => {
     if (!decoded) return;
     let cancelled = false;
 
-    setSerializing(true);
-    setJson(null);
-
     (async () => {
-      const result = await stringifyChunked(decoded);
+      const json = await stringifyChunked(decoded);
       if (cancelled) return;
-      setJson(result);
-      setSerializing(false);
+      setResult({ decoded, json });
     })();
 
     return () => {
       cancelled = true;
     };
   }, [decoded]);
+
+  const json = result && result.decoded === decoded ? result.json : null;
+  const serializing = decoded !== null && json === null;
 
   if (loading) {
     return (

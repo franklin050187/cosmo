@@ -10,6 +10,7 @@ export const FIXTURES_DIR = resolve(ROOT, "scripts/qa-fixtures");
 
 export const FIXTURE_PNG = resolve(FIXTURES_DIR, "valid-ship.ship.png");
 export const FIXTURE_JSON = resolve(FIXTURES_DIR, "valid-ship.json");
+export const FIXTURE_REPLACE_PNG = resolve(FIXTURES_DIR, "replace-ship.ship.png");
 export const FIXTURE_INVALID = resolve(FIXTURES_DIR, "invalid.png");
 
 export const SESSION_QA = "qa";
@@ -18,6 +19,7 @@ export const SESSION_ANON = "anon";
 export const PONEY_USER = "poney5850#0";
 export const PONEY_ID = "439514586778042369";
 export const FIXTURE_SOURCE_SHIP = 1624;
+export const REPLACE_SOURCE_SHIP = 2401;
 export const OTHER_SHIP_ID = 61;
 export const OTHER_COLLECTION_ID = 8;
 export const BOGUS_SHIP_ID = 999999999;

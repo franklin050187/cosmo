@@ -49,6 +49,7 @@ export function useAuth(): UseAuthReturn {
 
   const logout = useCallback(async () => {
     setUser(null);
+    sessionPromise = null;
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } catch {

@@ -1,4 +1,5 @@
-import { partsResources, lookupResourcePrice, lookupResourceStackSize } from "./price-data";
+import { computePartCost, partsResources, type PartResource } from "./part-data";
+import { lookupResourcePrice, lookupResourceStackSize } from "./price-data";
 
 interface DecodedShip {
   Parts: {
@@ -23,8 +24,9 @@ const catWeapons = new Set([
   "cosmoteer.ion_beam_prism", "cosmoteer.laser_blaster_large", "cosmoteer.laser_blaster_small",
   "cosmoteer.mining_laser_small", "cosmoteer.missile_launcher", "cosmoteer.point_defense",
   "cosmoteer.railgun_accelerator", "cosmoteer.railgun_launcher", "cosmoteer.railgun_loader",
-  "he_missiles", "nukes", "mines", "emp_missiles",
+  "he_missiles", "nukes", "mines", "emp_missiles", "thermal_missiles",
   "cosmoteer.chaingun", "cosmoteer.chaingun_magazine", "cosmoteer.resonance_beam_turret",
+  "cosmoteer.explosive_charge", "cosmoteer.manipulator_beam_emitter", "cosmoteer.tractor_beam_emitter",
 ]);
 
 const catArmor = new Set([
@@ -37,13 +39,15 @@ const catArmor = new Set([
 ]);
 
 const catCrew = new Set([
-  "cosmoteer.crew_quarters_med", "cosmoteer.crew_quarters_small",
+  "cosmoteer.crew_quarters_med", "cosmoteer.crew_quarters_small", "cosmoteer.crew_quarters_large",
 ]);
 
 const catMovement = new Set([
   "cosmoteer.engine_room", "cosmoteer.thruster_boost", "cosmoteer.thruster_huge",
   "cosmoteer.thruster_large", "cosmoteer.thruster_med", "cosmoteer.thruster_small",
   "cosmoteer.thruster_small_2way", "cosmoteer.thruster_small_3way",
+  "cosmoteer.thruster_rocket_battery", "cosmoteer.thruster_rocket_extender",
+  "cosmoteer.thruster_rocket_nozzle",
 ]);
 
 const catPower = new Set([
@@ -68,16 +72,12 @@ const missileMapping: Record<number, string> = {
   4: "thermal_missiles",
 };
 
-const partsResourcesMap = new Map(partsResources.map((p) => [p.ID, p.Resources]));
+const partsResourcesMap = new Map<string, PartResource>(partsResources.map((p) => [p.ID, p]));
 
 function priceOfPart(itemId: string): number {
-  const resources = partsResourcesMap.get(itemId);
-  if (!resources) return 0;
-  let price = 0;
-  for (const [resId, qty] of resources) {
-    price += lookupResourcePrice(resId) * parseInt(qty, 10);
-  }
-  return price;
+  const part = partsResourcesMap.get(itemId);
+  if (!part) return 0;
+  return computePartCost(part);
 }
 
 function categorize(itemId: string): string {

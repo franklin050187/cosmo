@@ -370,7 +370,7 @@ function prepareParts(blueprintData: {
   }>;
   FlightDirection: number;
 }): Part[] {
-  let parts = blueprintData.Parts.map((p) => ({ ...p }));
+  const parts = blueprintData.Parts.map((p) => ({ ...p }));
 
   if (blueprintData.PartUIToggleStates) {
     const ocRefs = new Set<string>();

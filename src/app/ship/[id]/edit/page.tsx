@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import AddToCollectionButton from "@/components/collection/AddToCollectionButton";
 import UserTagEditor from "@/components/tags/UserTagEditor";
+import TurnstileWidget from "@/components/TurnstileWidget";
+import type { TurnstileWidgetHandle } from "@/components/TurnstileWidget";
 import { extractUserTags } from "@/lib/user-tag-data";
 import ShipReplaceModal from "@/components/ship/ShipReplaceModal";
 import { uploadFiles } from "@/lib/upload-png";
@@ -30,6 +33,7 @@ export default function EditShipPage() {
   const [brand, setBrand] = useState("gen");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
   const [replaceModalOpen, setReplaceModalOpen] = useState(false);
   const [replacing, setReplacing] = useState(false);
   const [replacePreview, setReplacePreview] = useState("");
@@ -77,11 +81,15 @@ export default function EditShipPage() {
 
     setSaving(true);
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      const token = turnstileRef.current?.getToken();
+      if (token) headers["x-turnstile-token"] = token;
+
       await fetch(`/api/ship/${params.id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           ship_name: shipName,
           description,
@@ -191,7 +199,7 @@ export default function EditShipPage() {
           {/* Left: preview + metadata */}
           <div className="space-y-4">
             <div>
-              <img src={ship.data} alt={ship.ship_name} className="max-w-full h-auto max-sm:max-h-48 max-sm:object-contain" />
+              <Image src={ship.data} alt={ship.ship_name} width={512} height={512} className="max-w-full h-auto max-sm:max-h-48 max-sm:object-contain" />
             </div>
 
             <div>
@@ -283,6 +291,8 @@ export default function EditShipPage() {
           replacing={replacing}
         />
       )}
+
+      <TurnstileWidget ref={turnstileRef} />
     </div>
   );
 }

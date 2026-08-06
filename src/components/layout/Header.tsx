@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -50,11 +51,14 @@ export default function Header() {
   }, [user]);
 
   useEffect(() => {
-    const error = new URLSearchParams(window.location.search).get("auth_error");
-    if (error) {
-      window.history.replaceState({}, "", window.location.pathname + window.location.hash);
-      setAuthErrorCode(error);
-    }
+    const id = setTimeout(() => {
+      const error = new URLSearchParams(window.location.search).get("auth_error");
+      if (error) {
+        window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+        setAuthErrorCode(error);
+      }
+    }, 0);
+    return () => clearTimeout(id);
   }, []);
 
   const authError = authErrorCode && !dismissed ? (AUTH_ERROR_MESSAGES[authErrorCode] || "Login failed. Please try again.") : null;
@@ -100,7 +104,7 @@ export default function Header() {
       <div className="max-w-[1360px] mx-auto px-4 h-14 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link href="/" className="shrink-0">
-          <img alt="CosmoShip" src="/logo-v2.svg" width={120} height={32} className="h-8 w-auto" />
+          <Image alt="CosmoShip" src="/logo-v2.svg" width={120} height={32} className="h-8 w-auto" />
         </Link>
 
         {/* Desktop nav */}
@@ -127,7 +131,7 @@ export default function Header() {
                   className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/5 transition-colors"
                 >
                   {user.avatar && (
-                    <img src={user.avatar} alt="" className="w-6 h-6 rounded-full" />
+                    <Image src={user.avatar} alt="" width={24} height={24} className="w-6 h-6 rounded-full" />
                   )}
                   <span className="text-sm text-blue-200">{user.username}</span>
                   <svg className={`w-3 h-3 text-blue-300 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -235,7 +239,7 @@ export default function Header() {
               <div className="border-t border-[#1C598C]/20 mt-2 pt-2">
                 <div className="flex items-center gap-2 px-3 py-2">
                   {user.avatar && (
-                    <img src={user.avatar} alt="" className="w-5 h-5 rounded-full" />
+                    <Image src={user.avatar} alt="" width={20} height={20} className="w-5 h-5 rounded-full" />
                   )}
                   <span className="text-sm text-blue-200">{user.username}</span>
                 </div>

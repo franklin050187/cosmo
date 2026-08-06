@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { calculateShipPrice } from "@/lib/price";
-import { getUserFromRequest } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  const user = getUserFromRequest(req);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
 
   try {
     const cl = req.headers.get("content-length");

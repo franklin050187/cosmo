@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,35 +29,26 @@ export default function CollectionPicker({ shipId, children, className }: Props)
   const panelRef = useRef<HTMLDivElement>(null);
   const msgTimer = useRef<number | undefined>(undefined);
 
-  const fetchCollections = useCallback(async (signal?: AbortSignal) => {
-    if (!isLoggedIn) return;
-
-    setLoading(true);
-
-    try {
-      const res = await fetch(`/api/collections/mine?shipId=${shipId}`, {
-        signal,
-      });
-      if (!res.ok) {
-        setCollections([]);
-        return;
-      }
-      const data = await res.json();
-      setCollections(Array.isArray(data) ? data : []);
-    } catch (err) {
-      if ((err as Error)?.name === "AbortError") return;
-      setCollections([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [shipId, isLoggedIn]);
-
   useEffect(() => {
-    if (!open) return;
+    if (!open || !isLoggedIn) return;
     const ac = new AbortController();
-    fetchCollections(ac.signal);
+    fetch(`/api/collections/mine?shipId=${shipId}`, { signal: ac.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        setCollections(Array.isArray(data) ? data : []);
+      })
+      .catch((err: unknown) => {
+        if ((err as Error)?.name === "AbortError") return;
+        setCollections([]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
     return () => ac.abort();
-  }, [open, fetchCollections]);
+  }, [open, shipId, isLoggedIn]);
 
   useEffect(() => {
     if (!open || !triggerRef.current) return;
@@ -75,6 +66,15 @@ export default function CollectionPicker({ shipId, children, className }: Props)
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
+
+  const handleToggle = () => {
+    if (open) {
+      setOpen(false);
+    } else {
+      setOpen(true);
+      setLoading(true);
+    }
+  };
 
   const showMsg = (text: string) => {
     if (msgTimer.current !== undefined) clearTimeout(msgTimer.current);
@@ -128,7 +128,7 @@ export default function CollectionPicker({ shipId, children, className }: Props)
   return (
     <>
       <div ref={triggerRef} className={["relative inline-block", className].filter(Boolean).join(" ")}>
-        <span onClick={() => setOpen(!open)} className="cursor-pointer">
+        <span onClick={handleToggle} className="cursor-pointer">
           {children}
         </span>
       </div>

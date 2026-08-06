@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import AddToCollectionButton from "@/components/collection/AddToCollectionButton";
 import UserTagEditor from "@/components/tags/UserTagEditor";
@@ -73,7 +74,7 @@ export default function UploadPanel() {
           body: fd,
         });
         const dupData = await dupRes.json();
-        setDuplicates(dupData.duplicates ?? []);
+        setDuplicates(dupData?.data?.duplicates ?? []);
       } catch (err) {
         console.error("[duplicate-check] failed:", err);
         setDuplicates([]);
@@ -167,11 +168,13 @@ export default function UploadPanel() {
               </div>
 
               {preview && (
-                <div className="mb-4">
-                  <img
+                <div className="mb-4 relative w-full h-48">
+                  <Image
                     src={preview}
                     alt="Preview"
-                    className="max-w-full h-auto max-sm:max-h-48 max-sm:object-contain"
+                    fill
+                    unoptimized
+                    className="object-contain"
                   />
                 </div>
               )}

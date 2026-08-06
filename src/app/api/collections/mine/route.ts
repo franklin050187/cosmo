@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromRequest } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
+import { getUserCollections } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
-  const user = getUserFromRequest(req);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   try {
-    const { getUserCollections } = await import("@/lib/db");
     const { searchParams } = new URL(req.url);
     const shipId = searchParams.get("shipId");
     const data = await getUserCollections(

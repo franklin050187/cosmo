@@ -8,10 +8,10 @@ import {
   dbInit,
   FIXTURE_INVALID,
   FIXTURE_PNG,
+  FIXTURE_REPLACE_PNG,
   httpFetch,
   openSession,
   pageText,
-  pageUrl,
   prepTurnstile,
   q,
   runCli,
@@ -279,19 +279,39 @@ async function phase2(scratch: { shipId: number }) {
     });
   }
 
-  await check("P2-G2", "Analytics dashboard gated for anonymous (403 + no data leak)", async () => {
-    const res = await httpFetch(A, "/api/analytics/dashboard");
-    assert(res.status === 403, `dashboard api status ${res.status}`);
-    openSession(A, HOME + "/admin");
-    await waitText(A, "Complete the captcha");
-    prepTurnstile(A);
-    await waitFor(
-      A,
-      `document.body.innerText.toLowerCase().includes("not logged in") || window.location.pathname === "/"`,
-      15000
-    );
-    assert(!pageText(A).includes("Total Events"), "dashboard data leaked to anon");
-  });
+   await check("P2-G2", "Analytics dashboard gated for anonymous (403 + no data leak)", async () => {
+     const res = await httpFetch(A, "/api/analytics/dashboard");
+     assert(res.status === 401, `dashboard api status ${res.status}`);
+     openSession(A, HOME + "/admin");
+     await waitText(A, "Complete the captcha");
+     prepTurnstile(A);
+     await waitFor(
+       A,
+       `document.body.innerText.toLowerCase().includes("not logged in") || window.location.pathname === "/"`,
+       15000
+     );
+     assert(!pageText(A).includes("Total Events"), "dashboard data leaked to anon");
+   });
+
+   await check("P2-G11", "Rate limiting on check-duplicate endpoint", async () => {
+     const clients = Array.from({ length: 22 }, () => SESSION_ANON);
+     for (let i = 0; i < 22; i++) {
+       const session = clients[i];
+       const payload = { signature: "dummy-sign-${i}" };
+       const res = await httpFetch(session, "/api/ship/check-duplicate", {
+         method: "POST",
+         body: JSON.stringify(payload),
+         headers: { "Content-Type": "application/json" },
+       });
+       const ok = res.status !== 429;
+       if (i < 21) {
+         assert(ok, `check-duplicate should accept requests (attempt ${i+1})`);
+       } else {
+         assert(!ok, `check-duplicate should rate limit on 22nd request (status ${res.status})`);
+       }
+       console.log(`Attempt ${i+1}: status ${res.status}`);
+     }
+   });
 
   await check("P2-G3", `Ship edit (${scratch.shipId}) redirects anonymous to home`, async () => {
     openSession(A, HOME + `/ship/${scratch.shipId}/edit`);
@@ -360,7 +380,17 @@ async function phase2(scratch: { shipId: number }) {
 
   await check("P2-G10", "auth_error=access_denied shows 'Login was cancelled.'", async () => {
     openSession(A, HOME + "/?auth_error=access_denied");
-    await waitText(A, "Login was cancelled.");
+    try {
+      await waitText(A, "Login was cancelled.");
+    } catch (e) {
+      try {
+        const dbg = String(cliEval(A, `JSON.stringify({ url: location.href, q: location.search, text: document.body.innerText.slice(0, 400) })`));
+        console.log("P2-G10 DEBUG:", dbg);
+      } catch (e2) {
+        console.log("P2-G10 DEBUG eval failed:", e2);
+      }
+      throw e;
+    }
   });
 
   await check("F1", "Decode valid fixture matches expected JSON (valid-ship.json)", async () => {
@@ -465,13 +495,25 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
     openSession(S, HOME + `/ship/${scratch.shipId}/edit`);
     await waitText(S, "Edit Ship");
     await clickBtn(S, "Replace Ship");
-    runCli(["-s=" + S, "upload", FIXTURE_PNG]);
+    runCli(["-s=" + S, "upload", FIXTURE_REPLACE_PNG]);
     await waitText(S, "Confirm Replace", 40000);
     await clickBtn(S, "Confirm Replace");
     await waitFor(S, `window.location.pathname === "/ship/${scratch.shipId}"`, 30000);
-    await waitFor(S, `document.body.innerText.includes("valid-ship")`, 30000);
+    try {
+      await waitText(S, "replace-ship", 30000);
+    } catch (e) {
+      try {
+        const dbg = String(cliEval(S, `JSON.stringify({ url: location.href, text: document.body.innerText.slice(0, 600) })`));
+        console.log("P3-S6 DEBUG:", dbg);
+      } catch (e2) {
+        console.log("P3-S6 DEBUG eval failed:", e2);
+      }
+      throw e;
+    }
     const after = (await getShipRow(scratch.shipId))?.data as string;
     assert(after && after !== before, "data URL did not change");
+    const row = await getShipRow(scratch.shipId);
+    assert(row?.ship_name === "replace-ship", `ship_name after replace=${row?.ship_name}`);
     const oldStatus = await hostedStatus(before);
     const newStatus = await hostedStatus(after);
     assert(oldStatus >= 400, `old hosted file still reachable (${oldStatus})`);
@@ -482,7 +524,7 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
   await check("P3-S7", "Favorite/unfavorite scratch ship leaves no trace", async () => {
     const before = await poneyFavoriteIds();
     openSession(S, HOME + `/ship/${scratch.shipId}`);
-    await waitText(S, "valid-ship");
+    await waitText(S, "replace-ship");
     await clickBtn(S, "☆ Favorite");
     await waitText(S, "★ Unfavorite");
     let favs = await poneyFavoriteIds();
@@ -530,9 +572,9 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
 
     openSession(S, HOME + `/collections/${coll.id}/edit`);
     await waitText(S, "Edit Collection");
-    await setInput(S, 'input[placeholder="Search ship name..."]', "valid-ship");
+    await setInput(S, 'input[placeholder="Search ship name..."]', "replace-ship");
     await clickBtn(S, "Search");
-    await waitText(S, "valid-ship", 20000);
+    await waitText(S, "replace-ship", 20000);
     await clickBtn(S, "+ Add");
     await waitText(S, "✓ Added", 20000);
     row = (await q<{ ships: number[] }>("SELECT ships FROM collections WHERE id = $1", [coll.id])).rows[0];
@@ -541,7 +583,7 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
 
   await check("P3-S10", "Delete scratch ship → DB rows + hosted file + URL gone", async () => {
     openSession(S, HOME + `/ship/${scratch.shipId}`);
-    await waitText(S, "valid-ship");
+    await waitText(S, "replace-ship");
     await stubConfirm(S);
     await clickBtn(S, "Delete");
     await waitFor(S, `window.location.pathname === "/"`, 20000);
@@ -604,6 +646,7 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
         .split("\n")
         .filter((l) => /error/i.test(l))
         .filter((l) => !/Total messages:/.test(l))
+        .filter((l) => !/Console: \d+ errors?/.test(l))
         .filter((l) => !/challenges\.cloudflare\.com/.test(l))
         .filter((l) => !/Failed to load resource/.test(l))
         .filter((l) => !/favicon/i.test(l))

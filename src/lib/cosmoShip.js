@@ -205,7 +205,7 @@ function isBase64(str) {
   if (!/^[A-Za-z0-9+/]+={0,2}$/.test(str)) return false;
   try {
     return btoa(atob(str)) === str;
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -545,13 +545,13 @@ function decodeLengthPrefixedString(value) {
     const slice = value.slice(1, 1 + strLen);
     try {
       return new TextDecoder('utf-8', { fatal: true }).decode(slice);
-    } catch (e) {
+    } catch {
       return latin1Decode(slice);
     }
   }
   try {
     return readString(new ByteReader(value));
-  } catch (e) {
+  } catch {
     return new TextDecoder('utf-8').decode(value);
   }
 }
@@ -612,13 +612,13 @@ function decodeKeyElem(elem) {
     const strLen = elem[0];
     try {
       return new TextDecoder('utf-8', { fatal: true }).decode(elem.slice(1, 1 + strLen));
-    } catch (e) {
+    } catch {
       return latin1Decode(elem.slice(1));
     }
   }
   try {
     return new TextDecoder('utf-8', { fatal: true }).decode(elem);
-  } catch (e) {
+  } catch {
     return `<bytes len=${elem.length}>`;
   }
 }

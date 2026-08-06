@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMyFavorites } from "@/lib/db";
-import { getUserFromRequest } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-  const user = getUserFromRequest(req);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   try {
     const result = await getMyFavorites(user.username, user.id);

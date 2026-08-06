@@ -10,9 +10,6 @@ export function useAuthFetch<T>(url: string) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (!isLoggedIn) return;
-    setLoading(true);
-    setError(null);
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -22,11 +19,29 @@ export function useAuthFetch<T>(url: string) {
     } finally {
       setLoading(false);
     }
-  }, [url, isLoggedIn]);
+  }, [url]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (!isLoggedIn) return;
+    let active = true;
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((json: T) => {
+        if (active) setData(json);
+      })
+      .catch((err: unknown) => {
+        if (active) setError((err as Error).message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [url, isLoggedIn]);
 
   return { data, loading, error, refetch: fetchData };
 }

@@ -1,4 +1,4 @@
-import { partsResources, resourceCost } from "./part-data";
+import { partsResources, computePartCost, resourceCost } from "./part-data";
 import { partTagMap, missileTagMap } from "./tag-data";
 
 const MISSILE_MAPPING: Record<number, string> = {
@@ -17,26 +17,7 @@ const CREW_QUARTERS: Record<string, { price: number; crew: number }> = {
 
 const partCostCache = new Map<string, number>();
 for (const part of partsResources) {
-  let cost = 0;
-  for (const [resourceId, qty] of part.Resources) {
-    const res = resourceCost.find((r) => r.ID === resourceId);
-    if (res) cost += res.BuyPrice * Number(qty);
-  }
-  if (part.AmmoCapacity) {
-    const bullet = resourceCost.find((r) => r.ID === "bullet");
-    if (bullet) cost += bullet.BuyPrice * part.AmmoCapacity;
-  }
-  if (part.FuelCapacity) {
-    const hyperium = resourceCost.find((r) => r.ID === "hyperium");
-    if (hyperium) cost += hyperium.BuyPrice * part.FuelCapacity;
-  }
-  if (part.InputResources) {
-    for (const [resourceId, qty] of part.InputResources) {
-      const res = resourceCost.find((r) => r.ID === resourceId);
-      if (res) cost += res.BuyPrice * Number(qty);
-    }
-  }
-  partCostCache.set(part.ID, cost);
+  partCostCache.set(part.ID, computePartCost(part));
 }
 
 function lookupResourcePrice(resourceId: string): number {

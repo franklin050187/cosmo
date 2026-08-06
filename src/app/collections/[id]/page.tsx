@@ -6,6 +6,7 @@ import Link from "next/link";
 import ShipGrid from "@/components/ship/ShipGrid";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
+import TurnstileWidget from "@/components/TurnstileWidget";
 import { useAuth } from "@/hooks/useAuth";
 import { type CollectionDetail } from "@/lib/types";
 import { trackEvent } from "@/lib/analytics-client";
@@ -21,6 +22,7 @@ export default function CollectionDetailPage() {
   const [isOwner, setIsOwner] = useState(false);
   const [removing, setRemoving] = useState<number | null>(null);
   const [downloadingAll, setDownloadingAll] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -69,17 +71,25 @@ export default function CollectionDetailPage() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!confirm("Delete this collection?")) return;
     if (!isLoggedIn || !collection) return;
+    setPendingDelete(true);
+  };
 
+  const onDeleteVerify = async (token: string) => {
+    if (!pendingDelete || !collection || !token) return;
     try {
       await fetch(`/api/collections/${collection.id}`, {
         method: "DELETE",
+        headers: { "x-turnstile-token": token },
       });
       trackEvent("collection_delete");
       router.push("/my-collections");
-    } catch (e) { console.error("Failed to delete collection:", e); }
+    } catch (e) {
+      console.error("Failed to delete collection:", e);
+      setPendingDelete(false);
+    }
   };
 
   const handleDownloadAll = async () => {
@@ -205,6 +215,7 @@ export default function CollectionDetailPage() {
           )}
         </p>
       )}
+      {isOwner && pendingDelete && <TurnstileWidget onVerify={onDeleteVerify} />}
     </div>
   );
 }

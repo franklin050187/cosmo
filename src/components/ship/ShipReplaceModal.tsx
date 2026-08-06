@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 interface Props {
   previewUrl: string;
   currentAuthor: string;
@@ -81,8 +83,8 @@ export default function ShipReplaceModal({
         <div className="p-5">
           <h2 className="text-xl text-white font-semibold mb-4">Replace Ship</h2>
 
-          <div className="mb-4">
-            <img src={previewUrl} alt="New ship preview" className="max-w-full h-auto max-h-48 rounded border border-[#1C598C]" />
+          <div className="relative w-full h-48 mb-4">
+            <Image src={previewUrl} alt="New ship preview" fill unoptimized className="object-contain rounded border border-[#1C598C]" />
           </div>
 
           <table className="w-full text-sm">

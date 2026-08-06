@@ -14,18 +14,19 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [turnstilePassed, setTurnstilePassed] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!turnstilePassed) return;
+    if (!turnstilePassed || !isLoggedIn) return;
 
-    const fetchData = async () => {
-      if (!isLoggedIn) {
-        setError("Not logged in");
-        setLoading(false);
-        return;
-      }
+    let cancelled = false;
+
+    const run = async () => {
       try {
-        const res = await fetch("/api/analytics/dashboard", {
+        const url = selectedDate
+          ? `/api/analytics/dashboard?date=${encodeURIComponent(selectedDate)}`
+          : "/api/analytics/dashboard";
+        const res = await fetch(url, {
           headers: {
             "x-turnstile-token": turnstileToken,
           },
@@ -36,15 +37,22 @@ export default function AdminPage() {
         }
         if (!res.ok) throw new Error("Failed to fetch");
         const json = await res.json();
-        setData(json);
+        if (!cancelled) {
+          setData(json);
+          setError(null);
+        }
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Unknown error");
+        if (!cancelled) setError(e instanceof Error ? e.message : "Unknown error");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
-    fetchData();
-  }, [router, turnstilePassed, isLoggedIn]);
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [turnstilePassed, selectedDate, turnstileToken, isLoggedIn, router]);
 
   if (!turnstilePassed) {
     return (
@@ -54,6 +62,10 @@ export default function AdminPage() {
         <TurnstileWidget onVerify={(token) => { setTurnstileToken(token); setTurnstilePassed(true); }} />
       </div>
     );
+  }
+
+  if (!isLoggedIn) {
+    return <div className="flex justify-center pt-20 text-red-400">Not logged in</div>;
   }
 
   if (loading) {
@@ -67,36 +79,82 @@ export default function AdminPage() {
   if (!data) return null;
 
   const maxView = Math.max(...data.views_per_day.map((d) => d.count), 1);
+  const isFiltered = selectedDate !== null;
 
   return (
     <div className="pt-8 space-y-8">
-      <h1 className="text-2xl font-bold text-white">Analytics Dashboard</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold text-white">
+          Analytics Dashboard
+          {isFiltered && (
+            <span className="ml-2 text-base font-normal text-blue-300">— {selectedDate}</span>
+          )}
+        </h1>
+        {isFiltered && (
+          <button
+            onClick={() => { setLoading(true); setSelectedDate(null); }}
+            className="border border-[#1C598C] bg-gradient-to-b from-[#1e3851]/25 to-[#124c80]/25 text-cyan-400 hover:bg-cyan-400/20 hover:text-white rounded px-3 py-1.5 text-sm transition-colors"
+          >
+            ← Back to all days
+          </button>
+        )}
+      </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <SummaryCard label="Total Events" value={data.totals.total_events.toLocaleString()} />
         <SummaryCard label="Unique Users" value={data.totals.unique_users.toLocaleString()} />
-        <SummaryCard label="Events Today" value={data.totals.events_today.toLocaleString()} />
-        <SummaryCard label="Errors Today" value={data.totals.errors_today.toLocaleString()} />
-        <SummaryCard label="Collections" value={data.totals.total_collections.toLocaleString()} />
+        {!isFiltered && (
+          <SummaryCard label="Events Today" value={data.totals.events_today.toLocaleString()} />
+        )}
+        <SummaryCard
+          label={isFiltered ? "Errors" : "Errors Today"}
+          value={data.totals.errors_today.toLocaleString()}
+        />
+        <SummaryCard
+          label={isFiltered ? "Collections Created" : "Collections"}
+          value={data.totals.total_collections.toLocaleString()}
+        />
       </div>
 
       {/* Views per day (bar chart) */}
       <section>
-        <h2 className="text-lg font-semibold text-white mb-3">Page Views (last 30 days)</h2>
+        <h2 className="text-lg font-semibold text-white mb-3">
+          Page Views (last 30 days)
+          <span className="ml-2 text-sm font-normal text-blue-300">
+            {isFiltered ? "Click another bar or " : "Click a bar to view that day, or "}
+            use the button above to reset.
+          </span>
+        </h2>
         <div className="bg-[#021526] border border-[#1C598C]/30 rounded-lg p-4">
           <div className="flex items-end gap-[2px] h-48">
-            {data.views_per_day.map((d) => (
-              <div
-                key={d.date}
-                className="flex-1 bg-cyan-500/60 hover:bg-cyan-400/80 rounded-t relative group transition-colors"
-                style={{ height: `${(d.count / maxView) * 100}%` }}
-              >
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-blue-300 opacity-0 group-hover:opacity-100 whitespace-nowrap">
-                  {d.count}
-                </div>
-              </div>
-            ))}
+            {data.views_per_day.map((d) => {
+              const active = d.date === selectedDate;
+              return (
+                <button
+                  key={d.date}
+                  type="button"
+                  title={`${d.date}: ${d.count} views`}
+                  aria-label={`View analytics for ${d.date} (${d.count} views)`}
+                  onClick={() => { setLoading(true); setSelectedDate(active ? null : d.date); }}
+                  className={`flex-1 rounded-t relative group transition-colors cursor-pointer ${
+                    active
+                      ? "bg-cyan-300 shadow-[0_0_10px_rgba(0,216,255,0.6)]"
+                      : "bg-cyan-500/60 hover:bg-cyan-400/80"
+                  }`}
+                  style={{ height: `${(d.count / maxView) * 100}%` }}
+                >
+                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-blue-300 opacity-0 group-hover:opacity-100 whitespace-nowrap">
+                    {d.count}
+                  </div>
+                  {active && (
+                    <div className="absolute bottom-1 inset-x-0 text-center text-[9px] text-[#021526] font-semibold whitespace-nowrap overflow-hidden">
+                      {d.date.slice(5)}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
           {data.views_per_day.length > 0 && (
             <div className="text-[10px] text-blue-400 mt-2 text-center">

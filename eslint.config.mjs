@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Dev analysis scripts run as CommonJS with require().
+    "scripts/**/*.js",
   ]),
 ]);
 

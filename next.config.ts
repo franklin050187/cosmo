@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "i.ibb.co" },
       { protocol: "https", hostname: "*.ufs.sh" },
       { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "cdn.discordapp.com" },
     ],
   },
   async headers() {

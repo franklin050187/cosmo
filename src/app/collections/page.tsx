@@ -1,9 +1,9 @@
 import CollectionGrid from "@/components/collection/CollectionGrid";
+import { getAllCollections } from "@/lib/db";
 import { type CollectionSummary } from "@/lib/types";
 
 async function getCollections(): Promise<CollectionSummary[]> {
   try {
-    const { getAllCollections } = await import("@/lib/db");
     const data = await getAllCollections(1);
     return data.data ?? [];
   } catch {

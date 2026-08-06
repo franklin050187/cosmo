@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getImageData, deleteShip } from "@/lib/db";
-import { getUserFromRequest } from "@/lib/auth";
+import { getImageData, deleteShip, isShipOwner, updateShip } from "@/lib/db";
+import { requireAuth } from "@/lib/auth";
+import { verifyTurnstileFromRequest } from "@/lib/turnstile";
 import { UTApi } from "uploadthing/server";
 
 export async function GET(
@@ -30,10 +31,9 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = getUserFromRequest(req);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const { id } = await params;
   const shipId = parseInt(id, 10);
@@ -41,18 +41,36 @@ export async function PUT(
     return NextResponse.json({ error: "Invalid ship ID" }, { status: 400 });
   }
 
+  let body: {
+    name?: string;
+    data?: string;
+    description?: string;
+    ship_name?: string;
+    author?: string;
+    price?: number;
+    brand?: string;
+    crew?: number;
+    tags?: string[];
+    "cf-turnstile-response"?: string;
+  } = {};
   try {
     const cl = req.headers.get("content-length");
     if (cl && parseInt(cl, 10) > 1_048_576) {
       return NextResponse.json({ error: "Payload too large" }, { status: 413 });
     }
-    const body = await req.json();
-    const { getImageData: getShip } = await import("@/lib/db");
-    const ship = await getShip(shipId);
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  if (!(await verifyTurnstileFromRequest(req, body["cf-turnstile-response"] ?? ""))) {
+    return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });
+  }
+
+  try {
+    const ship = await getImageData(shipId);
     if (!ship) {
       return NextResponse.json({ error: "Ship not found" }, { status: 404 });
     }
-    const { isShipOwner, updateShip } = await import("@/lib/db");
     if (!isShipOwner(ship, { id: user.id, username: user.username })) {
       return NextResponse.json({ error: "Not the owner" }, { status: 403 });
     }
@@ -82,15 +100,18 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = getUserFromRequest(req);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const { id } = await params;
   const shipId = parseInt(id, 10);
   if (isNaN(shipId)) {
     return NextResponse.json({ error: "Invalid ship ID" }, { status: 400 });
+  }
+
+  if (!(await verifyTurnstileFromRequest(req))) {
+    return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });
   }
 
   try {
