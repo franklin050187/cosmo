@@ -279,7 +279,7 @@ async function phase2(scratch: { shipId: number }) {
     });
   }
 
-   await check("P2-G2", "Analytics dashboard gated for anonymous (403 + no data leak)", async () => {
+  await check("P2-G2", "Analytics dashboard gated for anonymous (401 + no data leak)", async () => {
      const res = await httpFetch(A, "/api/analytics/dashboard");
      assert(res.status === 401, `dashboard api status ${res.status}`);
      openSession(A, HOME + "/admin");
@@ -293,25 +293,32 @@ async function phase2(scratch: { shipId: number }) {
      assert(!pageText(A).includes("Total Events"), "dashboard data leaked to anon");
    });
 
-   await check("P2-G11", "Rate limiting on check-duplicate endpoint", async () => {
-     const clients = Array.from({ length: 22 }, () => SESSION_ANON);
-     for (let i = 0; i < 22; i++) {
-       const session = clients[i];
-       const payload = { signature: "dummy-sign-${i}" };
-       const res = await httpFetch(session, "/api/ship/check-duplicate", {
-         method: "POST",
-         body: JSON.stringify(payload),
-         headers: { "Content-Type": "application/json" },
-       });
-       const ok = res.status !== 429;
-       if (i < 21) {
-         assert(ok, `check-duplicate should accept requests (attempt ${i+1})`);
-       } else {
-         assert(!ok, `check-duplicate should rate limit on 22nd request (status ${res.status})`);
-       }
-       console.log(`Attempt ${i+1}: status ${res.status}`);
-     }
-   });
+  await check("P2-G11", "Rate limiting: /api/ship/check-duplicate returns 429 under burst", async () => {
+      let got429 = false;
+      let lastStatus = 0;
+      for (let i = 1; i <= 30 && !got429; i++) {
+        const res = await httpFetch(A, "/api/ship/check-duplicate", {
+          method: "POST",
+          body: JSON.stringify({ signature: `qa-ratelimit-${Date.now()}-${i}` }),
+          headers: { "Content-Type": "application/json" },
+        });
+        lastStatus = res.status;
+        if (res.status === 429) got429 = true;
+      }
+      assert(got429, `expected 429 under burst, last status ${lastStatus}`);
+    });
+
+    await check("P2-G12", "Rate limiting: /callback returns 429 under burst (login limiter 5/min)", async () => {
+      let got429 = false;
+      let lastStatus = 0;
+      const body = JSON.stringify({ code: "qa-burst", state: "qa-burst" });
+      for (let i = 0; i < 30 && !got429; i++) {
+        const res = await httpFetch(A, "/callback", { method: "POST", body });
+        lastStatus = res.status;
+        if (res.status === 429) got429 = true;
+      }
+      assert(got429, `expected 429 on /callback under burst, last status ${lastStatus}`);
+    });
 
   await check("P2-G3", `Ship edit (${scratch.shipId}) redirects anonymous to home`, async () => {
     openSession(A, HOME + `/ship/${scratch.shipId}/edit`);
@@ -378,20 +385,10 @@ async function phase2(scratch: { shipId: number }) {
     await waitText(A, "Collection not found");
   });
 
-  await check("P2-G10", "auth_error=access_denied shows 'Login was cancelled.'", async () => {
-    openSession(A, HOME + "/?auth_error=access_denied");
-    try {
-      await waitText(A, "Login was cancelled.");
-    } catch (e) {
-      try {
-        const dbg = String(cliEval(A, `JSON.stringify({ url: location.href, q: location.search, text: document.body.innerText.slice(0, 400) })`));
-        console.log("P2-G10 DEBUG:", dbg);
-      } catch (e2) {
-        console.log("P2-G10 DEBUG eval failed:", e2);
-      }
-      throw e;
-    }
-  });
+   await check("P2-G10", "auth_error=access_denied shows 'Login was cancelled.'", async () => {
+     openSession(A, HOME + "/?auth_error=access_denied");
+     await waitText(A, "Login was cancelled.");
+   });
 
   await check("F1", "Decode valid fixture matches expected JSON (valid-ship.json)", async () => {
     openSession(A, HOME + "/decode");

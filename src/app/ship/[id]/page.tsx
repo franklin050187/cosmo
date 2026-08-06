@@ -189,6 +189,7 @@ export default function ShipDetailPage() {
               alt={ship.ship_name}
               width={512}
               height={512}
+              unoptimized
               fetchPriority="high"
               className="max-w-[512px] w-full h-auto"
             />

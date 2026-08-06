@@ -225,14 +225,14 @@ function AddShipsSection({ collectionId, existingShipIds }: { collectionId: numb
                 className="group flex items-center gap-2 py-1.5 px-2 rounded hover:bg-[#1C598C]/20 min-w-0"
               >
                 <div className="relative shrink-0">
-                  <Image
-                    src={ship.data}
-                    alt={name}
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded object-contain bg-[#021526] border border-[#1C598C]/30"
-                    loading="lazy"
-                  />
+                    <Image
+                      src={ship.data}
+                      alt={ship.ship_name}
+                      width={96}
+                      height={96}
+                      unoptimized
+                      className="object-contain rounded border border-[#1C598B]/30"
+                    />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm truncate leading-tight">

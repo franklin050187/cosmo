@@ -59,6 +59,7 @@ export default function ShipCard({ ship, priority = false }: { ship: ShipRow; pr
           alt={ship.ship_name}
           width={400}
           height={400}
+          unoptimized
           draggable
           fetchPriority={priority ? "high" : undefined}
           loading={priority ? "eager" : "lazy"}

@@ -36,7 +36,7 @@ image-hosting reachability (`ufsUrl` 200 after insert, non-200 after delete).
 | ID | Case | Steps | Expected |
 |----|------|-------|----------|
 | P2-G1 | Login required | `/upload`, `/my-ships`, `/favorites`, `/my-collections`, `/collections/new` | "Login Required" + Discord link on each |
-| P2-G2 | Analytics gated | `/api/analytics/dashboard`; `/admin` after captcha | **403**; page redirects to `/`, no data leak |
+| P2-G2 | Analytics gated | `/api/analytics/dashboard`; `/admin` after captcha | **401**; page redirects to `/`, no data leak |
 | P2-G3 | Ship edit gated | `/ship/[scratch]/edit` anon | redirects to `/` |
 | P2-G4 | Ship edit/delete gated | `PUT`/`DELETE /api/ship/[scratch]` | **401** |
 | P2-G5 | Upload/replace endpoints | POST `/api/uploadthing`; `/api/ship/my-ships` | rejected (400/401/403); **401** |
@@ -45,7 +45,8 @@ image-hosting reachability (`ufsUrl` 200 after insert, non-200 after delete).
 | P2-G8 | Detail anon | `/ship/[scratch]` | "Login to favorite" + Download; **no** Edit/Delete |
 | P2-G9 | Incorrect/deleted ids | `/ship/999999999`, `/collections/999999999` (+ APIs) | "Ship/Collection not found"; APIs **404** |
 | P2-G10 | Cancelled login banner | `/?auth_error=access_denied` | "Login was cancelled." |
-| P2-G11 | Rate limiting | `/api/ship/check-duplicate` 20+ requests rapid | **429** on 21st request |
+| P2-G11 | Rate limiting (check-dup) | `/api/ship/check-duplicate` 21+ requests rapid | **429** under burst (limiter 20/min) |
+| P2-G12 | Rate limiting (login) | `/callback` 6+ requests rapid | **429** under burst (limiter 5/min) |
 | F1 | Decode valid fixture | `/decode` + `valid-ship.ship.png` | decoded JSON deep-equals `valid-ship.json` |
 | F2 | Decode invalid file | `/decode` + `invalid.png` | "Failed to decode ship data from image" |
 

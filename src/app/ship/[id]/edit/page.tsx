@@ -199,7 +199,7 @@ export default function EditShipPage() {
           {/* Left: preview + metadata */}
           <div className="space-y-4">
             <div>
-              <Image src={ship.data} alt={ship.ship_name} width={512} height={512} className="max-w-full h-auto max-sm:max-h-48 max-sm:object-contain" />
+              <Image src={ship.data} alt={ship.ship_name} width={512} height={512} unoptimized className="max-w-full h-auto max-sm:max-h-48 max-sm:object-contain" />
             </div>
 
             <div>
