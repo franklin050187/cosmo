@@ -42,6 +42,7 @@ export const TAG_CATEGORIES: TagCategory[] = [
       { value: "cargo_ship", label: "Cargo Ship" },
       { value: "spinner", label: "Spinner" },
       { value: "module", label: "Module" },
+      { value: "scarlet-mod", label: "Scarlet Mod" },
     ],
   },
   {
