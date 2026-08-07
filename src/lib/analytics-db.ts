@@ -1,4 +1,23 @@
-import { fetchAll, fetchOne } from "./db";
+import { fetchAll, fetchOne, query } from "./db";
+
+let schemaPromise: Promise<void> | null = null;
+
+/**
+ * Idempotently ensure the analytics table has the `anon_id` column used to
+ * tell anonymous visitors apart (hash of IP + user-agent). Runs once per
+ * process; safe to call on every analytics path.
+ */
+export function ensureAnalyticsSchema(): Promise<void> {
+  if (!schemaPromise) {
+    schemaPromise = (async () => {
+      await query("ALTER TABLE analytics ADD COLUMN IF NOT EXISTS anon_id text");
+    })().catch((e) => {
+      schemaPromise = null;
+      throw e;
+    });
+  }
+  return schemaPromise;
+}
 
 export async function logEvent(opts: {
   event_type: string;
@@ -8,10 +27,12 @@ export async function logEvent(opts: {
   ship_id?: number;
   url?: string;
   metadata?: Record<string, unknown>;
+  anon_id?: string;
 }) {
+  await ensureAnalyticsSchema();
   await fetchAll(
-    `INSERT INTO analytics (event_type, user_id, username, guild, ship_id, url, metadata)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    `INSERT INTO analytics (event_type, user_id, username, guild, ship_id, url, metadata, anon_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [
       opts.event_type,
       opts.user_id ?? null,
@@ -20,6 +41,7 @@ export async function logEvent(opts: {
       opts.ship_id ?? null,
       opts.url ?? null,
       opts.metadata ? JSON.stringify(opts.metadata) : "{}",
+      opts.anon_id ?? null,
     ]
   );
 }
@@ -38,75 +60,132 @@ export interface DashboardData {
   recent_errors: {
     id: number;
     username: string | null;
+    anon_id: string | null;
     url: string | null;
     metadata: Record<string, unknown>;
     created_at: string;
   }[];
 }
 
-export async function getDashboardData(date?: string): Promise<DashboardData> {
+export async function getDashboardData(
+  date?: string,
+  excludeUsernames?: string[],
+  excludeAnonIds?: string[],
+  excludeUserIds?: string[]
+): Promise<DashboardData> {
+  await ensureAnalyticsSchema();
+  const usernames = excludeUsernames && excludeUsernames.length > 0 ? excludeUsernames : undefined;
+  const anonIds = excludeAnonIds && excludeAnonIds.length > 0 ? excludeAnonIds : undefined;
+  const userIds = excludeUserIds && excludeUserIds.length > 0 ? excludeUserIds : undefined;
   const dateClause = date
     ? "created_at >= $1::date AND created_at < ($1::date + INTERVAL '1 day')"
     : null;
-  const dateArgs = date ? [date] : [];
 
+  // Exclusion predicates: keep rows with no matching identity (NULL username /
+  // NULL anon_id / NULL user_id) but drop rows whose username, anonymous id or
+  // user id is excluded. user_id catches legacy rows where the username used a
+  // different format. Each clause gets the next free $N index from the base args.
+  const exclPredicates = (startIndex: number): { sql: string[]; args: unknown[] } => {
+    const sql: string[] = [];
+    const args: unknown[] = [];
+    let idx = startIndex;
+    if (usernames) {
+      sql.push(`(username IS NULL OR username <> ALL($${idx}::text[]))`);
+      args.push(usernames);
+      idx++;
+    }
+    if (userIds) {
+      sql.push(`(user_id IS NULL OR user_id <> ALL($${idx}::text[]))`);
+      args.push(userIds);
+      idx++;
+    }
+    if (anonIds) {
+      sql.push(`(anon_id IS NULL OR anon_id <> ALL($${idx}::text[]))`);
+      args.push(anonIds);
+      idx++;
+    }
+    return { sql, args };
+  };
+
+  const where = (predicates: string[]): string =>
+    predicates.length > 0 ? ` WHERE ${predicates.join(" AND ")}` : "";
+
+  // Base predicates + args, then exclusions appended at the right $N index.
+  const build = (base: { preds: string[]; args: unknown[] }): { where: string; args: unknown[] } => {
+    const excl = exclPredicates(base.args.length + 1);
+    return { where: where([...base.preds, ...excl.sql]), args: [...base.args, ...excl.args] };
+  };
+
+  const totalsBase = date
+    ? { preds: [dateClause!], args: [date] }
+    : { preds: [], args: [] };
+  const totalsQ = build(totalsBase);
   const totals = await fetchOne(
     `
     SELECT
       COUNT(*)::int AS total_events,
-      COUNT(DISTINCT user_id)::int AS unique_users,
+      COUNT(DISTINCT COALESCE(user_id, anon_id))::int AS unique_users,
       COUNT(*) FILTER (WHERE ${date ? "TRUE" : "created_at >= CURRENT_DATE"})::int AS events_today,
       COUNT(*) FILTER (WHERE event_type = 'error' AND ${date ? "TRUE" : "created_at >= CURRENT_DATE"})::int AS errors_today,
       COUNT(*) FILTER (WHERE event_type = 'collection_create')::int AS total_collections
-    FROM analytics
-    ${dateClause ? `WHERE ${dateClause}` : ""}
+    FROM analytics${totalsQ.where}
     `,
-    dateArgs,
+    totalsQ.args,
   );
 
-  const viewsPerDay = await fetchAll(`
+  const viewsBase = {
+    preds: ["event_type = 'page_view'", "created_at >= CURRENT_DATE - INTERVAL '30 days'"],
+    args: [],
+  };
+  const viewsQ = build(viewsBase);
+  const viewsPerDay = await fetchAll(
+    `
     SELECT DATE(created_at)::text AS date, COUNT(*)::int AS count
-    FROM analytics
-    WHERE event_type = 'page_view'
-      AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+    FROM analytics${viewsQ.where}
     GROUP BY DATE(created_at)
     ORDER BY date
-  `);
+    `,
+    viewsQ.args,
+  );
 
+  const eventTypesQ = build(totalsBase);
   const eventTypes = await fetchAll(
     `
     SELECT event_type, COUNT(*)::int AS count
-    FROM analytics
-    ${dateClause ? `WHERE ${dateClause}` : ""}
+    FROM analytics${eventTypesQ.where}
     GROUP BY event_type
     ORDER BY count DESC
     `,
-    dateArgs,
+    eventTypesQ.args,
   );
 
+  const topPagesBase = date
+    ? { preds: ["url IS NOT NULL", dateClause!], args: [date] }
+    : { preds: ["url IS NOT NULL"], args: [] };
+  const topPagesQ = build(topPagesBase);
   const topPages = await fetchAll(
     `
     SELECT url, COUNT(*)::int AS count
-    FROM analytics
-    WHERE url IS NOT NULL
-    ${dateClause ? `AND ${dateClause}` : ""}
+    FROM analytics${topPagesQ.where}
     GROUP BY url
     ORDER BY count DESC
     LIMIT 10
     `,
-    dateArgs,
+    topPagesQ.args,
   );
 
+  const errorsBase = date
+    ? { preds: ["event_type = 'error'", dateClause!], args: [date] }
+    : { preds: ["event_type = 'error'"], args: [] };
+  const errorsQ = build(errorsBase);
   const recentErrors = await fetchAll(
     `
-    SELECT id, username, url, metadata, created_at
-    FROM analytics
-    WHERE event_type = 'error'
-    ${dateClause ? `AND ${dateClause}` : ""}
+    SELECT id, username, anon_id, url, metadata, created_at
+    FROM analytics${errorsQ.where}
     ORDER BY created_at DESC
     LIMIT 20
     `,
-    dateArgs,
+    errorsQ.args,
   );
 
   return {

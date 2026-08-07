@@ -4,6 +4,11 @@ Runner: `node --env-file=.env --no-warnings scripts/qa-suite.ts`
 Fixtures: `scripts/qa-fixtures/` (regenerated automatically if missing)
 Report artifacts: `.qa/output/qa-suite/`
 
+Poney data: the `qa` profile belongs to the real user, so the suite never hardcodes
+poney's favorites count. `P4-N1` snapshots poney's favorites at suite start and asserts
+the suite left them unchanged. To skip poney-specific personal-data assertions entirely
+(e.g. while using the site concurrently with a run), set `QA_EXCLUDE_PONEY_DATA=true`.
+
 Sessions:
 - `qa`  — persistent profile `.qa/brave-profile`, logged in as `poney5850#0` (`439514586778042369`, admin, guild `exl`).
 - `anon` — isolated in-memory context, no cookies.
@@ -26,6 +31,8 @@ image-hosting reachability (`ufsUrl` 200 after insert, non-200 after delete).
 | P1-U2b | Favorites count | open `/favorites` | matches DB favorites (`4`) |
 | P1-U2c | My Collections count | open `/my-collections` | matches DB count (`3`) |
 | P1-U3 | Admin analytics | open `/admin`, solve captcha (stub), fetch dashboard | dashboard renders summary cards; `/api/analytics/dashboard` → 200 |
+| P1-U3b | Analytics date zoom | click a date bar on `/admin` | dashboard filters to that date (`h1` shows it), stays on `/admin`, "Back to all days" shown (no home redirect) |
+| P1-U3c | Analytics exclude filter | `/admin` shows toggle; fetch dashboard with `?exclude=<owner>` | toggle visible; `?exclude=` returns 200 and `total_events` ≤ unfiltered; owner + QA anon id (`ANALYTICS_EXCLUDE_ANON_IDS`) dropped |
 | P1-U4 | Upload valid ship — decode panel | open `/upload`, select `valid-ship.ship.png` | Author/Price/Crew/Tags rendered |
 | P1-U5 | Duplicate warning | assert warning for existing blueprint (ship 1624) | "Upload Anyway" disabled → ack checkbox → enabled |
 | P1-U6 | Submit upload `[MUT]` | ack, turnstile stub, Upload Anyway | success screen; **DB**: `shipdb` row (`submitted_by=poney5850#0`, `discord_id=4395…`, `ship_name=valid-ship`, `data=https://…`), `ship_signatures` row; **hosting**: `ufsUrl` → 200 image/png. Captures **scratch ship id** |
@@ -71,7 +78,8 @@ image-hosting reachability (`ufsUrl` 200 after insert, non-200 after delete).
 
 | ID | Case | Expected |
 |----|------|----------|
-| P4-N1 | Zero traces | no `shipdb`/`ship_signatures` row for scratch id; no `ship_name='valid-ship'`; scratch id absent from all `collections.ships`/`favoritedb.favorite`; scratch `ufsUrl` non-200; fixture source ship 1624 intact; poney favorites back to baseline (`4`) |
+| P4-N1 | Zero traces | no `shipdb`/`ship_signatures` row for scratch id; no `ship_name='valid-ship'`; scratch id absent from all `collections.ships`/`favoritedb.favorite`; scratch `ufsUrl` non-200; fixture source ship 1624 intact; poney favorites back to the count snapshotted at suite start (or skipped with `QA_EXCLUDE_PONEY_DATA=true`) |
+| P4-N2 | QA anon identity pinned | anon session logs `/qa-anon-id-check` → its `anon_id` equals `QA_ANON_ID` (scripts/qa-lib.ts, `701be3030a345fca`); on drift, update that constant + `ANALYTICS_EXCLUDE_ANON_IDS` in `.env` |
 
 ## Exit criteria
 - Each case prints `[PASS]`/`[FAIL]` with case id; suite summary with pass/fail counts; non-zero exit on any failure.

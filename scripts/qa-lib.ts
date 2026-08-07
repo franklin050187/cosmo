@@ -16,6 +16,23 @@ export const FIXTURE_INVALID = resolve(FIXTURES_DIR, "invalid.png");
 export const SESSION_QA = "qa";
 export const SESSION_ANON = "anon";
 
+/**
+ * Anonymous QA events get a deterministic `anon_id` because the suite always
+ * runs from the same loopback IP with the same browser User-Agent and the
+ * default ANALYTICS_ANON_SALT: the server derives
+ * sha256(`::1|<UA>|cosmo-anon-v1`).slice(0,16), which equals QA_ANON_ID below.
+ * The analytics dashboard excludes it via ANALYTICS_EXCLUDE_ANON_IDS.
+ *
+ * If the browser's User-Agent changes (browser update), `qa-anon-id-check`
+ * rows stop matching QA_ANON_ID and P4-N2 fails loudly — update this constant
+ * and the .env ANALYTICS_EXCLUDE_ANON_IDS value together.
+ *
+ * NOTE: do not pin the anon session to a `--device` emulation to force a
+ * fixed UA — Cloudflare Turnstile stops auto-solving on the emulated context
+ * and P2-G2 (anon admin gate) times out.
+ */
+export const QA_ANON_ID = "701be3030a345fca";
+
 export const PONEY_USER = "poney5850#0";
 export const PONEY_ID = "439514586778042369";
 export const FIXTURE_SOURCE_SHIP = 1624;

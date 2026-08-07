@@ -12,6 +12,7 @@ import {
   httpFetch,
   openSession,
   pageText,
+  pageUrl,
   prepTurnstile,
   q,
   runCli,
@@ -26,6 +27,7 @@ import {
   OTHER_SHIP_ID,
   PONEY_ID,
   PONEY_USER,
+  QA_ANON_ID,
 } from "./qa-lib.ts";
 import { deepEqual, ensureFixtures, fixtureDecoded } from "./generate-fixtures.ts";
 
@@ -184,6 +186,53 @@ async function phase1(scratch: { shipId: number; ufsUrl: string }) {
     assert(pageText(S).includes("Total Events"), "no summary cards");
     const res = await httpFetch(S, "/api/analytics/dashboard");
     assert(res.status === 200, `dashboard api status ${res.status}`);
+  });
+
+  await check("P1-U3b", "Analytics: clicking a date bar zooms the dashboard (no home redirect)", async () => {
+    openSession(S, HOME + "/admin");
+    await waitText(S, "Complete the captcha");
+    prepTurnstile(S);
+    await waitFor(S, "document.body.innerText.includes('Analytics Dashboard')", 30000);
+    const label = String(
+      cliEval(
+        S,
+        `(() => {
+          const b = document.querySelector('button[aria-label^="View analytics for"]');
+          return b ? b.getAttribute("aria-label") : "";
+        })()`
+      )
+    );
+    const date = label.replace(/^View analytics for (\d{4}-\d{2}-\d{2}).*$/, "$1");
+    assert(/^\d{4}-\d{2}-\d{2}$/.test(date), `no date bar found (label="${label}")`);
+    runCli(["-s=" + S, "click", `button[aria-label="${label}"]`]);
+    await waitFor(
+      S,
+      `(() => { const h = document.querySelector('h1'); return !!h && h.innerText.includes('${date}'); })()`,
+      15000
+    );
+    assert(pageUrl(S).startsWith(HOME + "/admin"), "redirected away from /admin on date click");
+    assert(pageText(S).includes("Back to all days"), "missing Back to all days button after zoom");
+  });
+
+  await check("P1-U3c", "Analytics: exclude filter drops the owner's events", async () => {
+    openSession(S, HOME + "/admin");
+    await waitText(S, "Complete the captcha");
+    prepTurnstile(S);
+    await waitFor(S, "document.body.innerText.includes('Analytics Dashboard')", 30000);
+    const toggleText = pageText(S);
+    assert(
+      toggleText.includes("Excluding my data") || toggleText.includes("Include my data"),
+      "exclude toggle button missing"
+    );
+    const [allRes, exclRes] = await Promise.all([
+      httpFetch(S, "/api/analytics/dashboard"),
+      httpFetch(S, `/api/analytics/dashboard?exclude=${encodeURIComponent(PONEY_USER)}`),
+    ]);
+    assert(allRes.status === 200 && exclRes.status === 200, "dashboard api status");
+    const all = Number((allRes.body as { totals?: { total_events?: number } }).totals?.total_events ?? -1);
+    const excl = Number((exclRes.body as { totals?: { total_events?: number } }).totals?.total_events ?? -1);
+    assert(all >= 0 && excl >= 0, "missing totals.total_events in response");
+    assert(excl <= all, `exclude filter did not drop events (all=${all}, excl=${excl})`);
   });
 
   await check("P1-U4", "Upload valid ship: decode panel (Author/Price/Crew/Tags)", async () => {
@@ -656,8 +705,14 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
 // ══════════════════════════════════════════════════════════════════════
 // PHASE 4 — NO-TRACE SWEEP
 // ══════════════════════════════════════════════════════════════════════
-async function phase4(scratch: { shipId: number; ufsUrl: string }, coll: { id: number }) {
+async function phase4(
+  scratch: { shipId: number; ufsUrl: string },
+  coll: { id: number },
+  favoritesBaseline: number[]
+) {
   console.log("\n── PHASE 4: NO-TRACE SWEEP ──");
+
+  const excludePoney = process.env.QA_EXCLUDE_PONEY_DATA === "true";
 
   await check("P4-N1", "No trace of scratch ship/collection anywhere", async () => {
     const ship = await q<{ n: string }>("SELECT count(*)::text n FROM shipdb WHERE id = $1", [scratch.shipId]);
@@ -683,15 +738,48 @@ async function phase4(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
 
     const src = await getShipRow(1624);
     assert(src !== null, "fixture source ship 1624 unexpectedly deleted");
-    const favs = await poneyFavoriteIds();
-    assert(favs.length === 4, `poney favorites altered: ${favs.join(",")}`);
+    if (!excludePoney) {
+      const favs = await poneyFavoriteIds();
+      assert(
+        favs.length === favoritesBaseline.length,
+        `poney favorites altered (baseline ${favoritesBaseline.length}): ${favs.join(",")}`
+      );
+    }
     console.log(`       scratch ship ${scratch.shipId} + collection ${coll.id}: zero traces`);
+  });
+
+  await check("P4-N2", "QA anonymous events carry the pinned anon_id (identifiable/excludable)", async () => {
+    openSession(A, HOME + "/");
+    const res = await httpFetch(A, "/api/analytics/log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event_type: "page_view", url: "/qa-anon-id-check" }),
+    });
+    assert(res.status === 200, `marker log status ${res.status}`);
+    const row = await q<{ anon_id: string | null }>(
+      "SELECT anon_id FROM analytics WHERE url = '/qa-anon-id-check' ORDER BY created_at DESC LIMIT 1"
+    );
+    const got = row.rows[0]?.anon_id ?? null;
+    assert(
+      got === QA_ANON_ID,
+      `QA anon_id drifted (got ${got}, expected ${QA_ANON_ID}). Update QA_ANON_ID in scripts/qa-lib.ts and ANALYTICS_EXCLUDE_ANON_IDS in .env.`
+    );
   });
 }
 
 async function main() {
   await ensureFixtures();
   await dbInit();
+
+  // Poney is the real user on this instance; snapshot their personal data at
+  // suite start so the no-trace sweep asserts "unchanged by the suite" rather
+  // than a hardcoded count that drifts as the user favorites/ships on the site.
+  const favoritesBaseline = await poneyFavoriteIds();
+  if (process.env.QA_EXCLUDE_PONEY_DATA === "true") {
+    console.log(
+      `       [QA_EXCLUDE_PONEY_DATA] excluding poney's personal data from assertions (baseline favorites: ${favoritesBaseline.length})`
+    );
+  }
 
   const scratch = { shipId: 0, ufsUrl: "" };
   const coll = { id: 0, title: "" };
@@ -700,7 +788,7 @@ async function main() {
     await phase1(scratch);
     await phase2(scratch);
     await phase3(scratch, coll);
-    await phase4(scratch, coll);
+    await phase4(scratch, coll, favoritesBaseline);
   } catch (e) {
     console.error("Suite aborted:", e);
   } finally {

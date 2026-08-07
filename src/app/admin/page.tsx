@@ -1,20 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DashboardData } from "@/lib/analytics-db";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import { useAuth } from "@/hooks/useAuth";
 
+const IS_DEV = process.env.NODE_ENV === "development";
+
 export default function AdminPage() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [turnstilePassed, setTurnstilePassed] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState("");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  // Default on: the logged-in admin is usually the real owner whose own activity
+  // would otherwise drown out real visitor stats.
+  const [excludeMine, setExcludeMine] = useState(true);
+  // Bumping this nonce remounts the (hidden) Turnstile widget, which issues a
+  // fresh single-use token. Cloudflare tokens are one-shot, so each dashboard
+  // request needs its own token — reusing the gate token gets 403.
+  const [widgetNonce, setWidgetNonce] = useState(0);
+
+  const pendingTokenRef = useRef<((token: string) => void) | null>(null);
+  const tokenRef = useRef("");
+
+  const handleVerify = useCallback((token: string) => {
+    tokenRef.current = token;
+    setTurnstilePassed(true);
+    pendingTokenRef.current?.(token);
+    pendingTokenRef.current = null;
+  }, []);
+
+  const getFreshToken = useCallback((): Promise<string> => {
+    if (IS_DEV) return Promise.resolve("dev");
+    if (tokenRef.current) {
+      const token = tokenRef.current;
+      tokenRef.current = "";
+      return Promise.resolve(token);
+    }
+    return new Promise<string>((resolve) => {
+      pendingTokenRef.current = resolve;
+      setWidgetNonce((n) => n + 1);
+    });
+  }, []);
 
   useEffect(() => {
     if (!turnstilePassed || !isLoggedIn) return;
@@ -23,17 +54,35 @@ export default function AdminPage() {
 
     const run = async () => {
       try {
-        const url = selectedDate
+        const base = selectedDate
           ? `/api/analytics/dashboard?date=${encodeURIComponent(selectedDate)}`
           : "/api/analytics/dashboard";
-        const res = await fetch(url, {
-          headers: {
-            "x-turnstile-token": turnstileToken,
-          },
-        });
+        const url =
+          excludeMine && user
+            ? `${base}${selectedDate ? "&" : "?"}exclude=${encodeURIComponent(user.username)}&excludeUserId=${encodeURIComponent(user.id)}`
+            : base;
+        const token = await getFreshToken();
+        if (cancelled) return;
+        let res = await fetch(url, { headers: { "x-turnstile-token": token } });
+        if (cancelled) return;
+
         if (res.status === 403) {
-          router.push("/");
-          return;
+          const body = await res.json().catch(() => null);
+          const turnstileFailed = body?.error === "Turnstile verification failed";
+          if (turnstileFailed) {
+            // Stale/consumed token — retry once with a freshly issued token.
+            const retryToken = await getFreshToken();
+            if (cancelled) return;
+            res = await fetch(url, { headers: { "x-turnstile-token": retryToken } });
+            if (res.status === 403) {
+              setError("Verification failed. Please refresh the page and try again.");
+              return;
+            }
+          } else {
+            // Genuine auth/forbidden failure — session is not admin anymore.
+            router.push("/");
+            return;
+          }
         }
         if (!res.ok) throw new Error("Failed to fetch");
         const json = await res.json();
@@ -52,14 +101,14 @@ export default function AdminPage() {
     return () => {
       cancelled = true;
     };
-  }, [turnstilePassed, selectedDate, turnstileToken, isLoggedIn, router]);
+  }, [turnstilePassed, selectedDate, isLoggedIn, router, getFreshToken, excludeMine, user]);
 
   if (!turnstilePassed) {
     return (
       <div className="flex flex-col items-center justify-center pt-20 gap-6">
         <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
         <p className="text-blue-200 text-sm">Complete the captcha to access the dashboard.</p>
-        <TurnstileWidget onVerify={(token) => { setTurnstileToken(token); setTurnstilePassed(true); }} />
+        <TurnstileWidget onVerify={handleVerify} />
       </div>
     );
   }
@@ -83,21 +132,41 @@ export default function AdminPage() {
 
   return (
     <div className="pt-8 space-y-8">
-      <div className="flex items-center justify-between gap-4">
+      {/* Hidden widget stays mounted so each request gets a fresh one-shot token */}
+      <div className="hidden" aria-hidden="true">
+        <TurnstileWidget key={widgetNonce} onVerify={handleVerify} />
+      </div>
+
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <h1 className="text-2xl font-bold text-white">
           Analytics Dashboard
           {isFiltered && (
             <span className="ml-2 text-base font-normal text-blue-300">— {selectedDate}</span>
           )}
         </h1>
-        {isFiltered && (
-          <button
-            onClick={() => { setLoading(true); setSelectedDate(null); }}
-            className="border border-[#1C598C] bg-gradient-to-b from-[#1e3851]/25 to-[#124c80]/25 text-cyan-400 hover:bg-cyan-400/20 hover:text-white rounded px-3 py-1.5 text-sm transition-colors"
-          >
-            ← Back to all days
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {user && (
+            <button
+              onClick={() => { setLoading(true); setExcludeMine((v) => !v); }}
+              title="Filter out your own analytics events from the dashboard"
+              className={`border rounded px-3 py-1.5 text-sm transition-colors ${
+                excludeMine
+                  ? "border-amber-400/60 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20"
+                  : "border-[#1C598C] bg-gradient-to-b from-[#1e3851]/25 to-[#124c80]/25 text-cyan-400 hover:bg-cyan-400/20 hover:text-white"
+              }`}
+            >
+              {excludeMine ? "✓ Excluding my data" : "Include my data"}
+            </button>
+          )}
+          {isFiltered && (
+            <button
+              onClick={() => { setLoading(true); setSelectedDate(null); }}
+              className="border border-[#1C598C] bg-gradient-to-b from-[#1e3851]/25 to-[#124c80]/25 text-cyan-400 hover:bg-cyan-400/20 hover:text-white rounded px-3 py-1.5 text-sm transition-colors"
+            >
+              ← Back to all days
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -203,7 +272,7 @@ export default function AdminPage() {
             <div key={e.id} className="px-4 py-2.5 text-sm space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-red-400 font-medium">Error</span>
-                <span className="text-blue-300">{e.username || "anonymous"}</span>
+                <span className="text-blue-300">{e.username || (e.anon_id ? `anon:${e.anon_id.slice(0, 8)}` : "anonymous")}</span>
                 <span className="text-blue-400/60 text-xs">{new Date(e.created_at).toLocaleString()}</span>
               </div>
               {e.url && <div className="text-blue-200/60 text-xs truncate">{e.url}</div>}

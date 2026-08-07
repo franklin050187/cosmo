@@ -51,6 +51,9 @@ export const envSchema: Record<string, EnvVarRule> = {
   NEXT_PUBLIC_TURNSTILE_SITEKEY: { description: "Turnstile site key", validator: minLength(10) },
   ADMIN_USERNAMES: { description: "Comma-separated admin usernames", optional: true },
   ALLOWED_ORIGINS: { description: "Comma-separated allowed CORS origins", optional: true },
+  ANALYTICS_ANON_SALT: { description: "Salt for anonymizing anonymous analytics visitors (hash of IP + user-agent)", optional: true },
+  ANALYTICS_EXCLUDE_USERNAMES: { description: "Comma-separated usernames to exclude from the analytics dashboard (default for the exclude filter)", optional: true },
+  ANALYTICS_EXCLUDE_ANON_IDS: { description: "Comma-separated anonymous visitor ids (anon_id) to exclude alongside username exclusions (e.g. the pinned QA-run identity)", optional: true },
 };
 
 export const requiredEnvVars = Object.fromEntries(

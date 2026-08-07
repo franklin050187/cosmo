@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 
 export interface User {
+  id: string;
   username: string;
   avatar: string | null;
   guild?: string;

@@ -1,6 +1,26 @@
+import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { logEvent } from "@/lib/analytics-db";
 import { getUserFromRequest } from "@/lib/auth";
+
+/**
+ * Stable pseudo-identity for anonymous visitors: hash(IP + user-agent + salt).
+ * Lets the dashboard tell distinct anonymous users apart even though they have
+ * no Discord session. Not reversible and never logged in plaintext.
+ */
+function anonIdFor(req: NextRequest): string {
+  const ip = (
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    ""
+  ).replace(/^::ffff:/, "");
+  const ua = req.headers.get("user-agent") || "";
+  const salt = process.env.ANALYTICS_ANON_SALT || "cosmo-anon-v1";
+  return createHash("sha256")
+    .update(`${ip}|${ua}|${salt}`)
+    .digest("hex")
+    .slice(0, 16);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,6 +54,7 @@ export async function POST(req: NextRequest) {
       ship_id: isNaN(ship_id as number) ? undefined : ship_id,
       url: url || req.headers.get("referer") || undefined,
       metadata,
+      anon_id: user ? undefined : anonIdFor(req),
     });
 
     return NextResponse.json({ ok: true });
