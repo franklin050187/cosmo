@@ -106,7 +106,7 @@ export default function Header() {
       <div className="max-w-[1360px] mx-auto px-4 h-14 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link href="/" className="shrink-0" aria-label="CosmoShip Home">
-          <Image alt="" src="/logo-v2.svg" width={120} height={32} className="h-8 w-auto" />
+          <Image alt="" src="/logo-v2.svg" width={400} height={98} priority className="h-8 w-auto" style={{ width: "auto" }} />
         </Link>
 
         {/* Desktop nav */}
