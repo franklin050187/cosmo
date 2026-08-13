@@ -101,8 +101,8 @@ export default function ShipCard({ ship, priority = false }: { ship: ShipRow; pr
           <button
             onClick={handleDownload}
             disabled={downloading}
+            aria-label={`Download ${ship.ship_name}`}
             className="p-1 rounded bg-[#021526]/80 border border-[#1C598C]/30 text-white/60 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors disabled:opacity-40"
-            title="Download ship"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -110,8 +110,8 @@ export default function ShipCard({ ship, priority = false }: { ship: ShipRow; pr
           </button>
           <CollectionPicker shipId={ship.id}>
             <button
+              aria-label={`Add ${ship.ship_name} to collection`}
               className="p-1 rounded bg-[#021526]/80 border border-[#1C598C]/30 text-white/60 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors"
-              title="Add to collection"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />

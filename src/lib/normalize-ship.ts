@@ -18,6 +18,10 @@ function isColorValue(obj: any): boolean {
 }
 
 export function normalizeForSignature(obj: unknown): unknown {
+  return normalize(obj, new WeakSet());
+}
+
+function normalize(obj: unknown, seen: WeakSet<object>): unknown {
   if (obj === null || obj === undefined) return obj;
 
   if (isFloatValue(obj)) {
@@ -28,15 +32,20 @@ export function normalizeForSignature(obj: unknown): unknown {
     return (obj as { parts: string[] }).parts;
   }
 
-  if (Array.isArray(obj)) {
-    return obj.map(normalizeForSignature);
-  }
-
   if (typeof obj === "object") {
-    const result: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(obj)) {
-      result[key] = normalizeForSignature(value);
+    if (seen.has(obj)) return "[Circular]";
+    seen.add(obj);
+    let result: unknown;
+    if (Array.isArray(obj)) {
+      result = obj.map((item) => normalize(item, seen));
+    } else {
+      const out: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        out[key] = normalize(value, seen);
+      }
+      result = out;
     }
+    seen.delete(obj);
     return result;
   }
 

@@ -50,6 +50,7 @@ export default function SearchBar({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Search ships..."
+          aria-label="Search ships"
           className="w-full pl-9 pr-8 py-2.5 bg-[#0a1e33] border border-[#1C598C] rounded-lg text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-cyan-400 transition-colors"
         />
         {input && (

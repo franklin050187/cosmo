@@ -62,9 +62,15 @@ class ByteReader {
     this.pos = 0;
   }
   readByte() {
+    if (this.pos >= this.bytes.length) {
+      throw new Error('ByteReader: readByte past end of buffer');
+    }
     return this.bytes[this.pos++];
   }
   read(n) {
+    if (this.pos + n > this.bytes.length) {
+      throw new Error(`ByteReader: read(${n}) past end of buffer (pos ${this.pos}, length ${this.bytes.length})`);
+    }
     const out = this.bytes.slice(this.pos, this.pos + n);
     this.pos += n;
     return out;
@@ -188,9 +194,38 @@ function isTwoIntList(node) {
 // ---------------------------------------------------------------------------
 // gzip via native Compression/DecompressionStream
 // ---------------------------------------------------------------------------
+// Hard caps so a malicious payload can't force a huge allocation. 64MB is a
+// generous bound for the embedded ship tree (the raw pixel payload itself is
+// at most width*height*channels bytes, ~6MB for a max-size image).
+const MAX_DECOMPRESSED_BYTES = 64 * 1024 * 1024;
+const MAX_IMAGE_DIMENSION = 4096;
+
+async function inflateWithLimit(bytes, format, maxBytes) {
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(format));
+  const reader = stream.getReader();
+  const chunks = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error(`Decompressed data exceeds ${maxBytes} byte limit`);
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const c of chunks) {
+    out.set(c, off);
+    off += c.byteLength;
+  }
+  return out;
+}
+
 async function gunzip(bytes) {
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
+  return inflateWithLimit(bytes, 'gzip', MAX_DECOMPRESSED_BYTES);
 }
 async function gzipCompress(bytes) {
   const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));
@@ -308,6 +343,9 @@ async function decodePngRaw(blob) {
   const colorType = ihdr.getUint8(9);
   const interlace = ihdr.getUint8(12);
 
+  if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+    throw new Error(`PNG dimensions too large: ${width}x${height} (max ${MAX_IMAGE_DIMENSION})`);
+  }
   if (bitDepth !== 8) throw new Error(`Unsupported PNG bit depth: ${bitDepth} (only 8-bit supported)`);
   if (interlace !== 0) throw new Error('Interlaced PNG not supported');
   const channelsByColorType = { 0: 1, 2: 3, 4: 2, 6: 4 };
@@ -323,10 +361,8 @@ async function decodePngRaw(blob) {
     p += c.data.length;
   }
 
-  const inflatedStream = new Blob([idat]).stream().pipeThrough(new DecompressionStream('deflate'));
-  const inflated = new Uint8Array(await new Response(inflatedStream).arrayBuffer());
-
   const stride = width * channels;
+  const inflated = await inflateWithLimit(idat, 'deflate', height * (stride + 1));
   const rgba = new Uint8ClampedArray(width * height * 4);
   let inOffset = 0;
   let prevRow = new Uint8Array(stride);
@@ -439,6 +475,9 @@ function pngChunk(type, data) {
  * alpha-premultiplication problem either.
  */
 async function encodePngRaw({ data, width, height }) {
+  if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+    throw new Error(`PNG dimensions too large: ${width}x${height} (max ${MAX_IMAGE_DIMENSION})`);
+  }
   const signature = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
   const ihdrData = new Uint8Array(13);

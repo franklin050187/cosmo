@@ -23,6 +23,8 @@ export default function CrewFilter({ maxCrew, onChange }: CrewFilterProps) {
             key={p.label}
             type="button"
             onClick={() => onChange(p.value)}
+            aria-pressed={maxCrew === p.value}
+            aria-label={`Max crew ${p.label}`}
             className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
               maxCrew === p.value
                 ? "bg-cyan-400/20 text-cyan-300 border border-cyan-400/40"
@@ -38,6 +40,7 @@ export default function CrewFilter({ maxCrew, onChange }: CrewFilterProps) {
         value={maxCrew}
         onChange={e => onChange(e.target.value)}
         placeholder="Custom max crew..."
+        aria-label="Custom maximum crew size"
         min={0}
         max={1000}
         className="w-full px-3 py-1.5 bg-[#061220] border border-[#1C598C]/50 rounded-md text-white text-[12px] placeholder:text-gray-700 focus:outline-none focus:border-cyan-400/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"

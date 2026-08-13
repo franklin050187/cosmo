@@ -59,6 +59,8 @@ export default function UserTagEditor({ value, onChange, brand, onBrandChange }:
         <button
           type="button"
           onClick={() => onBrandChange(brand === "exl" ? "gen" : "exl")}
+          aria-pressed={brand === "exl"}
+          aria-label="Toggle Excelsior Library design mark"
           className={`hidden sm:flex items-center gap-3 w-full px-4 py-3 rounded-lg border transition-colors ${
             brand === "exl"
               ? "bg-yellow-900/20 text-yellow-300 border-yellow-600/40"
@@ -101,6 +103,8 @@ export default function UserTagEditor({ value, onChange, brand, onBrandChange }:
                     [cat.id]: !prev[cat.id],
                   }))
                 }
+                aria-expanded={isOpen}
+                aria-controls={`tag-section-${cat.id}`}
                 className="w-full flex items-center justify-between px-3 py-2.5 bg-[#0a1e33]/80 text-left"
               >
                 <span className="text-blue-200 text-sm font-medium">
@@ -130,7 +134,7 @@ export default function UserTagEditor({ value, onChange, brand, onBrandChange }:
                 </div>
               </button>
               {isOpen && (
-                <div className="px-3 py-3 bg-[#021526]/60">
+                <div id={`tag-section-${cat.id}`} className="px-3 py-3 bg-[#021526]/60">
                   <TagSection
                     category={cat}
                     value={value}
@@ -146,6 +150,8 @@ export default function UserTagEditor({ value, onChange, brand, onBrandChange }:
             <button
               type="button"
               onClick={() => onBrandChange(brand === "exl" ? "gen" : "exl")}
+              aria-pressed={brand === "exl"}
+              aria-label="Toggle Excelsior Library design mark"
               className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
                 brand === "exl"
                   ? "bg-yellow-900/20 text-yellow-300"
@@ -197,6 +203,8 @@ function TagSection({
               key={opt.value}
               type="button"
               onClick={() => onToggle(opt.value, category.type, category.id)}
+              aria-pressed={selected}
+              aria-label={`${opt.label} tag`}
               className={`
                 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all
                 ${

@@ -34,10 +34,11 @@ export default function HomeContent({ initialShips, initialTotalCount, initialMa
 
       const res = await fetch(`/api/ship/search?${params.toString()}`, { signal });
       if (res.ok) {
-        const data = await res.json();
-        setShips(data.data ?? []);
-        setMaxPage(data.max_page ?? 1);
-        setTotalResults(data.total_count ?? data.data?.length ?? 0);
+        const json = await res.json();
+        const payload = json.data ?? {};
+        setShips(payload.data ?? []);
+        setMaxPage(payload.max_page ?? 1);
+        setTotalResults(payload.total_count ?? payload.data?.length ?? 0);
       }
     } catch (err) {
       if ((err as Error)?.name === "AbortError") return;
@@ -144,6 +145,8 @@ export default function HomeContent({ initialShips, initialTotalCount, initialMa
               <button
                 key={o}
                 onClick={() => setFilter("order", o)}
+                aria-pressed={filters.order === o}
+                aria-label={`Sort by ${sortLabels[o] ?? o}`}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   filters.order === o
                     ? "bg-cyan-400/20 text-cyan-300 border border-cyan-400/40"
@@ -163,9 +166,9 @@ export default function HomeContent({ initialShips, initialTotalCount, initialMa
 
         {/* Ship grid or loading */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
+          <div className="flex items-center justify-center py-20" role="status">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-8 h-8 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" aria-hidden="true" />
               <p className="text-sm text-blue-200">Loading ships...</p>
             </div>
           </div>
@@ -178,6 +181,7 @@ export default function HomeContent({ initialShips, initialTotalCount, initialMa
             <p className="text-gray-500 text-sm mb-4">Try adjusting your filters or search terms</p>
             <button
               onClick={clearFilters}
+              aria-label="Clear all filters"
               className="px-4 py-2 text-sm text-cyan-400 border border-[#1C598C] rounded-lg hover:bg-cyan-400/10 transition-colors"
             >
               Clear all filters
@@ -214,6 +218,8 @@ export default function HomeContent({ initialShips, initialTotalCount, initialMa
                 <button
                   key={p}
                   onClick={() => setFilter("page", p.toString())}
+                  aria-label={`Page ${p}`}
+                  aria-current={p === filters.page ? "page" : undefined}
                   className={`w-9 h-9 rounded-lg transition-colors text-sm ${
                     p === filters.page
                       ? "bg-cyan-400/20 text-white font-bold border border-cyan-400/40"

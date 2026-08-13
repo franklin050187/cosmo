@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { getUserCollections } from "@/lib/db";
+import { ok, error } from "@/lib/api";
 
 export async function GET(req: NextRequest) {
   const auth = requireAuth(req);
@@ -15,9 +16,9 @@ export async function GET(req: NextRequest) {
       user.id,
       shipId ? parseInt(shipId, 10) || undefined : undefined,
     );
-    return NextResponse.json(data);
+    return ok(data);
   } catch (err) {
     console.error("collections/mine error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }

@@ -16,7 +16,7 @@ function FavoritesContent() {
       </h1>
 
       {loading ? (
-        <p className="text-center text-blue-200">Loading...</p>
+        <p className="text-center text-blue-200" role="status">Loading...</p>
       ) : (
         <>
           <p className="text-center text-blue-200 mb-4">

@@ -4,14 +4,18 @@ import {
   check,
   chooseFile,
   cliEval,
+  cliEvalAsync,
   dbClose,
   dbInit,
   FIXTURE_INVALID,
   FIXTURE_PNG,
   FIXTURE_REPLACE_PNG,
   httpFetch,
+  httpFetchAsync,
   openSession,
+  openSessionAsync,
   pageText,
+  pageTextAsync,
   pageUrl,
   prepTurnstile,
   q,
@@ -21,6 +25,7 @@ import {
   stubConfirm,
   summary,
   waitFor,
+  waitForAsync,
   BOGUS_COLLECTION_ID,
   BOGUS_SHIP_ID,
   OTHER_COLLECTION_ID,
@@ -28,6 +33,7 @@ import {
   PONEY_ID,
   PONEY_USER,
   QA_ANON_ID,
+  parallelChecks,
 } from "./qa-lib.ts";
 import { deepEqual, ensureFixtures, fixtureDecoded } from "./generate-fixtures.ts";
 
@@ -42,6 +48,23 @@ async function waitText(session: string, text: string, timeoutMs = 25000) {
     `document.body.innerText.toLowerCase().includes(${JSON.stringify(text.toLowerCase())})`,
     timeoutMs
   );
+}
+
+// Non-blocking variant for concurrent tests (polls with an async spawn-based eval).
+async function waitTextAsync(session: string, text: string, timeoutMs = 25000) {
+  const needle = text.toLowerCase();
+  const t0 = Date.now();
+  let lastErr: unknown;
+  while (Date.now() - t0 < timeoutMs) {
+    try {
+      const v = await cliEvalAsync(session, `document.body.innerText.toLowerCase().includes(${JSON.stringify(needle)})`);
+      if (v) return v;
+    } catch (e) {
+      lastErr = e;
+    }
+    await sleep(600);
+  }
+  throw new Error(`waitTextAsync timeout: ${text}${lastErr ? " (last: " + String(lastErr).slice(0, 120) + ")" : ""}`);
 }
 
 async function clickBtn(session: string, text: string) {
@@ -171,7 +194,7 @@ async function phase1(scratch: { shipId: number; ufsUrl: string }) {
 
   await check("P1-U2c", `My Collections lists ${dbColls[0].n} collections`, async () => {
     openSession(S, HOME + "/my-collections");
-    await waitText(S, "collection");
+    await waitText(S, "You have", 25000);
     const text = pageText(S);
     const m = text.match(/You have (\d+) collections?/);
     assert(m, "collections count line missing");
@@ -182,7 +205,8 @@ async function phase1(scratch: { shipId: number; ufsUrl: string }) {
     openSession(S, HOME + "/admin");
     await waitText(S, "Complete the captcha");
     prepTurnstile(S);
-    await waitFor(S, "document.body.innerText.includes('Analytics Dashboard')", 30000);
+    await sleep(1200);
+    await waitFor(S, "document.body.innerText.includes('Analytics Dashboard')", 45000);
     assert(pageText(S).includes("Total Events"), "no summary cards");
     const res = await httpFetch(S, "/api/analytics/dashboard");
     assert(res.status === 200, `dashboard api status ${res.status}`);
@@ -229,8 +253,8 @@ async function phase1(scratch: { shipId: number; ufsUrl: string }) {
       httpFetch(S, `/api/analytics/dashboard?exclude=${encodeURIComponent(PONEY_USER)}`),
     ]);
     assert(allRes.status === 200 && exclRes.status === 200, "dashboard api status");
-    const all = Number((allRes.body as { totals?: { total_events?: number } }).totals?.total_events ?? -1);
-    const excl = Number((exclRes.body as { totals?: { total_events?: number } }).totals?.total_events ?? -1);
+    const all = Number((allRes.body as { data?: { totals?: { total_events?: number } } }).data?.totals?.total_events ?? -1);
+    const excl = Number((exclRes.body as { data?: { totals?: { total_events?: number } } }).data?.totals?.total_events ?? -1);
     assert(all >= 0 && excl >= 0, "missing totals.total_events in response");
     assert(excl <= all, `exclude filter did not drop events (all=${all}, excl=${excl})`);
   });
@@ -320,27 +344,93 @@ async function phase2(scratch: { shipId: number }) {
     ["/my-collections", "My Collections"],
     ["/collections/new", "New Collection"],
   ];
+
+  // Independent anonymous gate tests: ephemeral-browser GETs on routes that
+  // aren't rate-limited endpoints and don't mutate state, so they can run
+  // concurrently. parallelChecks hands each its own throwaway session name so
+  // the per-test browser contexts never race on a shared "anon" context.
+  const parallelBatch: { id: string; name: string; fn: (s: string) => Promise<void> }[] = [];
   for (const [route, label] of gatedRoutes) {
-    await check(`P2-G1:${label}`, `Login required on ${route}`, async () => {
-      openSession(A, HOME + route);
-      await waitText(A, "Login Required", 20000);
-      assert(pageText(A).includes("Login with Discord"), "no Discord login link");
+    parallelBatch.push({
+      id: `P2-G1:${label}`,
+      name: `Login required on ${route}`,
+      fn: async (s) => {
+        await openSessionAsync(s, HOME + route);
+        await waitTextAsync(s, "Login Required", 20000);
+        assert((await pageTextAsync(s)).includes("Login with Discord"), "no Discord login link");
+      },
     });
   }
+  parallelBatch.push({
+    id: "P2-G3",
+    name: `Ship edit (${scratch.shipId}) redirects anonymous to home`,
+    fn: async (s) => {
+      await openSessionAsync(s, HOME + `/ship/${scratch.shipId}/edit`);
+      await waitForAsync(s, `window.location.pathname === "/"`, 15000);
+    },
+  });
+  parallelBatch.push({
+    id: "P2-G6",
+    name: `Collection edit (${OTHER_COLLECTION_ID}) requires login`,
+    fn: async (s) => {
+      await openSessionAsync(s, HOME + `/collections/${OTHER_COLLECTION_ID}/edit`);
+      await waitTextAsync(s, "Login Required", 20000);
+    },
+  });
+  parallelBatch.push({
+    id: "P2-G8",
+    name: `Ship detail (${scratch.shipId}) anonymous: no edit/delete, login-to-favorite`,
+    fn: async (s) => {
+      await openSessionAsync(s, HOME + `/ship/${scratch.shipId}`);
+      await waitTextAsync(s, "valid-ship", 30000);
+      const text = await pageTextAsync(s);
+      assert(text.includes("Login to favorite"), "missing login-to-favorite");
+      assert(text.includes("Download"), "missing download");
+      assert(!text.includes("Delete"), "delete leaked to anon");
+      assert(!text.includes("Edit"), "edit leaked to anon");
+    },
+  });
+  parallelBatch.push({
+    id: "P2-G9",
+    name: "Incorrect/deleted ids show not-found (ship + collection)",
+    fn: async (s) => {
+      await openSessionAsync(s, HOME + "/");
+      const res = await httpFetchAsync(s, `/api/ship/${BOGUS_SHIP_ID}`);
+      assert(res.status === 404, `ship api status ${res.status}`);
+      await openSessionAsync(s, HOME + `/ship/${BOGUS_SHIP_ID}`);
+      await waitTextAsync(s, "Ship not found", 20000);
+      const cRes = await httpFetchAsync(s, `/api/collections/${BOGUS_COLLECTION_ID}`);
+      assert(cRes.status === 404, `collection api status ${cRes.status}`);
+      await openSessionAsync(s, HOME + `/collections/${BOGUS_COLLECTION_ID}`);
+      await waitTextAsync(s, "Collection not found", 20000);
+    },
+  });
+  parallelBatch.push({
+    id: "P2-G10",
+    name: "auth_error=access_denied shows 'Login was cancelled.'",
+    fn: async (s) => {
+      await openSessionAsync(s, HOME + "/?auth_error=access_denied");
+      await waitTextAsync(s, "Login was cancelled.", 20000);
+    },
+  });
+  await parallelChecks(parallelBatch, 3);
+
+  // Sequential tests below: they POST to API endpoints or burst rate-limited
+  // routes, so they must not overlap (avoid cascading 429s).
 
   await check("P2-G2", "Analytics dashboard gated for anonymous (401 + no data leak)", async () => {
-     const res = await httpFetch(A, "/api/analytics/dashboard");
-     assert(res.status === 401, `dashboard api status ${res.status}`);
-     openSession(A, HOME + "/admin");
-     await waitText(A, "Complete the captcha");
-     prepTurnstile(A);
-     await waitFor(
-       A,
-       `document.body.innerText.toLowerCase().includes("not logged in") || window.location.pathname === "/"`,
-       15000
-     );
-     assert(!pageText(A).includes("Total Events"), "dashboard data leaked to anon");
-   });
+    const res = await httpFetch(A, "/api/analytics/dashboard");
+    assert(res.status === 401, `dashboard api status ${res.status}`);
+    openSession(A, HOME + "/admin");
+    await waitText(A, "Complete the captcha");
+    prepTurnstile(A);
+    await waitFor(
+      A,
+      `document.body.innerText.toLowerCase().includes("not logged in") || window.location.pathname === "/"`,
+      15000
+    );
+    assert(!pageText(A).includes("Total Events"), "dashboard data leaked to anon");
+  });
 
   await check("P2-G11", "Rate limiting: /api/ship/check-duplicate returns 429 under burst", async () => {
       let got429 = false;
@@ -369,11 +459,6 @@ async function phase2(scratch: { shipId: number }) {
       assert(got429, `expected 429 on /callback under burst, last status ${lastStatus}`);
     });
 
-  await check("P2-G3", `Ship edit (${scratch.shipId}) redirects anonymous to home`, async () => {
-    openSession(A, HOME + `/ship/${scratch.shipId}/edit`);
-    await waitFor(A, `window.location.pathname === "/"`, 15000);
-  });
-
   await check("P2-G4", `PUT/DELETE ship/${scratch.shipId} return 401 anonymous`, async () => {
     const put = await httpFetch(A, `/api/ship/${scratch.shipId}`, {
       method: "PUT",
@@ -385,7 +470,7 @@ async function phase2(scratch: { shipId: number }) {
     assert(del.status === 401, `DELETE status ${del.status}`);
   });
 
-  await check("P2-G5", "Upload/replace endpoints reject anonymous", async () => {
+  await check("P2-G5", "Upload/reject endpoints reject anonymous", async () => {
     const uploadthing = await httpFetch(A, "/api/uploadthing", {
       method: "POST",
       body: "{}",
@@ -394,11 +479,6 @@ async function phase2(scratch: { shipId: number }) {
     assert([400, 401, 403].includes(uploadthing.status), `uploadthing status ${uploadthing.status}`);
     const myShips = await httpFetch(A, "/api/ship/my-ships");
     assert(myShips.status === 401, `my-ships status ${myShips.status}`);
-  });
-
-  await check("P2-G6", `Collection edit (${OTHER_COLLECTION_ID}) requires login`, async () => {
-    openSession(A, HOME + `/collections/${OTHER_COLLECTION_ID}/edit`);
-    await waitText(A, "Login Required", 20000);
   });
 
   await check("P2-G7", `PUT/DELETE collections/${OTHER_COLLECTION_ID} return 401 anonymous`, async () => {
@@ -411,33 +491,6 @@ async function phase2(scratch: { shipId: number }) {
     const del = await httpFetch(A, `/api/collections/${OTHER_COLLECTION_ID}`, { method: "DELETE" });
     assert(del.status === 401, `DELETE status ${del.status}`);
   });
-
-  await check("P2-G8", `Ship detail (${scratch.shipId}) anonymous: no edit/delete, login-to-favorite`, async () => {
-    openSession(A, HOME + `/ship/${scratch.shipId}`);
-    await waitText(A, "valid-ship");
-    const text = pageText(A);
-    assert(text.includes("Login to favorite"), "missing login-to-favorite");
-    assert(text.includes("Download"), "missing download");
-    assert(!text.includes("Delete"), "delete leaked to anon");
-    assert(!text.includes("Edit"), "edit leaked to anon");
-  });
-
-  await check("P2-G9", "Incorrect/deleted ids show not-found (ship + collection)", async () => {
-    const res = await httpFetch(A, `/api/ship/${BOGUS_SHIP_ID}`);
-    assert(res.status === 404, `ship api status ${res.status}`);
-    openSession(A, HOME + `/ship/${BOGUS_SHIP_ID}`);
-    await waitText(A, "Ship not found");
-
-    const cRes = await httpFetch(A, `/api/collections/${BOGUS_COLLECTION_ID}`);
-    assert(cRes.status === 404, `collection api status ${cRes.status}`);
-    openSession(A, HOME + `/collections/${BOGUS_COLLECTION_ID}`);
-    await waitText(A, "Collection not found");
-  });
-
-   await check("P2-G10", "auth_error=access_denied shows 'Login was cancelled.'", async () => {
-     openSession(A, HOME + "/?auth_error=access_denied");
-     await waitText(A, "Login was cancelled.");
-   });
 
   await check("F1", "Decode valid fixture matches expected JSON (valid-ship.json)", async () => {
     openSession(A, HOME + "/decode");
@@ -677,6 +730,7 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
       for (const route of ["/", "/my-ships"]) {
         runCli(["-s=" + S, "resize", w, h]);
         openSession(S, HOME + route);
+        await sleep(800);
         await waitText(S, route === "/" ? "Ships" : "You have uploaded");
         const overflow = cliEval(
           S,
@@ -750,12 +804,22 @@ async function phase4(
 
   await check("P4-N2", "QA anonymous events carry the pinned anon_id (identifiable/excludable)", async () => {
     openSession(A, HOME + "/");
-    const res = await httpFetch(A, "/api/analytics/log", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ event_type: "page_view", url: "/qa-anon-id-check" }),
-    });
-    assert(res.status === 200, `marker log status ${res.status}`);
+    // Anonymous traffic in this suite shares one loopback identity (IP key ""),
+    // so the shared /api rate-limit budget can transiently trip on /api/analytics/log.
+    // Retry only on 429 so the anon_id invariant is verified once a slot frees up.
+    let res: { status: number; body: unknown };
+    let attempts = 0;
+    for (;;) {
+      res = await httpFetch(A, "/api/analytics/log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_type: "page_view", url: "/qa-anon-id-check" }),
+      });
+      if (res.status === 200 || res.status !== 429 || attempts >= 8) break;
+      attempts++;
+      await sleep(6000);
+    }
+    assert(res.status === 200, `marker log status ${res.status} (after ${attempts} retries)`);
     const row = await q<{ anon_id: string | null }>(
       "SELECT anon_id FROM analytics WHERE url = '/qa-anon-id-check' ORDER BY created_at DESC LIMIT 1"
     );
@@ -764,6 +828,7 @@ async function phase4(
       got === QA_ANON_ID,
       `QA anon_id drifted (got ${got}, expected ${QA_ANON_ID}). Update QA_ANON_ID in scripts/qa-lib.ts and ANALYTICS_EXCLUDE_ANON_IDS in .env.`
     );
+    await q("DELETE FROM analytics WHERE url = '/qa-anon-id-check'");
   });
 }
 

@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getImageData, deleteShip, isShipOwner, updateShip } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { verifyTurnstileFromRequest } from "@/lib/turnstile";
 import { UTApi } from "uploadthing/server";
+import { ok, badRequest, notFound, forbidden, error } from "@/lib/api";
 
 export async function GET(
   req: NextRequest,
@@ -12,18 +13,18 @@ export async function GET(
     const { id } = await params;
     const shipId = parseInt(id, 10);
     if (isNaN(shipId)) {
-      return NextResponse.json({ error: "Invalid ship ID" }, { status: 400 });
+      return badRequest("Invalid ship ID");
     }
 
     const ship = await getImageData(shipId);
     if (!ship) {
-      return NextResponse.json({ error: "Ship not found" }, { status: 404 });
+      return notFound("Ship not found");
     }
 
-    return NextResponse.json(ship);
+    return ok(ship);
   } catch (err) {
     console.error("ship/[id] GET error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }
 
@@ -38,7 +39,7 @@ export async function PUT(
   const { id } = await params;
   const shipId = parseInt(id, 10);
   if (isNaN(shipId)) {
-    return NextResponse.json({ error: "Invalid ship ID" }, { status: 400 });
+    return badRequest("Invalid ship ID");
   }
 
   let body: {
@@ -56,23 +57,23 @@ export async function PUT(
   try {
     const cl = req.headers.get("content-length");
     if (cl && parseInt(cl, 10) > 1_048_576) {
-      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+      return badRequest("Payload too large", 413);
     }
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return badRequest("Invalid JSON body");
   }
   if (!(await verifyTurnstileFromRequest(req, body["cf-turnstile-response"] ?? ""))) {
-    return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });
+    return forbidden("Turnstile verification failed");
   }
 
   try {
     const ship = await getImageData(shipId);
     if (!ship) {
-      return NextResponse.json({ error: "Ship not found" }, { status: 404 });
+      return notFound("Ship not found");
     }
     if (!isShipOwner(ship, { id: user.id, username: user.username })) {
-      return NextResponse.json({ error: "Not the owner" }, { status: 403 });
+      return forbidden("Not the owner");
     }
 
     await updateShip({
@@ -90,9 +91,9 @@ export async function PUT(
       tags: body.tags ?? ship.tags,
     });
 
-    return NextResponse.json({ success: "Ship updated" });
+    return ok({ success: "Ship updated" });
   } catch {
-    return NextResponse.json({ error: "Failed to update ship" }, { status: 500 });
+    return error("Failed to update ship");
   }
 }
 
@@ -107,17 +108,17 @@ export async function DELETE(
   const { id } = await params;
   const shipId = parseInt(id, 10);
   if (isNaN(shipId)) {
-    return NextResponse.json({ error: "Invalid ship ID" }, { status: 400 });
+    return badRequest("Invalid ship ID");
   }
 
   if (!(await verifyTurnstileFromRequest(req))) {
-    return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });
+    return forbidden("Turnstile verification failed");
   }
 
   try {
     const result = await deleteShip(shipId, { id: user.id, username: user.username });
     if ("error" in result) {
-      return NextResponse.json(result, { status: 403 });
+      return forbidden(result.error);
     }
 
     if (result.data) {
@@ -134,9 +135,9 @@ export async function DELETE(
       }
     }
 
-    return NextResponse.json({ success: result.success });
+    return ok({ success: result.success });
   } catch (err) {
     console.error("ship/[id] DELETE error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }

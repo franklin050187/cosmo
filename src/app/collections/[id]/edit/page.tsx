@@ -29,6 +29,7 @@ function EditCollectionContent() {
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
 
     if (!hydrated) return;
 
@@ -37,10 +38,11 @@ function EditCollectionContent() {
       return;
     }
 
-    fetch(`/api/collections/${params.id}`)
+    fetch(`/api/collections/${params.id}`, { signal: controller.signal })
       .then((r) => r.json())
-      .then((data) => {
+      .then((json) => {
         if (!active) return;
+        const data = json.data ?? json;
         const isOwner = user?.username === data.owner;
 
         if (!isOwner) {
@@ -55,7 +57,7 @@ function EditCollectionContent() {
       .catch(() => { if (active) router.push("/"); })
       .finally(() => { if (active) setLoading(false); });
 
-    return () => { active = false; };
+    return () => { active = false; controller.abort(); };
   }, [params.id, router, isLoggedIn, user?.username, hydrated]);
 
   const handleSave = async () => {
@@ -71,16 +73,16 @@ function EditCollectionContent() {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`/api/collections/${collection.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ title: title.trim(), description: description.trim(), "cf-turnstile-response": turnstileToken }),
-      });
-      const data = await res.json();
-      if (data.error) {
-        setError(data.error);
+       const res = await fetch(`/api/collections/${collection.id}`, {
+         method: "PUT",
+         headers: {
+           "Content-Type": "application/json",
+         },
+         body: JSON.stringify({ title: title.trim(), description: description.trim(), "cf-turnstile-response": turnstileToken }),
+       });
+      const json = await res.json();
+      if (json.error) {
+        setError(json.error);
         turnstileRef.current?.reset();
       } else {
         trackEvent("collection_edit");
@@ -94,7 +96,7 @@ function EditCollectionContent() {
     }
   };
 
-  if (loading) return <p className="text-center text-blue-200">Loading...</p>;
+  if (loading) return <p className="text-center text-blue-200" role="status">Loading...</p>;
   if (!collection) return null;
 
   return (
@@ -123,7 +125,7 @@ function EditCollectionContent() {
           />
         </div>
 
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+        {error && <p className="text-red-400 text-sm" role="alert">{error}</p>}
 
         <TurnstileWidget ref={turnstileRef} />
 
@@ -163,8 +165,8 @@ function AddShipsSection({ collectionId, existingShipIds }: { collectionId: numb
     setSearching(true);
     try {
       const res = await fetch(`/api/ship/search?q=${encodeURIComponent(query.trim())}&order=new`);
-      const data = await res.json();
-      setResults(data.data ?? []);
+      const json = await res.json();
+      setResults(json.data?.data ?? []);
     } catch {
       setResults([]);
     } finally {
@@ -202,6 +204,7 @@ function AddShipsSection({ collectionId, existingShipIds }: { collectionId: numb
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && search()}
+          aria-label="Search ship name"
           placeholder="Search ship name..."
           className="flex-1 p-2 bg-[#021526] border border-gray-400 rounded text-white text-sm"
         />

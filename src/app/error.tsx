@@ -16,7 +16,7 @@ export default function ErrorPage({
 
   return (
     <div className="flex items-center justify-center py-20">
-      <Card className="text-center max-w-md">
+      <Card className="text-center max-w-md" role="alert">
         <h2 className="text-white text-xl font-semibold mb-2">Something went wrong</h2>
         <p className="text-blue-200 text-sm mb-6">
           {error.message || "An unexpected error occurred."}

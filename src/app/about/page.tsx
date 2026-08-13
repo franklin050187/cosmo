@@ -21,6 +21,7 @@ export default function AboutPage() {
             className="text-cyan-400 underline"
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Cosmoteer: Starship Architect & Commander (opens in new tab)"
           >
             Cosmoteer: Starship Architect & Commander
           </a>
@@ -38,6 +39,7 @@ export default function AboutPage() {
             className="text-cyan-400 underline"
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="CC BY 4.0 (opens in new tab)"
           >
             CC BY 4.0
           </a>{" "}

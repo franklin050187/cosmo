@@ -1,3 +1,5 @@
+"use client";
+
 import type { ShipStats } from "@/lib/physics";
 
 const DIR_ORDER = ["NW", "N", "NE", "E", "SE", "S", "SW", "W"];

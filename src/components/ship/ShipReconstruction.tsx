@@ -316,7 +316,7 @@ export default function ShipReconstruction({ stats, parts }: Props) {
         className="w-full h-auto border border-[#1C598C] rounded"
       />
       {rendering && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#021526]/70 rounded">
+        <div className="absolute inset-0 flex items-center justify-center bg-[#021526]/70 rounded" role="status" aria-label="Generating ship image">
           <div className="flex items-center gap-3">
             <div className="h-5 w-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
             <p className="text-blue-200 text-sm">Generating ship image…</p>

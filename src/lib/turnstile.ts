@@ -10,6 +10,7 @@ export async function verifyTurnstileToken(token: string, ip?: string): Promise<
         response: token,
         ...(ip ? { remoteip: ip } : {}),
       }),
+      signal: AbortSignal.timeout(10000),
     });
     if (!r.ok) return false;
     const data = await r.json();

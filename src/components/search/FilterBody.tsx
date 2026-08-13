@@ -99,22 +99,28 @@ export default function FilterBody({ filters, setFilter, setFilters, clearFilter
 
       <FilterSection title="Library" icon={<LibraryIcon />} badge={filters.brand ? 1 : 0}>
         <div className="flex gap-1.5 flex-wrap">
-          {(["", "gen", "exl"] as const).map((val) => (
-            <button
-              key={val}
-              type="button"
-              onClick={() => setFilter("brand", val)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                (filters.brand || "") === val
-                  ? val === "exl"
-                    ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/40"
-                    : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
-                  : "text-gray-400 border border-[#1C598C]/40 hover:text-white hover:border-cyan-400/20"
-              }`}
-            >
-              {val === "" ? "All" : val === "gen" ? "Casual" : "Excelsior"}
-            </button>
-          ))}
+          {(["", "gen", "exl"] as const).map((val) => {
+            const label = val === "" ? "All" : val === "gen" ? "Casual" : "Excelsior";
+            const isActive = (filters.brand || "") === val;
+            return (
+              <button
+                key={val}
+                type="button"
+                onClick={() => setFilter("brand", val)}
+                aria-label={`${label} ships`}
+                aria-pressed={isActive}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive
+                    ? val === "exl"
+                      ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/40"
+                      : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                    : "text-gray-400 border border-[#1C598C]/40 hover:text-white hover:border-cyan-400/20"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       </FilterSection>
 

@@ -25,6 +25,15 @@ export async function getImageData(shipId: number): Promise<ShipRow | null> {
   );
 }
 
+export async function getShipForReplacement(
+  shipId: number,
+): Promise<{ id: number; data: string; submitted_by: string; discord_id: string | null } | null> {
+  return fetchOne(
+    "SELECT id, data, submitted_by, discord_id FROM shipdb WHERE id = $1",
+    [shipId]
+  );
+}
+
 export async function getMyShips(user: string, userId: string) {
   const data = await fetchAll(
     "SELECT id, name, data, submitted_by, discord_id, description, ship_name, author, price, brand, crew, tags, downloads, fav, date FROM shipdb WHERE discord_id = $1 OR submitted_by = $2",

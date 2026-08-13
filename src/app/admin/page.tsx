@@ -87,7 +87,7 @@ export default function AdminPage() {
         if (!res.ok) throw new Error("Failed to fetch");
         const json = await res.json();
         if (!cancelled) {
-          setData(json);
+          setData(json.data);
           setError(null);
         }
       } catch (e) {
@@ -118,11 +118,11 @@ export default function AdminPage() {
   }
 
   if (loading) {
-    return <div className="flex justify-center pt-20 text-blue-300">Loading dashboard…</div>;
+    return <div className="flex justify-center pt-20 text-blue-300" role="status">Loading dashboard…</div>;
   }
 
   if (error) {
-    return <div className="flex justify-center pt-20 text-red-400">{error}</div>;
+    return <div className="flex justify-center pt-20 text-red-400" role="alert">{error}</div>;
   }
 
   if (!data) return null;
@@ -148,7 +148,8 @@ export default function AdminPage() {
           {user && (
             <button
               onClick={() => { setLoading(true); setExcludeMine((v) => !v); }}
-              title="Filter out your own analytics events from the dashboard"
+              aria-pressed={excludeMine}
+              aria-label="Filter out your own analytics events from the dashboard"
               className={`border rounded px-3 py-1.5 text-sm transition-colors ${
                 excludeMine
                   ? "border-amber-400/60 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20"

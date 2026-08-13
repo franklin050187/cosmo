@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { getCollectionsForShip, getAllCollections, createCollection } from "@/lib/db";
+import { ok, badRequest, forbidden, error } from "@/lib/api";
 
 export async function GET(req: NextRequest) {
   const shipId = req.nextUrl.searchParams.get("shipId");
@@ -10,18 +11,18 @@ export async function GET(req: NextRequest) {
     if (shipId) {
       const shipIdNum = parseInt(shipId, 10);
       if (isNaN(shipIdNum)) {
-        return NextResponse.json({ error: "invalid shipId" }, { status: 400 });
+        return badRequest("invalid shipId");
       }
       const data = await getCollectionsForShip(shipIdNum);
-      return NextResponse.json({ data });
+      return ok(data);
     }
 
     const page = parseInt(req.nextUrl.searchParams.get("page") ?? "1", 10) || 1;
     const data = await getAllCollections(page);
-    return NextResponse.json(data);
+    return ok(data);
   } catch (err) {
     console.error("collections GET error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }
 
@@ -32,12 +33,12 @@ export async function POST(req: NextRequest) {
 
   const cl = req.headers.get("content-length");
   if (cl && parseInt(cl, 10) > 1_048_576) {
-    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    return badRequest("Payload too large", 413);
   }
   const body = await req.json();
   const title = body.title?.trim();
   if (!title) {
-    return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    return badRequest("Title is required");
   }
 
   if (process.env.NODE_ENV !== "development") {
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
     const ip = (req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "").replace(/^::ffff:/, "");
     const turnstileOk = await verifyTurnstileToken(turnstileToken, ip);
     if (!turnstileOk) {
-      return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });
+      return forbidden("Turnstile verification failed");
     }
   }
 
@@ -57,9 +58,9 @@ export async function POST(req: NextRequest) {
       body.description?.trim() ?? "",
     );
 
-    return NextResponse.json(result, { status: 201 });
+    return ok(result, 201);
   } catch (err) {
     console.error("collections POST error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }

@@ -12,6 +12,7 @@ interface FilterSectionProps {
 
 export default function FilterSection({ title, icon, badge = 0, defaultOpen = true, children }: FilterSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const contentId = `filter-section-${title.toLowerCase().replace(/\s+/g, "-")}`;
   const contentRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | "auto">(defaultOpen ? "auto" : 0);
 
@@ -33,6 +34,8 @@ export default function FilterSection({ title, icon, badge = 0, defaultOpen = tr
       <button
         type="button"
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-controls={contentId}
         className="w-full flex items-center gap-2.5 text-left group"
       >
         {icon && (
@@ -59,6 +62,7 @@ export default function FilterSection({ title, icon, badge = 0, defaultOpen = tr
         </svg>
       </button>
       <div
+        id={contentId}
         ref={contentRef}
         className="overflow-hidden transition-[max-height,opacity] duration-200 ease-out"
         style={{ maxHeight: height === "auto" ? "none" : `${height}px`, opacity: open ? 1 : 0 }}

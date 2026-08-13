@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getMyFavorites } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
+import { ok, error } from "@/lib/api";
 
 export async function GET(req: NextRequest) {
   const auth = requireAuth(req);
@@ -9,9 +10,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const result = await getMyFavorites(user.username, user.id);
-    return NextResponse.json(result);
+    return ok(result);
   } catch (err) {
     console.error("ship/favorites error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }

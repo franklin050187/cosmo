@@ -19,6 +19,8 @@ export default function SortFilter({ value, onChange }: SortFilterProps) {
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
+          aria-pressed={value === opt.value}
+          aria-label={`Sort by ${opt.label}`}
           className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all text-left ${
             value === opt.value
               ? "bg-cyan-400/10 text-cyan-300 border border-cyan-400/30"

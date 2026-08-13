@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { verifyTurnstileFromRequest } from "@/lib/turnstile";
 import { getCollection, updateCollection, deleteCollection } from "@/lib/db";
+import { ok, badRequest, notFound, forbidden, error } from "@/lib/api";
 
 export async function GET(
   _req: NextRequest,
@@ -11,18 +12,18 @@ export async function GET(
     const { id } = await params;
     const collectionId = parseInt(id, 10);
     if (isNaN(collectionId)) {
-      return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+      return badRequest("Invalid id");
     }
 
     const col = await getCollection(collectionId);
     if (!col) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return notFound();
     }
 
-    return NextResponse.json(col);
+    return ok(col);
   } catch (err) {
     console.error("collections/[id] GET error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }
 
@@ -37,17 +38,17 @@ export async function PUT(
   const { id } = await params;
   const collectionId = parseInt(id, 10);
   if (isNaN(collectionId)) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+    return badRequest("Invalid id");
   }
 
   const cl = req.headers.get("content-length");
   if (cl && parseInt(cl, 10) > 1_048_576) {
-    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    return badRequest("Payload too large", 413);
   }
   const body = await req.json();
 
   if (!(await verifyTurnstileFromRequest(req, (body["cf-turnstile-response"] as string) ?? ""))) {
-    return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });
+    return forbidden("Turnstile verification failed");
   }
 
   try {
@@ -57,12 +58,14 @@ export async function PUT(
     });
 
     if ("error" in result) {
-      return NextResponse.json(result, { status: result.error === "not the owner" ? 403 : 404 });
+      return result.error === "not the owner"
+        ? forbidden("not the owner")
+        : notFound(result.error === "not found" ? "Not found" : result.error);
     }
-    return NextResponse.json(result);
+    return ok(result);
   } catch (err) {
     console.error("collections/[id] PUT error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }
 
@@ -77,22 +80,24 @@ export async function DELETE(
   const { id } = await params;
   const collectionId = parseInt(id, 10);
   if (isNaN(collectionId)) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+    return badRequest("Invalid id");
   }
 
   if (!(await verifyTurnstileFromRequest(req))) {
-    return NextResponse.json({ error: "Turnstile verification failed" }, { status: 403 });
+    return forbidden("Turnstile verification failed");
   }
 
   try {
     const result = await deleteCollection(collectionId, user.username, user.id);
 
     if ("error" in result) {
-      return NextResponse.json(result, { status: result.error === "not the owner" ? 403 : 404 });
+      return result.error === "not the owner"
+        ? forbidden("not the owner")
+        : notFound(result.error === "not found" ? "Not found" : result.error);
     }
-    return NextResponse.json(result);
+    return ok(result);
   } catch (err) {
     console.error("collections/[id] DELETE error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }

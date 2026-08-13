@@ -2,7 +2,7 @@ import { createUploadthing } from "uploadthing/next";
 import { UTApi } from "uploadthing/server";
 import { decodeShipFromUrl, decodeShipFromPixels } from "@/lib/server-decode";
 import { calculateShipPrice } from "@/lib/price";
-import { insertShip, updateShip, getImageData, isShipOwner } from "@/lib/db";
+import { insertShip, updateShip, getShipForReplacement, isShipOwner } from "@/lib/db";
 import { getUserFromRequest, type UserPayload } from "@/lib/auth";
 import { computeShipSignature } from "@/lib/ship-signature";
 import { verifyTurnstileToken } from "@/lib/turnstile";
@@ -127,7 +127,7 @@ export const uploadRouter = {
         throw new Error("Invalid x-ship-id header");
       }
 
-      const ship = await getImageData(shipId);
+      const ship = await getShipForReplacement(shipId);
       if (!ship) {
         throw new Error("Ship not found");
       }

@@ -33,7 +33,7 @@ export default function ShipJson({ imageUrl }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-3 mt-2">
+      <div className="flex items-center gap-3 mt-2" role="status" aria-label="Decoding ship blueprint">
         <div className="h-4 w-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
         <p className="text-blue-200 text-sm">Decoding ship blueprint...</p>
       </div>
@@ -41,12 +41,12 @@ export default function ShipJson({ imageUrl }: Props) {
   }
 
   if (error) {
-    return <p className="text-red-400 mt-2">{error}</p>;
+    return <p className="text-red-400 mt-2" role="alert">{error}</p>;
   }
 
   if (serializing) {
     return (
-      <div className="flex items-center gap-3 mt-2">
+      <div className="flex items-center gap-3 mt-2" role="status" aria-label="Preparing JSON">
         <div className="h-4 w-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
         <p className="text-blue-200 text-sm">Preparing JSON...</p>
       </div>

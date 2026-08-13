@@ -26,7 +26,14 @@ interface CachedStats {
   }[];
 }
 
+const MAX_CACHE_SIZE = 50;
 const statsCache = new Map<string, CachedStats>();
+
+function evictCache() {
+  if (statsCache.size <= MAX_CACHE_SIZE) return;
+  const oldest = statsCache.keys().next().value;
+  if (oldest !== undefined) statsCache.delete(oldest);
+}
 
 export default function ShipStats({ imageUrl }: Props) {
   const { decoded, loading, error: decodeError } = useShipDecode(imageUrl);
@@ -44,6 +51,7 @@ export default function ShipStats({ imageUrl }: Props) {
       try {
         const stats = await calculateShipStatsAsync(decoded);
         const result: CachedStats = { stats, parts: decoded.Parts };
+        evictCache();
         statsCache.set(imageUrl, result);
         if (active) setCached(result);
       } catch (err) {
@@ -59,7 +67,7 @@ export default function ShipStats({ imageUrl }: Props) {
   if (loading || !cached) {
     return (
       <Card className="mt-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3" role="status" aria-label="Analyzing ship">
           <div className="h-5 w-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
           <p className="text-blue-200">Analyzing ship...</p>
         </div>
@@ -70,7 +78,7 @@ export default function ShipStats({ imageUrl }: Props) {
   if (decodeError) {
     return (
       <Card className="mt-6">
-        <p className="text-red-400">{decodeError}</p>
+        <p className="text-red-400" role="alert">{decodeError}</p>
       </Card>
     );
   }

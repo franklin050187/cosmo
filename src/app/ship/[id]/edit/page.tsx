@@ -42,6 +42,8 @@ export default function EditShipPage() {
 
   useEffect(() => {
     if (!hydrated) return;
+    let active = true;
+    const controller = new AbortController();
 
     const fetchShip = async () => {
       if (!isLoggedIn) {
@@ -50,15 +52,18 @@ export default function EditShipPage() {
       }
 
       try {
-        const res = await fetch(`/api/ship/${params.id}`);
+        const res = await fetch(`/api/ship/${params.id}`, { signal: controller.signal });
         if (!res.ok) throw new Error("Ship not found");
-        const data = await res.json();
+        const json = await res.json();
+        const data = json.data ?? json;
 
+        if (!active) return;
         if (!user?.username || data.submitted_by !== user.username) {
           setNotOwner(true);
           return;
         }
 
+        if (!active) return;
         setShip(data);
         setShipName(data.ship_name);
         setDescription(data.description);
@@ -67,13 +72,14 @@ export default function EditShipPage() {
         setUserTags(ut);
         setAutoTags(at);
       } catch (err) {
-        console.error("Failed to fetch ship:", err);
+        if (active) console.error("Failed to fetch ship:", err);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     fetchShip();
+    return () => { active = false; controller.abort(); };
   }, [params.id, router, isLoggedIn, user?.username, hydrated]);
 
   const handleSave = async () => {
@@ -176,7 +182,7 @@ export default function EditShipPage() {
     }
   }, [notOwner, params.id, router]);
 
-  if (loading) return <p className="text-center text-blue-200">Loading...</p>;
+  if (loading) return <p className="text-center text-blue-200" role="status">Loading...</p>;
   if (notOwner) return null;
   if (!ship) return <p className="text-center text-red-400">Ship not found</p>;
 

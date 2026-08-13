@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
+import { ok, error } from "@/lib/api";
 import { getTagsWithCounts } from "@/lib/db";
 
 export async function GET() {
   try {
     const tags = await getTagsWithCounts();
-    return NextResponse.json(tags);
+    return ok(tags);
   } catch (err) {
     console.error("ship/tags error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }

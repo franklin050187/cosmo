@@ -32,13 +32,13 @@ export default function CollectionPicker({ shipId, children, className }: Props)
   useEffect(() => {
     if (!open || !isLoggedIn) return;
     const ac = new AbortController();
-    fetch(`/api/collections/mine?shipId=${shipId}`, { signal: ac.signal })
+     fetch(`/api/collections/mine?shipId=${shipId}`, { signal: ac.signal })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
-      .then((data) => {
-        setCollections(Array.isArray(data) ? data : []);
+      .then((json) => {
+        setCollections(Array.isArray(json.data) ? json.data : []);
       })
       .catch((err: unknown) => {
         if ((err as Error)?.name === "AbortError") return;
@@ -67,6 +67,15 @@ export default function CollectionPicker({ shipId, children, className }: Props)
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
+  useEffect(() => {
+    return () => {
+      if (msgTimer.current !== undefined) {
+        clearTimeout(msgTimer.current);
+        msgTimer.current = undefined;
+      }
+    };
+  }, []);
+
   const handleToggle = () => {
     if (open) {
       setOpen(false);
@@ -91,14 +100,15 @@ export default function CollectionPicker({ shipId, children, className }: Props)
         const res = await fetch(`/api/collections/${col.id}/ships/${shipId}`, {
           method: "DELETE",
         });
-        const data = await res.json();
-        if (data.success) {
+        const json = await res.json();
+        const data = json.data ?? {};
+        if (data.success || data.warning) {
           setCollections((prev) =>
             prev.map((c) => (c.id === col.id ? { ...c, has_ship: false } : c)),
           );
           showMsg(`Removed from "${col.title}"`);
         } else {
-          showMsg(data.error ?? data.warning ?? "Failed to remove");
+          showMsg(json.error ?? data.error ?? "Failed to remove");
         }
       } else {
         const res = await fetch(`/api/collections/${col.id}/ships`, {
@@ -108,14 +118,15 @@ export default function CollectionPicker({ shipId, children, className }: Props)
           },
           body: JSON.stringify({ shipId }),
         });
-        const data = await res.json();
+        const json = await res.json();
+        const data = json.data ?? {};
         if (data.success || data.warning) {
           setCollections((prev) =>
             prev.map((c) => (c.id === col.id ? { ...c, has_ship: true } : c)),
           );
           showMsg(data.warning ?? `Added to "${col.title}"`);
         } else {
-          showMsg(data.error ?? "Failed to add");
+          showMsg(json.error ?? data.error ?? "Failed to add");
         }
       }
     } catch {
@@ -127,16 +138,30 @@ export default function CollectionPicker({ shipId, children, className }: Props)
 
   return (
     <>
-      <div ref={triggerRef} className={["relative inline-block", className].filter(Boolean).join(" ")}>
-        <span onClick={handleToggle} className="cursor-pointer">
+      <div
+        ref={triggerRef}
+        className={["relative inline-block", className].filter(Boolean).join(" ")}
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleToggle();
+          }
+        }}
+      >
+        <div onClick={handleToggle} className="cursor-pointer">
           {children}
-        </span>
+        </div>
       </div>
 
       {typeof document !== "undefined" && createPortal(
         <>
           {msg && (
             <div
+              role="status"
               className="fixed px-3 py-1 bg-[#021526] border border-[#1C598C] rounded text-sm text-white z-[9999] whitespace-nowrap"
               style={{ top: pos.top, left: pos.left }}
             >
@@ -147,6 +172,8 @@ export default function CollectionPicker({ shipId, children, className }: Props)
           {open && (
             <div
               ref={panelRef}
+              role="listbox"
+              aria-label="Your collections"
               className="fixed w-64 bg-[#021526] border border-[#1C598C] rounded-md shadow-lg z-[9999] max-h-60 overflow-y-auto"
               style={{ top: pos.top, left: pos.left }}
             >
@@ -165,6 +192,7 @@ export default function CollectionPicker({ shipId, children, className }: Props)
                     key={col.id}
                     onClick={() => toggleShip(col)}
                     disabled={toggling === col.id}
+                    aria-label={col.has_ship ? `Remove from ${col.title}` : `Add to ${col.title}`}
                     className="w-full text-left px-3 py-2 text-sm hover:bg-[#1C598C]/30 transition-colors disabled:opacity-40 disabled:cursor-default border-b border-[#1C598C]/20 last:border-0 flex items-center gap-2"
                   >
                     <span className={`shrink-0 w-4 h-4 rounded border flex items-center justify-center text-xs ${

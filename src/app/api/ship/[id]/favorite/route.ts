@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { addToFavorites } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
+import { ok, badRequest, error } from "@/lib/api";
 
 export async function POST(
   req: NextRequest,
@@ -13,14 +14,14 @@ export async function POST(
   const { id } = await params;
   const shipId = parseInt(id, 10);
   if (isNaN(shipId)) {
-    return NextResponse.json({ error: "Invalid ship ID" }, { status: 400 });
+    return badRequest("Invalid ship ID");
   }
 
   try {
     await addToFavorites(user.username, user.id, shipId);
-    return NextResponse.json({ success: true });
+    return ok({ success: true });
   } catch (err) {
     console.error("ship/[id]/favorite error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }

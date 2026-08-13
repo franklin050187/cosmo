@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
+import { unauthorized, forbidden } from "@/lib/api";
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -74,7 +75,7 @@ export function requireAuth(req: NextRequest): AuthGuard {
   if (!user) {
     return {
       ok: false,
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      response: unauthorized(),
     };
   }
   return { ok: true, user };
@@ -86,7 +87,7 @@ export function requireAdmin(req: NextRequest): AuthGuard {
   if (!isAdminUsername(auth.user.username)) {
     return {
       ok: false,
-      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+      response: forbidden(),
     };
   }
   return auth;

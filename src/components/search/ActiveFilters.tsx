@@ -73,7 +73,7 @@ export default function ActiveFilters({ filters, setFilter, setFilters, clearFil
         ))}
       </div>
       {chips.length > 1 && (
-        <button onClick={clearFilters} className="text-[11px] text-gray-500 hover:text-red-300 whitespace-nowrap transition-colors">
+        <button onClick={clearFilters} aria-label="Clear all active filters" className="text-[11px] text-gray-500 hover:text-red-300 whitespace-nowrap transition-colors">
           Clear all
         </button>
       )}

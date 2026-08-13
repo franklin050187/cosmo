@@ -88,7 +88,7 @@ export default function DecodePage() {
           </div>
         )}
 
-        {error && <p className="text-red-400 mb-4">{error}</p>}
+        {error && <p className="text-red-400 mb-4" role="alert">{error}</p>}
 
         {decodedData && (
           <Button onClick={handleCalculate}>

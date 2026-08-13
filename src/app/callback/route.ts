@@ -111,7 +111,8 @@ export async function GET(req: NextRequest) {
     await migrateUsernameOnLogin(user.id, user.username, prevUsername ?? null, discordUser.username);
 
     // Clear OAuth cookies and set session cookie (never in URL — prevents token leakage)
-    const res = NextResponse.redirect(`${clientUrl}${returnTo}`);
+    const successReturn = `${returnTo}${returnTo.includes("?") ? "&" : "?"}just_logged_in=1`;
+    const res = NextResponse.redirect(`${clientUrl}${successReturn}`);
     res.cookies.set("__session", token, {
       path: "/",
       httpOnly: true,

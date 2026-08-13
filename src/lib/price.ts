@@ -1,23 +1,18 @@
 import { partsResources, computePartCost, resourceCost } from "./part-data";
 import { partTagMap, missileTagMap } from "./tag-data";
 
-const MISSILE_MAPPING: Record<number, string> = {
-  0: "he_missiles",
-  1: "emp_missiles",
-  2: "nukes",
-  3: "mines",
-  4: "thermal_missiles",
-};
-
 const CREW_QUARTERS: Record<string, { price: number; crew: number }> = {
   "cosmoteer.crew_quarters_small": { price: 1000, crew: 2 },
   "cosmoteer.crew_quarters_med": { price: 3000, crew: 6 },
   "cosmoteer.crew_quarters_large": { price: 12000, crew: 24 },
 };
 
-const partCostCache = new Map<string, number>();
-for (const part of partsResources) {
-  partCostCache.set(part.ID, computePartCost(part));
+function getPartCostCache(): Map<string, number> {
+  const cache = new Map<string, number>();
+  for (const part of partsResources) {
+    cache.set(part.ID, computePartCost(part));
+  }
+  return cache;
 }
 
 function lookupResourcePrice(resourceId: string): number {
@@ -62,6 +57,7 @@ export interface PriceResult {
 }
 
 export function calculatePrice(data: ShipData): PriceResult {
+  const partCostCache = getPartCostCache();
   const parts = data.Parts ?? [];
   const doors = data.Doors ?? [];
 
@@ -73,7 +69,7 @@ export function calculatePrice(data: ShipData): PriceResult {
   }
 
   for (const mt of getMissileTypes(data)) {
-    const id = MISSILE_MAPPING[mt];
+    const id = missileTagMap[mt];
     if (id) price += partCostCache.get(id) ?? 0;
   }
 

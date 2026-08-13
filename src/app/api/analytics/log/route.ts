@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { logEvent } from "@/lib/analytics-db";
 import { getUserFromRequest } from "@/lib/auth";
+import { ok, badRequest, error } from "@/lib/api";
 
 /**
  * Stable pseudo-identity for anonymous visitors: hash(IP + user-agent + salt).
@@ -22,6 +23,11 @@ function anonIdFor(req: NextRequest): string {
     .slice(0, 16);
 }
 
+const MAX_EVENT_TYPE_LEN = 64;
+const MAX_URL_LEN = 1024;
+const MAX_METADATA_BYTES = 4096;
+const MAX_SHIP_ID = 2_147_483_647; // int4 range
+
 export async function POST(req: NextRequest) {
   try {
     let body: Record<string, unknown>;
@@ -29,37 +35,52 @@ export async function POST(req: NextRequest) {
     if (ct.includes("application/json")) {
       const cl = req.headers.get("content-length");
       if (cl && parseInt(cl, 10) > 1_048_576) {
-        return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+        return badRequest("Payload too large", 413);
       }
       body = await req.json();
     } else {
-      return NextResponse.json({ error: "unsupported content-type" }, { status: 400 });
+      return badRequest("unsupported content-type");
     }
 
-    const event_type = String(body.event_type ?? "");
+    const event_type = String(body.event_type ?? "").trim().slice(0, MAX_EVENT_TYPE_LEN);
     if (!event_type) {
-      return NextResponse.json({ error: "event_type is required" }, { status: 400 });
+      return badRequest("event_type is required");
+    }
+
+    const rawMetadata = body.metadata;
+    let metadata: Record<string, unknown> | undefined;
+    if (rawMetadata != null) {
+      if (typeof rawMetadata !== "object" || Array.isArray(rawMetadata)) {
+        return badRequest("metadata must be an object");
+      }
+      if (Buffer.byteLength(JSON.stringify(rawMetadata), "utf8") > MAX_METADATA_BYTES) {
+        return badRequest("metadata too large");
+      }
+      metadata = rawMetadata as Record<string, unknown>;
     }
 
     const user = getUserFromRequest(req);
-    const ship_id = body.ship_id != null ? Number(body.ship_id) : undefined;
-    const url = body.url ? String(body.url) : undefined;
-    const metadata = body.metadata as Record<string, unknown> | undefined;
+    const rawShipId = body.ship_id != null ? Number(body.ship_id) : undefined;
+    const ship_id =
+      rawShipId !== undefined && Number.isFinite(rawShipId) && rawShipId > 0 && rawShipId <= MAX_SHIP_ID
+        ? rawShipId
+        : undefined;
+    const url = body.url ? String(body.url).slice(0, MAX_URL_LEN) : undefined;
 
     await logEvent({
       event_type,
       user_id: user?.id,
       username: user?.username,
       guild: user?.guild,
-      ship_id: isNaN(ship_id as number) ? undefined : ship_id,
-      url: url || req.headers.get("referer") || undefined,
+      ship_id,
+      url: url || req.headers.get("referer")?.slice(0, MAX_URL_LEN) || undefined,
       metadata,
       anon_id: user ? undefined : anonIdFor(req),
     });
 
-    return NextResponse.json({ ok: true });
+    return ok(true);
   } catch (err) {
     console.error("analytics/log error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }

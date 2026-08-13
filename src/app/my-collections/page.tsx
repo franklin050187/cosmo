@@ -29,7 +29,7 @@ function MyCollectionsContent() {
       </div>
 
       {loading ? (
-        <p className="text-center text-blue-200">Loading...</p>
+        <p className="text-center text-blue-200" role="status">Loading...</p>
       ) : (
         <>
           <p className="text-center text-blue-200 mb-4">

@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { searchFromQueryString } from "@/lib/db";
+import { ok, error } from "@/lib/api";
 
 export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams.toString();
     const result = await searchFromQueryString(searchParams);
-    return NextResponse.json(result);
+    return ok(result);
   } catch (err) {
     console.error("ship/search error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }

@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { addShipToCollection } from "@/lib/db";
+import { ok, badRequest, forbidden, notFound, error } from "@/lib/api";
 
 export async function POST(
   req: NextRequest,
@@ -13,30 +14,30 @@ export async function POST(
   const { id } = await params;
   const collectionId = parseInt(id, 10);
   if (isNaN(collectionId)) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+    return badRequest("Invalid id");
   }
 
   const cl = req.headers.get("content-length");
   if (cl && parseInt(cl, 10) > 1_048_576) {
-    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    return badRequest("Payload too large", 413);
   }
   const body = await req.json();
   const shipId = body.shipId;
   if (typeof shipId !== "number") {
-    return NextResponse.json({ error: "shipId required" }, { status: 400 });
+    return badRequest("shipId required");
   }
 
   try {
     const result = await addShipToCollection(collectionId, shipId, user.username, user.id);
 
     if ("error" in result) {
-      return NextResponse.json(result, {
-        status: result.error === "not the owner" ? 403 : 404,
-      });
+      return result.error === "not the owner"
+        ? forbidden("not the owner")
+        : notFound(result.error === "not found" ? "Not found" : result.error);
     }
-    return NextResponse.json(result);
+    return ok(result);
   } catch (err) {
     console.error("collections/[id]/ships error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }

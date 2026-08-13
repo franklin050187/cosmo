@@ -180,7 +180,7 @@ export default function UploadPanel() {
               )}
 
               {decoding && (
-                <p className="text-blue-200 mb-4">Decoding ship data...</p>
+                <p className="text-blue-200 mb-4" role="status">Decoding ship data...</p>
               )}
 
               {priceResult && (
@@ -255,7 +255,7 @@ export default function UploadPanel() {
                   </div>
                 )}
 
-                {error && <p className="text-red-400">{error}</p>}
+                {error && <p className="text-red-400" role="alert">{error}</p>}
 
                 {priceResult && (
                   <TurnstileWidget ref={turnstileRef} />
@@ -286,11 +286,11 @@ export default function UploadPanel() {
       {uploadResult && (
         <div className="text-center">
           {saveFailed ? (
-            <p className="text-red-400 text-xl mb-4">
+            <p className="text-red-400 text-xl mb-4" role="alert">
               Ship image uploaded, but failed to save to the library.
             </p>
           ) : (
-            <p className="text-[#0AD448] text-xl mb-4">
+            <p className="text-[#0AD448] text-xl mb-4" role="status">
               Ship uploaded successfully!
             </p>
           )}

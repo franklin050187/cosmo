@@ -20,6 +20,7 @@ export default function Footer() {
               className="text-white text-xs hover:border-b hover:border-white transition-colors"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Source code (opens in new tab)"
             >
               Source code
             </Link>
@@ -30,6 +31,7 @@ export default function Footer() {
               className="text-white text-xs hover:border-b hover:border-white transition-colors"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Issues (opens in new tab)"
             >
               Issues
             </Link>

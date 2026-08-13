@@ -6,6 +6,10 @@ let schemaPromise: Promise<void> | null = null;
  * Idempotently ensure the analytics table has the `anon_id` column used to
  * tell anonymous visitors apart (hash of IP + user-agent). Runs once per
  * process; safe to call on every analytics path.
+ *
+ * The canonical schema change lives in `scripts/migrations/001-analytics-anon-id.sql`
+ * (`npm run migrate`). This is a self-healing fallback so read/write paths keep
+ * working on instances where migrations haven't been applied yet.
  */
 export function ensureAnalyticsSchema(): Promise<void> {
   if (!schemaPromise) {
@@ -120,8 +124,7 @@ export async function getDashboardData(
     ? { preds: [dateClause!], args: [date] }
     : { preds: [], args: [] };
   const totalsQ = build(totalsBase);
-  const totals = await fetchOne(
-    `
+  const totalsSql = `
     SELECT
       COUNT(*)::int AS total_events,
       COUNT(DISTINCT COALESCE(user_id, anon_id))::int AS unique_users,
@@ -129,64 +132,59 @@ export async function getDashboardData(
       COUNT(*) FILTER (WHERE event_type = 'error' AND ${date ? "TRUE" : "created_at >= CURRENT_DATE"})::int AS errors_today,
       COUNT(*) FILTER (WHERE event_type = 'collection_create')::int AS total_collections
     FROM analytics${totalsQ.where}
-    `,
-    totalsQ.args,
-  );
+    `;
 
   const viewsBase = {
     preds: ["event_type = 'page_view'", "created_at >= CURRENT_DATE - INTERVAL '30 days'"],
     args: [],
   };
   const viewsQ = build(viewsBase);
-  const viewsPerDay = await fetchAll(
-    `
+  const viewsSql = `
     SELECT DATE(created_at)::text AS date, COUNT(*)::int AS count
     FROM analytics${viewsQ.where}
     GROUP BY DATE(created_at)
     ORDER BY date
-    `,
-    viewsQ.args,
-  );
+    `;
 
   const eventTypesQ = build(totalsBase);
-  const eventTypes = await fetchAll(
-    `
+  const eventTypesSql = `
     SELECT event_type, COUNT(*)::int AS count
     FROM analytics${eventTypesQ.where}
     GROUP BY event_type
     ORDER BY count DESC
-    `,
-    eventTypesQ.args,
-  );
+    `;
 
   const topPagesBase = date
     ? { preds: ["url IS NOT NULL", dateClause!], args: [date] }
     : { preds: ["url IS NOT NULL"], args: [] };
   const topPagesQ = build(topPagesBase);
-  const topPages = await fetchAll(
-    `
+  const topPagesSql = `
     SELECT url, COUNT(*)::int AS count
     FROM analytics${topPagesQ.where}
     GROUP BY url
     ORDER BY count DESC
     LIMIT 10
-    `,
-    topPagesQ.args,
-  );
+    `;
 
   const errorsBase = date
     ? { preds: ["event_type = 'error'", dateClause!], args: [date] }
     : { preds: ["event_type = 'error'"], args: [] };
   const errorsQ = build(errorsBase);
-  const recentErrors = await fetchAll(
-    `
+  const errorsSql = `
     SELECT id, username, anon_id, url, metadata, created_at
     FROM analytics${errorsQ.where}
     ORDER BY created_at DESC
     LIMIT 20
-    `,
-    errorsQ.args,
-  );
+    `;
+
+  // All five panels share the same WHERE base, so run them concurrently.
+  const [totals, viewsPerDay, eventTypes, topPages, recentErrors] = await Promise.all([
+    fetchOne(totalsSql, totalsQ.args),
+    fetchAll(viewsSql, viewsQ.args),
+    fetchAll(eventTypesSql, eventTypesQ.args),
+    fetchAll(topPagesSql, topPagesQ.args),
+    fetchAll(errorsSql, errorsQ.args),
+  ]);
 
   return {
     totals: {

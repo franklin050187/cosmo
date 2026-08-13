@@ -146,7 +146,7 @@ export function computePartCost(part: PartResource): number {
   let cost = 0;
   for (const [resourceId, qty] of part.Resources) {
     const res = resourceCost.find((r) => r.ID === resourceId);
-    if (res) cost += res.BuyPrice * Number(qty);
+    if (res) cost += res.BuyPrice * (Number(qty) || 0);
   }
   if (part.AmmoCapacity) {
     const bullet = resourceCost.find((r) => r.ID === "bullet");
@@ -159,7 +159,7 @@ export function computePartCost(part: PartResource): number {
   if (part.InputResources) {
     for (const [resourceId, qty] of part.InputResources) {
       const res = resourceCost.find((r) => r.ID === resourceId);
-      if (res) cost += res.BuyPrice * Number(qty);
+      if (res) cost += res.BuyPrice * (Number(qty) || 0);
     }
   }
   return cost;

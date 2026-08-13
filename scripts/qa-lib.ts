@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -51,18 +51,132 @@ export interface CaseResult {
 }
 export const results: CaseResult[] = [];
 
-export function runCli(args: string[]): string {
-  const res = spawnSync("playwright-cli", args, {
-    encoding: "utf8",
-    maxBuffer: 512 * 1024 * 1024,
-  });
-  if (res.error) throw res.error;
-  if (res.status !== 0) {
-    throw new Error(
-      `playwright-cli ${args.join(" ")} failed (${res.status}): ${(res.stderr || res.stdout || "").slice(0, 800)}`
-    );
+// The playwright-cli daemon can die/exit cleanly (empty stderr) mid-suite, which
+// makes `open`/`eval` fail with connection errors even though nothing app-side
+// was wrong. Treat those as transient: retry, and if the daemon is gone
+// entirely, relaunch the session on HOME before retrying. Failing commands never
+// reached the browser, so re-running them is safe.
+const DAEMON_TRANSIENT = /session\.js|Daemon pid=|Daemon process exited|is not open|ECONNREFUSED|EPIPE|spawn ENOENT|daemon.*(die|exit|crash)|socket hang up/i;
+
+function sessionFromArgs(args: string[]): string | null {
+  const sep = args.indexOf("-s");
+  if (sep >= 0 && sep + 1 < args.length) return args[sep + 1];
+  const joined = args.find((a) => a.startsWith("-s="));
+  if (joined) return joined.slice("-s=".length);
+  const named = args.find((a) => a.startsWith("--session="));
+  return named ? named.slice("--session=".length) : null;
+}
+
+function isOpenBroadcast(msg: string): boolean {
+  return /is not open|ECONNREFUSED/.test(msg);
+}
+
+function daemonAlive(session: string): boolean {
+  try {
+    const r = spawnSync("playwright-cli", ["-s=" + session, "eval", "1"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    return r.status === 0;
+  } catch {
+    return false;
   }
-  return res.stdout.replace(/\0/g, "");
+}
+
+// Relaunch a session and wait until it actually accepts commands (the CLI's
+// `open` can exit 0 before its daemon is ready, or hit stale-socket races).
+function ensureOpenLive(session: string): boolean {
+  for (let i = 0; i < 4; i++) {
+    spawnSync("playwright-cli", ["-s=" + session, "open", "http://localhost:8000/"], {
+      encoding: "utf8",
+      stdio: "ignore",
+      maxBuffer: 256 * 1024 * 1024,
+    });
+    for (let j = 0; j < 5; j++) {
+      if (daemonAlive(session)) return true;
+      spawnSync("sleep", ["1"], { stdio: "ignore" });
+    }
+  }
+  return false;
+}
+
+function runCliInner(args: string[], attempts: number): string {
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const res = spawnSync("playwright-cli", args, {
+      encoding: "utf8",
+      maxBuffer: 512 * 1024 * 1024,
+    });
+    if (res.error) {
+      lastErr = res.error;
+      if (attempt < attempts) {
+        spawnSync("sleep", ["1"], { stdio: "ignore" });
+        continue;
+      }
+      throw res.error;
+    }
+    if (res.status === 0) return res.stdout.replace(/\0/g, "");
+
+    const msg = (res.stderr || res.stdout || "").slice(0, 800);
+    if (attempt < attempts && DAEMON_TRANSIENT.test(msg)) {
+      if (isOpenBroadcast(msg)) {
+        const session = sessionFromArgs(args);
+        if (session && args[1] !== "open") ensureOpenLive(session);
+      }
+      lastErr = msg;
+      spawnSync("sleep", ["1"], { stdio: "ignore" });
+      continue;
+    }
+    throw new Error(`playwright-cli ${args.join(" ")} failed (${res.status}): ${msg}`);
+  }
+  throw lastErr;
+}
+
+export function runCli(args: string[], attempts = 3): string {
+  return runCliInner(args, attempts);
+}
+
+// Async (non-blocking) variant for tests that can run concurrently.
+export function runCliAsync(args: string[], attempts = 3): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const tryAttempt = (attempt: number) => {
+      const child = spawn("playwright-cli", args, {
+        encoding: "utf8",
+        maxBuffer: 512 * 1024 * 1024,
+      });
+      let stdout = "";
+      let stderr = "";
+      child.stdout?.on("data", (d) => (stdout += d));
+      child.stderr?.on("data", (d) => (stderr += d));
+      child.on("error", (err) => {
+        if (attempt < attempts) {
+          sleep(800).then(() => tryAttempt(attempt + 1));
+        } else {
+          reject(err);
+        }
+      });
+      child.on("close", (code) => {
+        if (code === 0) {
+          resolve(stdout.replace(/\0/g, ""));
+          return;
+        }
+        const msg = (stderr || stdout).slice(0, 800);
+        if (attempt < attempts && DAEMON_TRANSIENT.test(msg)) {
+          if (isOpenBroadcast(msg)) {
+            const session = sessionFromArgs(args);
+            if (session && args[1] !== "open") ensureOpenLive(session);
+          }
+          sleep(1000).then(() => tryAttempt(attempt + 1));
+          return;
+        }
+        reject(
+          new Error(`playwright-cli ${args.join(" ")} failed (${code}): ${msg}`)
+        );
+      });
+    };
+    tryAttempt(1);
+  });
 }
 
 export function openSession(session: string, url: string) {
@@ -71,6 +185,15 @@ export function openSession(session: string, url: string) {
     args.push("--persistent", "--profile=" + QA_PROFILE);
   }
   return runCli(args);
+}
+
+// Async variant for concurrent tests.
+export async function openSessionAsync(session: string, url: string): Promise<string> {
+  const args = ["-s=" + session, "open", url];
+  if (session === SESSION_QA) {
+    args.push("--persistent", "--profile=" + QA_PROFILE);
+  }
+  return runCliAsync(args);
 }
 
 function extractResult(out: string): string {
@@ -85,6 +208,18 @@ function extractResult(out: string): string {
 
 export function cliEval(session: string, expr: string): unknown {
   const out = runCli(["-s=" + session, "eval", expr]);
+  const raw = extractResult(out);
+  if (raw === "undefined") return undefined;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    throw new Error(`eval result not JSON (${raw.slice(0, 300)})`);
+  }
+}
+
+// Async variant for concurrent tests.
+export async function cliEvalAsync(session: string, expr: string): Promise<unknown> {
+  const out = await runCliAsync(["-s=" + session, "eval", expr]);
   const raw = extractResult(out);
   if (raw === "undefined") return undefined;
   try {
@@ -109,12 +244,56 @@ export async function httpFetch(
   return (await cliEval(session, expr)) as { status: number; body: unknown };
 }
 
+// Async variant for concurrent tests.
+export async function httpFetchAsync(
+  session: string,
+  url: string,
+  opts?: { method?: string; body?: string; headers?: Record<string, string> }
+): Promise<{ status: number; body: unknown }> {
+  const { method = "GET", body, headers = {} } = opts ?? {};
+  const expr = `fetch(${JSON.stringify(url)}, ${JSON.stringify({
+    method,
+    body,
+    headers,
+    credentials: "include",
+  })}).then(async (r) => ({ status: r.status, body: await r.json().catch(() => null) }))`;
+  return (await cliEvalAsync(session, expr)) as { status: number; body: unknown };
+}
+
 export function pageUrl(session: string): string {
   return String(cliEval(session, "window.location.href"));
 }
 
 export function pageText(session: string): string {
   return String(cliEval(session, "document.body.innerText"));
+}
+
+// Async variants for concurrent tests.
+export async function pageTextAsync(session: string): Promise<string> {
+  return String(await cliEvalAsync(session, "document.body.innerText"));
+}
+
+export async function pageUrlAsync(session: string): Promise<string> {
+  return String(await cliEvalAsync(session, "window.location.href"));
+}
+
+// Run a list of async test fns with bounded concurrency. Each item receives a
+// unique throwaway session name so independent ephemeral browser contexts don't
+// race on a shared session.
+export async function parallelChecks(
+  items: { id: string; name: string; fn: (session: string) => Promise<void> }[],
+  concurrency = 3
+): Promise<void> {
+  const queue = [...items].map((it) => ({ ...it, session: `anon-par-${Math.random().toString(36).slice(2, 10)}` }));
+  const workers: Promise<void>[] = [];
+  const run = async () => {
+    while (queue.length) {
+      const item = queue.shift()!;
+      await check(item.id, item.name, () => item.fn(item.session));
+    }
+  };
+  for (let i = 0; i < Math.min(concurrency, items.length); i++) workers.push(run());
+  await Promise.all(workers);
 }
 
 export async function waitFor(
@@ -135,6 +314,27 @@ export async function waitFor(
     await sleep(interval);
   }
   throw new Error(`waitFor timeout: ${expr}${lastErr ? " (last: " + String(lastErr).slice(0, 200) + ")" : ""}`);
+}
+
+// Non-blocking (spawn-based) variant for concurrent tests.
+export async function waitForAsync(
+  session: string,
+  expr: string,
+  timeoutMs = 20000,
+  interval = 600
+): Promise<unknown> {
+  const t0 = Date.now();
+  let lastErr: unknown;
+  while (Date.now() - t0 < timeoutMs) {
+    try {
+      const v = await cliEvalAsync(session, expr);
+      if (v) return v;
+    } catch (e) {
+      lastErr = e;
+    }
+    await sleep(interval);
+  }
+  throw new Error(`waitForAsync timeout: ${expr}${lastErr ? " (last: " + String(lastErr).slice(0, 200) + ")" : ""}`);
 }
 
 export function prepTurnstile(session: string) {

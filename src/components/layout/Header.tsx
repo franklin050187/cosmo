@@ -44,10 +44,12 @@ export default function Header() {
 
   useEffect(() => {
     if (!user) return;
-    fetch("/api/auth/is-admin")
+    const controller = new AbortController();
+    fetch("/api/auth/is-admin", { signal: controller.signal })
       .then((r) => r.json())
-      .then((d: { isAdmin: boolean }) => setIsAdmin(d.isAdmin))
+      .then((d: { data: { isAdmin: boolean } }) => setIsAdmin(d.data?.isAdmin ?? false))
       .catch(() => setIsAdmin(false));
+    return () => controller.abort();
   }, [user]);
 
   useEffect(() => {
@@ -65,7 +67,7 @@ export default function Header() {
 
   useEffect(() => {
     if (!authError) return;
-    const timer = setTimeout(() => setDismissed(true), 5000);
+    const timer = setTimeout(() => setDismissed(true), 15000);
     return () => clearTimeout(timer);
   }, [authError]);
 
@@ -103,12 +105,12 @@ export default function Header() {
     <header className="fixed top-0 inset-x-0 z-20 bg-[#021526]/80 backdrop-blur-md border-b border-[#1C598C]/50">
       <div className="max-w-[1360px] mx-auto px-4 h-14 flex items-center justify-between gap-4">
         {/* Logo */}
-        <Link href="/" className="shrink-0">
-          <Image alt="CosmoShip" src="/logo-v2.svg" width={120} height={32} className="h-8 w-auto" />
+        <Link href="/" className="shrink-0" aria-label="CosmoShip Home">
+          <Image alt="" src="/logo-v2.svg" width={120} height={32} className="h-8 w-auto" />
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -129,6 +131,9 @@ export default function Header() {
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/5 transition-colors"
+                  aria-expanded={userMenuOpen}
+                  aria-haspopup="true"
+                  aria-label="User menu"
                 >
                   {user.avatar && (
                     <Image src={user.avatar} alt="" width={24} height={24} className="w-6 h-6 rounded-full" />
@@ -139,13 +144,14 @@ export default function Header() {
                   </svg>
                 </button>
                 {userMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-[#021526] border border-[#1C598C] rounded-md shadow-lg z-50 py-1">
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-[#021526] border border-[#1C598C] rounded-md shadow-lg z-50 py-1" role="menu">
                     {USER_MENU_LINKS.map((link) => (
                       <Link
                         key={link.href}
                         href={link.href}
                         onClick={() => setUserMenuOpen(false)}
                         className="block px-4 py-2 text-sm text-blue-200 hover:text-white hover:bg-white/5 transition-colors"
+                        role="menuitem"
                       >
                         {link.label}
                       </Link>
@@ -155,6 +161,7 @@ export default function Header() {
                         href="/admin"
                         onClick={() => setUserMenuOpen(false)}
                         className="block px-4 py-2 text-sm text-amber-400 hover:text-amber-300 hover:bg-white/5 transition-colors"
+                        role="menuitem"
                       >
                         Analytics
                       </Link>
@@ -163,6 +170,7 @@ export default function Header() {
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                      role="menuitem"
                     >
                       Logout
                     </button>
@@ -211,7 +219,7 @@ export default function Header() {
           menuOpen ? "max-h-[40rem]" : "max-h-0"
         }`}
       >
-        <nav className="bg-[#021526] border-t border-[#1C598C]/30 px-4 py-3 space-y-1">
+        <nav className="bg-[#021526] border-t border-[#1C598C]/30 px-4 py-3 space-y-1" aria-label="Mobile navigation">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -277,7 +285,7 @@ export default function Header() {
     </header>
     {authError && (
       <div className="fixed top-14 inset-x-0 z-20 flex justify-center px-4">
-        <div className="flex items-center gap-3 bg-red-900/80 border border-red-500/40 backdrop-blur-md text-red-200 text-sm px-4 py-2.5 rounded-lg shadow-lg animate-fade-in">
+        <div className="flex items-center gap-3 bg-red-900/80 border border-red-500/40 backdrop-blur-md text-red-200 text-sm px-4 py-2.5 rounded-lg shadow-lg animate-fade-in" role="alert">
           <svg className="w-4 h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
           </svg>

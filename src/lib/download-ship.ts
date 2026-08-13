@@ -7,8 +7,8 @@ export async function downloadShip(shipId: number, shipName: string, imageUrl?: 
     const url = imageUrl ?? await (async () => {
       const res = await fetch(`/api/ship/${shipId}`);
       if (!res.ok) throw new Error("Failed to fetch ship");
-      const ship = await res.json();
-      return ship.data;
+      const json = await res.json();
+      return json.data?.data;
     })();
 
     const imgRes = await fetch(url);

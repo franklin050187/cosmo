@@ -27,6 +27,8 @@ export default function PriceFilter({ min, max, onChange }: PriceFilterProps) {
             key={p.label}
             type="button"
             onClick={() => onChange(p.min, p.max)}
+            aria-pressed={isActive(p)}
+            aria-label={`Price filter ${p.label}`}
             className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-all ${
               isActive(p)
                 ? "bg-cyan-400/20 text-cyan-300 border border-cyan-400/40"
@@ -45,6 +47,7 @@ export default function PriceFilter({ min, max, onChange }: PriceFilterProps) {
             value={min}
             onChange={e => onChange(e.target.value, max)}
             placeholder="Min"
+            aria-label="Minimum price"
             min={0}
             className="w-full pl-5 pr-2 py-1.5 bg-[#061220] border border-[#1C598C]/50 rounded-md text-white text-[12px] placeholder:text-gray-700 focus:outline-none focus:border-cyan-400/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
@@ -57,6 +60,7 @@ export default function PriceFilter({ min, max, onChange }: PriceFilterProps) {
             value={max}
             onChange={e => onChange(min, e.target.value)}
             placeholder="Max"
+            aria-label="Maximum price"
             min={0}
             className="w-full pl-5 pr-2 py-1.5 bg-[#061220] border border-[#1C598C]/50 rounded-md text-white text-[12px] placeholder:text-gray-700 focus:outline-none focus:border-cyan-400/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />

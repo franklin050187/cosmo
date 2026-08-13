@@ -84,9 +84,10 @@ export function decodePngPixels(buf: ArrayBuffer) {
     p += c.data.length;
   }
 
-  const inflated = zlib.inflateSync(Buffer.from(idat));
-
   const stride = width * channels;
+  const inflated = zlib.inflateSync(Buffer.from(idat), {
+    maxOutputLength: height * (stride + 1),
+  });
   const rgba = new Uint8ClampedArray(width * height * 4);
   let inOffset = 0;
   const prevRow = new Uint8Array(stride);
@@ -161,6 +162,9 @@ function readLSBBytes(data: Uint8ClampedArray, width: number, height: number) {
 
   const length =
     ((out[0] << 24) | (out[1] << 16) | (out[2] << 8) | out[3]) >>> 0;
+  if (length > out.length - 4) {
+    throw new Error(`Corrupt ship payload: declared length ${length} exceeds ${out.length - 4} bytes`);
+  }
   return out.slice(4, 4 + length);
 }
 
@@ -174,9 +178,17 @@ class ByteReader {
     this.pos = 0;
   }
   readByte() {
+    if (this.pos >= this.buf.length) {
+      throw new Error("ByteReader: readByte past end of buffer");
+    }
     return this.buf[this.pos++];
   }
   read(n: number) {
+    if (this.pos + n > this.buf.length) {
+      throw new Error(
+        `ByteReader: read(${n}) past end of buffer (pos ${this.pos}, length ${this.buf.length})`
+      );
+    }
     const slice = this.buf.slice(this.pos, this.pos + n);
     this.pos += n;
     return slice;
@@ -384,7 +396,14 @@ function decodeTree(reader: ByteReader): unknown {
       let value = decodeTree(reader);
       if (value instanceof Uint8Array) {
         const processed = processBinaryValue(key, value);
-        if (processed === SKIP) continue;
+        if (processed === SKIP) {
+          console.warn(
+            "[server-decode] skipping unhandled binary value for key:",
+            key,
+            `(${value.length} bytes)`
+          );
+          continue;
+        }
         value = processed;
       }
       d[key] = value;
@@ -445,7 +464,9 @@ export function decodeShipFromPixels(
     payload = payload.slice(magic.length);
   }
 
-  const decompressed = zlib.gunzipSync(Buffer.from(payload));
+  const decompressed = zlib.gunzipSync(Buffer.from(payload), {
+    maxOutputLength: 64 * 1024 * 1024,
+  });
   const reader = new ByteReader(new Uint8Array(decompressed));
   return decodeTree(reader);
 }

@@ -16,6 +16,7 @@ export {
 export type { ShipRow } from "./ships";
 export {
   getImageData,
+  getShipForReplacement,
   getMyShips,
   updateDownloads,
   deleteShip,

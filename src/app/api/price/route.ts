@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { calculateShipPrice } from "@/lib/price";
 import { requireAuth } from "@/lib/auth";
+import { ok, badRequest } from "@/lib/api";
 
 export async function POST(req: NextRequest) {
   const auth = requireAuth(req);
@@ -9,13 +10,13 @@ export async function POST(req: NextRequest) {
   try {
     const cl = req.headers.get("content-length");
     if (cl && parseInt(cl, 10) > 1_048_576) {
-      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+      return badRequest("Payload too large", 413);
     }
     const body = await req.json();
     const result = calculateShipPrice(body);
-    return NextResponse.json(result);
+    return ok(result);
   } catch (err) {
     console.error("price calculation error:", err);
-    return NextResponse.json({ error: "Invalid ship data" }, { status: 400 });
+    return badRequest("Invalid ship data");
   }
 }

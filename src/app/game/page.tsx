@@ -29,6 +29,7 @@ export default function GamePage() {
           className="text-cyan-400 underline hover:text-cyan-300"
           target="_blank"
           rel="noopener noreferrer"
+          aria-label="cosmoteer.net (opens in new tab)"
         >
           cosmoteer.net
         </a>
@@ -81,6 +82,7 @@ export default function GamePage() {
                   className="text-cyan-400 underline hover:text-cyan-300"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={`${link.label} (opens in new tab)`}
                 >
                   {link.label}
                 </a>

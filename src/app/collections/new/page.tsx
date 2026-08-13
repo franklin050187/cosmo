@@ -40,12 +40,13 @@ function NewCollectionContent() {
         },
         body: JSON.stringify({ title: title.trim(), description: description.trim(), "cf-turnstile-response": turnstileToken }),
       });
-      const data = await res.json();
+      const json = await res.json();
+      const data = json.data ?? json;
       if (data.id) {
         trackEvent("collection_create");
         router.push(`/collections/${data.id}`);
       } else {
-        setError(data.error ?? "Failed to create");
+        setError(json.error ?? data.error ?? "Failed to create");
         turnstileRef.current?.reset();
       }
     } catch {
@@ -84,7 +85,7 @@ function NewCollectionContent() {
           />
         </div>
 
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+        {error && <p className="text-red-400 text-sm" role="alert">{error}</p>}
 
         <TurnstileWidget ref={turnstileRef} />
 

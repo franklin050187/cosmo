@@ -71,29 +71,33 @@ export async function getSearchPlus(filters: SearchFilters) {
 
 // Also parse from query string — supports both old and new URL formats
 export async function searchFromQueryString(queryString: string) {
+  const params = new URLSearchParams(queryString ?? "");
   const filters: SearchFilters = {};
   let page = 1;
   const tagsOn: string[] = [];
   const tagsOff: string[] = [];
 
-  for (const part of (queryString ?? "").split("&")) {
-    const eq = part.indexOf("=");
-    if (eq === -1) continue;
-    const key = part.slice(0, eq);
-    const val = decodeURIComponent(part.slice(eq + 1)).replace(/\+/g, " ");
+  const SCALAR_KEYS = ["author", "desc", "minprice", "maxprice", "max-crew", "fulltext", "brand"];
 
-    if (key === "page") { page = parseInt(val, 10) || 1; continue; }
-    if (key === "order") { filters.order = val; continue; }
-    if (key === "q") { filters.desc = val; continue; }
-    if (key === "tag") { tagsOn.push(val); continue; }
-    if (key === "notag") { tagsOff.push(val); continue; }
-    if (["author", "desc", "minprice", "maxprice", "max-crew", "order", "fulltext", "brand"].includes(key)) {
-      (filters as Record<string, string>)[key] = val;
-    } else if (val === "1") {
-      tagsOn.push(key);
-    } else if (val === "0") {
-      tagsOff.push(key);
-    }
+  const pageStr = params.get("page");
+  if (pageStr) page = parseInt(pageStr, 10) || 1;
+
+  if (params.has("order")) filters.order = params.get("order")!;
+  if (params.has("q")) filters.desc = params.get("q")!;
+
+  tagsOn.push(...params.getAll("tag"));
+  tagsOff.push(...params.getAll("notag"));
+
+  for (const key of SCALAR_KEYS) {
+    if (params.has(key)) (filters as Record<string, string>)[key] = params.get(key)!;
+  }
+
+  for (const key of params.keys()) {
+    if (key === "page" || key === "order" || key === "q" || key === "tag" || key === "notag") continue;
+    if (SCALAR_KEYS.includes(key)) continue;
+    const val = params.get(key)!;
+    if (val === "1") tagsOn.push(key);
+    else if (val === "0") tagsOff.push(key);
   }
 
   if (tagsOn.length) filters.tagsOn = tagsOn;

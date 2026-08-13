@@ -26,13 +26,15 @@ export default function CollectionDetailPage() {
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
 
     const fetchCollection = async () => {
       try {
-        const res = await fetch(`/api/collections/${params.id}`);
+        const res = await fetch(`/api/collections/${params.id}`, { signal: controller.signal });
         if (!res.ok) throw new Error("Not found");
-        const data = await res.json();
+        const json = await res.json();
         if (!active) return;
+        const data = json.data ?? json;
         setCollection(data);
         document.title = `${data.title} - CosmoShip`;
         trackEvent("collection_view");
@@ -48,7 +50,7 @@ export default function CollectionDetailPage() {
     };
 
     fetchCollection();
-    return () => { active = false; };
+    return () => { active = false; controller.abort(); };
   }, [params.id, user?.username]);
 
   const handleRemove = async (shipId: number) => {
@@ -129,7 +131,7 @@ export default function CollectionDetailPage() {
     }
   };
 
-  if (loading) return <p className="text-center text-blue-200">Loading...</p>;
+  if (loading) return <p className="text-center text-blue-200" role="status">Loading...</p>;
   if (!collection) return <p className="text-center text-red-400">Collection not found</p>;
 
   return (

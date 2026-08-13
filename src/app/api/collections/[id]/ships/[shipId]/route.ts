@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { removeShipFromCollection } from "@/lib/db";
+import { ok, badRequest, forbidden, notFound, error } from "@/lib/api";
 
 export async function DELETE(
   req: NextRequest,
@@ -14,7 +15,7 @@ export async function DELETE(
   const collectionId = parseInt(id, 10);
   const shipIdNum = parseInt(shipId, 10);
   if (isNaN(collectionId) || isNaN(shipIdNum)) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+    return badRequest("Invalid id");
   }
 
   try {
@@ -26,13 +27,13 @@ export async function DELETE(
     );
 
     if ("error" in result) {
-      return NextResponse.json(result, {
-        status: result.error === "not the owner" ? 403 : 404,
-      });
+      return result.error === "not the owner"
+        ? forbidden("not the owner")
+        : notFound(result.error === "not found" ? "Not found" : result.error);
     }
-    return NextResponse.json(result);
+    return ok(result);
   } catch (err) {
     console.error("collections/[id]/ships/[shipId] error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return error("internal");
   }
 }

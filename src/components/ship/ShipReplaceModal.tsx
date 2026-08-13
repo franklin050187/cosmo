@@ -79,9 +79,9 @@ export default function ShipReplaceModal({
 
   return (
     <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/70">
-      <div className="bg-[#021526] border border-[#1C598C] rounded-lg shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="p-5">
-          <h2 className="text-xl text-white font-semibold mb-4">Replace Ship</h2>
+        <div className="bg-[#021526] border border-[#1C598C] rounded-lg shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="replace-ship-title">
+          <div className="p-5">
+            <h2 id="replace-ship-title" className="text-xl text-white font-semibold mb-4">Replace Ship</h2>
 
           <div className="relative w-full h-48 mb-4">
             <Image src={previewUrl} alt="New ship preview" fill unoptimized className="object-contain rounded border border-[#1C598C]" />
