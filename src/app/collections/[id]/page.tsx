@@ -157,12 +157,17 @@ export default function CollectionDetailPage() {
 
         <div className="flex flex-wrap gap-2">
           {collection.ships.length > 0 && (
-            <Button
-              onClick={handleDownloadAll}
-              disabled={downloadingAll}
-            >
-              {downloadingAll ? "Zipping..." : "Download All"}
-            </Button>
+            <>
+              <Link
+                href={`/roulette?collection=${collection.id}`}
+                className="px-4 py-2 border border-amber-500/50 rounded text-amber-300 hover:bg-amber-500/20 transition-colors"
+              >
+                Ship Roulette
+              </Link>
+              <Button onClick={handleDownloadAll} disabled={downloadingAll}>
+                {downloadingAll ? "Zipping..." : "Download All"}
+              </Button>
+            </>
           )}
           {isOwner && (
             <>
