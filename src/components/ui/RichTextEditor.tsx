@@ -7,9 +7,10 @@ interface Props {
   onChange: (html: string) => void;
   placeholder?: string;
   rows?: number;
+  labelId?: string;
 }
 
-export default function RichTextEditor({ value, onChange, placeholder, rows = 4 }: Props) {
+export default function RichTextEditor({ value, onChange, placeholder, rows = 4, labelId }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -196,11 +197,13 @@ export default function RichTextEditor({ value, onChange, placeholder, rows = 4 
       </div>
       <div
         ref={editorRef}
+        id={labelId}
         contentEditable
         suppressContentEditableWarning
         onInput={handleInput}
         data-placeholder={placeholder}
-        aria-label={placeholder || "Rich text editor"}
+        aria-labelledby={labelId}
+        aria-label={labelId ? undefined : placeholder || "Rich text editor"}
         dir="ltr"
         className="w-full bg-[#021526] text-white p-2 focus:outline-none [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-500 [&_a]:text-cyan-400 [&_a]:underline [&_li]:ml-4 [&_ul]:list-disc"
         style={{ direction: "ltr", unicodeBidi: "embed", minHeight: `${rows * 1.5}rem` }}

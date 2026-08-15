@@ -754,6 +754,84 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
       assert(bad.length === 0, `console errors (${session}):\n${bad.slice(0, 8).join("\n")}`);
     }
   });
+
+  await check("P3-S13", "Roulette collection dropdown stays on-screen at 375px", async () => {
+    openSession(S, HOME + "/roulette?collection=8");
+    await waitText(S, "Ship Roulette");
+    await waitFor(S, "document.getElementById('roulette-collection') !== null", 10000);
+
+    runCli(["-s=" + S, "resize", "375", "812"]);
+    await sleep(700);
+
+    const before = cliEval(
+      S,
+      `(() => {
+        const sel = document.getElementById('roulette-collection');
+        const r = sel.getBoundingClientRect();
+        return {
+          hasSel: !!sel,
+          innerW: window.innerWidth,
+          innerH: window.innerHeight,
+          left: +r.left.toFixed(1),
+          right: +r.right.toFixed(1),
+          top: +r.top.toFixed(1),
+          bottom: +r.bottom.toFixed(1),
+          scrollW: document.documentElement.scrollWidth,
+          hOverflow: document.documentElement.scrollWidth > window.innerWidth + 2,
+        };
+      })()`
+    ) as {
+      hasSel: boolean;
+      innerW: number;
+      innerH: number;
+      left: number;
+      right: number;
+      top: number;
+      bottom: number;
+      scrollW: number;
+      hOverflow: boolean;
+    };
+
+    assert(before.hasSel, "roulette-collection select present");
+    assert(
+      !before.hOverflow,
+      `horizontal overflow at 375px: scrollW=${before.scrollW} innerW=${before.innerW}`
+    );
+    assert(
+      before.left >= 0 && before.right <= before.innerW + 2,
+      `select trigger inside viewport horizontally: [${before.left}, ${before.right}] vs innerW=${before.innerW}`
+    );
+    assert(
+      before.top >= 0 && before.bottom <= before.innerH + 2,
+      `select trigger inside viewport vertically: [${before.top}, ${before.bottom}] vs innerH=${before.innerH}`
+    );
+
+    runCli(["-s=" + S, "click", "#roulette-collection"]);
+    await sleep(700);
+
+    const opened = cliEval(
+      S,
+      `(() => {
+        const sel = document.getElementById('roulette-collection');
+        const r = sel.getBoundingClientRect();
+        return {
+          open: document.activeElement === sel,
+          left: +r.left.toFixed(1),
+          right: +r.right.toFixed(1),
+          top: +r.top.toFixed(1),
+          bottom: +r.bottom.toFixed(1),
+        };
+      })()`
+    ) as { open: boolean; left: number; right: number; top: number; bottom: number };
+
+    assert(opened.open, "dropdown opens from pointer click (activeElement === select)");
+    assert(
+      opened.left >= 0 && opened.right <= 377 && opened.top >= 0 && opened.bottom <= 814,
+      `select fully on-screen while menu open: [${opened.left}, ${opened.right}]x[${opened.top}, ${opened.bottom}]`
+    );
+
+    runCli(["-s=" + S, "screenshot", "--filename=qa-roulette-mobile-dropdown.png"]);
+  });
 }
 
 // ══════════════════════════════════════════════════════════════════════

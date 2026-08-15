@@ -2,7 +2,7 @@ import pg from "pg";
 
 const { Client } = pg;
 
-const APP_TABLES = ["shipdb", "analytics", "ship_signatures", "favoritedb", "collections"];
+const APP_TABLES = ["shipdb", "analytics", "ship_signatures", "favoritedb", "collections", "games", "game_ships", "game_registrations", "game_contestants", "game_matches"];
 
 let pass = 0;
 let warn = 0;

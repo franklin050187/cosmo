@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: "/", label: "Ships" },
   { href: "/collections", label: "Collections" },
   { href: "/roulette", label: "Roulette" },
+  { href: "/games", label: "Games" },
   { href: "/upload", label: "Upload" },
 ];
 
