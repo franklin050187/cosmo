@@ -1,10 +1,9 @@
 import { randomBytes } from "node:crypto";
 import { query, fetchAll, fetchOne, transaction, queryOnClient, fetchOneOnClient } from "./core";
 import { bumpDbVersion } from "@/lib/cache";
+import type { GameMode, GameStatus, GameVisibility } from "@/lib/games-types";
 
-export type GameMode = "pvp" | "tournament" | "campaign";
-export type GameVisibility = "public" | "private";
-export type GameStatus = "open" | "closed" | "finished";
+export type { GameMode, GameVisibility, GameStatus } from "@/lib/games-types";
 
 export interface GameRow {
   id: number;
