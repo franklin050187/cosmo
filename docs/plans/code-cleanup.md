@@ -19,7 +19,7 @@ Things the docs currently state that are **WRONG or stale** — fix the docs, no
 
 | Doc claim | Reality (verified) | Action |
 |-----------|--------------------|--------|
-| QA suite = **43 cases** (`CODE_REVIEW_FINDINGS`, `PROJECT.md`) | **44 checks** exist (34 `check()` + 10 parallel items incl. P2-G11, P2-G12, P3-S13) | Corrected the count in docs to 44 |
+| QA suite = **43 cases** (`CODE_REVIEW_FINDINGS`, `PROJECT.md`) | **51 checks** (34 `check()` + 10 parallel + 7 game/roulette `P3-G1..G7`) | Corrected the count in docs to 51 |
 | `R5-2` rate-limit coverage **missing** (ROADMAP 1.1, QA_FINDINGS 1) | `P2-G11` + `P2-G12` **now present** in `qa-suite.ts` | Mark resolved |
 | `AnalyticsTracker` outside `<Suspense>` (ROADMAP 5.6 ⬜) | **Wrapped** at `layout.tsx:72-74` | Mark done |
 | Cross-tab login sync missing (ROADMAP 5.10 ⬜) | **Implemented** via `storage` listener (`useAuth.ts:80`) | Mark done |
@@ -132,9 +132,9 @@ elsewhere so the import remains.
 ### C3 ✅ ROADMAP 1.2 / R5-3 — Refresh stale `QA_TEST_PLAN.md` counts
 P1-U2a/b/c are **read dynamically** by the suite, so the hardcoded `350`/`4`/`3`
 were stale placeholders — updated the plan to say "matches live DB count". Added the
-missing **`P3-S13`** (roulette dropdown) row. Corrected the "43 cases" figure to **44**
-(34 `check()` calls + 10 parallel items; 43 predates P3-S13) across `QA_TEST_PLAN.md`,
-`README.md`, `CODE_REVIEW_FINDINGS.md`, `PROJECT.md`, `ROADMAP.md`.
+missing **`P3-S13`** (roulette dropdown) row. Corrected the "43 cases" figure to **51**
+(34 `check()` calls + 10 parallel items + 7 game/roulette tests `P3-G1..G7`) across
+`QA_TEST_PLAN.md`, `README.md`, `CODE_REVIEW_FINDINGS.md`, `PROJECT.md`, `ROADMAP.md`.
 
 ### C4 ⬜ ROADMAP 2.1 — Bad-IP blocklist
 **EXCLUDED per request** — reference `docs/plans/bad-ip-blocklist-503.md`; do not action here.

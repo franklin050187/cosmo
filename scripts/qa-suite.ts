@@ -453,7 +453,11 @@ async function phase2(scratch: { shipId: number }) {
   await parallelChecks(parallelBatch, 3);
 
   // Sequential tests below: they POST to API endpoints or burst rate-limited
-  // routes, so they must not overlap (avoid cascading 429s).
+  // routes, so they must not overlap (avoid cascading 429s). They also use
+  // relative fetch URLs on the shared anon session, so pin that browser to the
+  // app origin first (otherwise the relative fetch has no base URL to resolve).
+  openSession(A, HOME + "/");
+  await waitText(A, "Newest", 20000);
 
   await check("P2-G2", "Analytics dashboard gated for anonymous (401 + no data leak)", async () => {
     const res = await httpFetch(A, "/api/analytics/dashboard");
