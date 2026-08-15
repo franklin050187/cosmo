@@ -78,7 +78,12 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
 
     useImperativeHandle(ref, () => ({
       getToken: () => {
-        if (typeof window !== "undefined" && getTurnstile()) {
+        if (typeof window === "undefined") return;
+        // Mirror the server's NODE_ENV=development skip: the local site-key is
+        // never authorized, so the widget can't complete and getToken() would
+        // stay empty, blocking form submission in dev. Production stays intact.
+        if (process.env.NODE_ENV === "development") return "dev-skip";
+        if (getTurnstile()) {
           return getTurnstile()!.getResponse(widgetIdRef.current);
         }
       },

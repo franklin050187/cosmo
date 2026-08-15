@@ -40,6 +40,14 @@ cd /home/johnn/cosmo-next
 > **Next 16 note:** this is not the Next.js you may know — APIs and conventions differ.
 > Read the relevant guide in `node_modules/next/dist/docs/` before writing code.
 
+## Trust boundary (reverse proxies)
+
+Anonymous analytics identity (`anonIdFor`), the API rate-limiter IP (`getClientIp`) and
+Turnstile `remoteip` all trust the `x-forwarded-for` / `x-real-ip` headers. This is safe on
+**Vercel** (platform sets these headers) but is a constraint if the app is ever moved behind a
+plain reverse proxy — the proxy must set/overwrite those headers, or client IPs become spoofable
+and rate-limits/Turnstile remote IP checks can be bypassed.
+
 ## License
 
 User-submitted ships are **CC BY 4.0** unless stated otherwise in their description.
