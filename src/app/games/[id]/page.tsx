@@ -506,7 +506,9 @@ export default function GameDetailPage() {
                 />
               </div>
             )}
-            <p className="text-blue-200 text-xs mt-2">{origin}/games/join/{game.invite_code}</p>
+            {game.visibility === "public" && (
+              <p className="text-blue-200 text-xs mt-2">{origin}/games/join/{game.invite_code}</p>
+            )}
           </div>
         )}
       </Card>

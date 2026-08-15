@@ -132,8 +132,21 @@ export default function ShipDetailPage() {
        }
      };
 
+      const fetchFavoriteStatus = async () => {
+        if (!user?.username) return;
+        try {
+          const res = await fetch(`/api/ship/${params.id}/favorite`, { signal: controller.signal });
+          if (!res.ok) return;
+          const json = await res.json();
+          if (active) setIsFavorited(json.data?.favorited === true);
+        } catch {
+          /* keep default unfavorited on error */
+        }
+      };
+
      fetchShip();
      fetchCollections();
+     fetchFavoriteStatus();
      return () => { active = false; controller.abort(); };
    }, [params.id, user?.username]);
 

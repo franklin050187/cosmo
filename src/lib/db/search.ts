@@ -53,8 +53,9 @@ export async function getSearchPlus(filters: SearchFilters) {
     const ORDER_BY_ALLOW: Record<string, string> = { fav: "fav DESC", pop: "downloads DESC" };
     const order = ORDER_BY_ALLOW[filters.order ?? ""] ?? "date DESC";
 
-    const limit = page === -1 ? 999999 : PAGE_SIZE;
-    const offset = page === -1 ? null : (page - 1) * PAGE_SIZE;
+    const effectivePage = page === -1 ? -1 : Math.min(Math.max(page, 1), Math.max(maxPage, 1));
+    const limit = effectivePage === -1 ? 999999 : PAGE_SIZE;
+    const offset = effectivePage === -1 ? null : (effectivePage - 1) * PAGE_SIZE;
 
     args.push(limit);
     let sql = `SELECT id, name, data, submitted_by, description, ship_name, author, price, brand, crew, tags, downloads, fav, date FROM shipdb${where} ORDER BY ${order} LIMIT $${args.length}`;
@@ -65,7 +66,7 @@ export async function getSearchPlus(filters: SearchFilters) {
 
     const data = await fetchAll(sql, args);
     const total_count = parseInt(countRow?.count ?? "0", 10);
-    return { data, page, max_page: page === -1 ? 1 : maxPage, total_count };
+    return { data, page: effectivePage, max_page: effectivePage === -1 ? 1 : maxPage, total_count };
   });
 }
 

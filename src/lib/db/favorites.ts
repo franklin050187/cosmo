@@ -1,4 +1,4 @@
-import { queryOnClient, fetchAll, fetchOneOnClient, transaction } from "./core";
+import { queryOnClient, fetchAll, fetchOne, fetchOneOnClient, transaction } from "./core";
 import { bumpDbVersion } from "@/lib/cache";
 
 export async function getMyFavorites(user: string, userId: string) {
@@ -7,6 +7,14 @@ export async function getMyFavorites(user: string, userId: string) {
     [userId, user],
   );
   return { data, page: 1, max_page: 1 };
+}
+
+export async function isShipFavorited(user: string, userId: string, shipId: number) {
+  const row = await fetchOne(
+    "SELECT favorite FROM favoritedb WHERE discord_id = $1 OR name = $2",
+    [userId, user],
+  );
+  return !!row && row.favorite.includes(shipId);
 }
 
 export async function addToFavorites(user: string, userId: string, shipId: number) {

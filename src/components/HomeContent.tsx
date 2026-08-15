@@ -39,6 +39,9 @@ export default function HomeContent({ initialShips, initialTotalCount, initialMa
         setShips(payload.data ?? []);
         setMaxPage(payload.max_page ?? 1);
         setTotalResults(payload.total_count ?? payload.data?.length ?? 0);
+        if (payload.page != null && payload.page !== pageNum) {
+          setFilter("page", payload.page.toString());
+        }
       }
     } catch (err) {
       if ((err as Error)?.name === "AbortError") return;
@@ -46,7 +49,7 @@ export default function HomeContent({ initialShips, initialTotalCount, initialMa
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setFilter]);
 
   useEffect(() => {
     if (isInitialMount.current) {

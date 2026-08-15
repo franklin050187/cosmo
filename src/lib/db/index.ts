@@ -41,6 +41,7 @@ export {
 // Favorites queries
 export {
   getMyFavorites,
+  isShipFavorited,
   addToFavorites,
   deleteFromFavorites,
 } from "./favorites";

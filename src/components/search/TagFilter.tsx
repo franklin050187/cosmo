@@ -59,7 +59,7 @@ export default function TagFilter({ tagsOn, tagsOff, onChange }: TagFilterProps)
       e.preventDefault();
       if (highlight >= 0 && highlight < matches.length) add(matches[highlight].tag, false);
       else if (input.startsWith("-")) add(input.slice(1).trim(), true);
-      else if (input.trim()) add(input.trim(), true);
+      else if (input.trim()) add(input.trim(), false);
     } else if (e.key === "ArrowDown") { e.preventDefault(); setHighlight(i => Math.min(i + 1, matches.length - 1)); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setHighlight(i => Math.max(i - 1, -1)); }
     else if (e.key === "Escape") { setShowDD(false); (e.currentTarget as HTMLInputElement).blur(); }

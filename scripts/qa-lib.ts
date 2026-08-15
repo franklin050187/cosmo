@@ -17,6 +17,23 @@ export const SESSION_QA = "qa";
 export const SESSION_ANON = "anon";
 
 /**
+ * Stop every playwright-cli browser session (and any stale/zombie daemons) so
+ * the suite doesn't leave browsers running and burning CPU/memory after it ends.
+ * Used in the suite's `finally` block.
+ */
+export function stopAllPlaywright() {
+  try {
+    spawnSync("playwright-cli", ["kill-all"], {
+      encoding: "utf8",
+      stdio: "ignore",
+      timeout: 15_000,
+    });
+  } catch {
+    /* best-effort cleanup */
+  }
+}
+
+/**
  * Anonymous QA events get a deterministic `anon_id` because the suite always
  * runs from the same loopback IP with the same browser User-Agent and the
  * default ANALYTICS_ANON_SALT: the server derives

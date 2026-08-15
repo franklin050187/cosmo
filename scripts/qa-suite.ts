@@ -22,6 +22,7 @@ import {
   runCli,
   SESSION_ANON,
   SESSION_QA,
+  stopAllPlaywright,
   stubConfirm,
   summary,
   waitFor,
@@ -69,6 +70,42 @@ async function waitTextAsync(session: string, text: string, timeoutMs = 25000) {
 
 async function clickBtn(session: string, text: string) {
   runCli(["-s=" + session, "click", `button:has-text("${text}")`]);
+}
+
+// ── Games helpers (self-cleaning: every created game is deleted in `finally`) ──
+
+async function createGameViaApi(opts: {
+  title?: string;
+  mode?: "pvp" | "tournament" | "campaign";
+  visibility?: "public" | "private";
+  collectionId?: number | null;
+  roulette?: boolean;
+} = {}): Promise<{ id: number; inviteCode: string }> {
+  const res = await httpFetch(S, "/api/games", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: opts.title ?? `QA game ${Date.now()}`,
+      description: "",
+      game_mode: opts.mode ?? "pvp",
+      visibility: opts.visibility ?? "public",
+      collection_id: opts.collectionId ?? null,
+      game_date: new Date(Date.now() + 7 * 86400000).toISOString(),
+      roulette_enabled: opts.roulette ?? false,
+    }),
+  });
+  const data = (res.body as { data?: { id?: number; invite_code?: string } })?.data;
+  assert(
+    res.status === 201 && data?.id != null,
+    `create game status ${res.status}: ${JSON.stringify(res.body)}`
+  );
+  return { id: data!.id!, inviteCode: data!.invite_code ?? "" };
+}
+
+async function deleteGameViaApi(id: number) {
+  const res = await httpFetch(S, `/api/games/${id}`, { method: "DELETE" });
+  const body = res.body as { ok?: boolean };
+  assert(res.status === 200 && body?.ok, `delete game ${id} status ${res.status}: ${JSON.stringify(res.body)}`);
 }
 
 // Click the upload panel's primary action, handling the duplicate-acknowledge
@@ -820,7 +857,160 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
       `select fully on-screen while menu open: [${opened.left}, ${opened.right}]x[${opened.top}, ${opened.bottom}]`
     );
 
-    runCli(["-s=" + S, "screenshot", "--filename=qa-roulette-mobile-dropdown.png"]);
+    runCli(["-s=" + S, "screenshot", "--filename=.qa/output/qa-roulette-mobile-dropdown.png"]);
+  });
+
+  // ── GAME PLANNING + SHIP ROULETTE (new features) — self-cleaning ──
+
+  await check("P3-G1", "Create a game via API → DB row + invite code; delete leaves no trace", async () => {
+    const { id, inviteCode } = await createGameViaApi({ title: `QA create game ${Date.now()}` });
+    try {
+      assert(inviteCode.length > 0, "invite_code missing");
+      const rows = await q<{ title: string; owner: string; mode: string }>(
+        "SELECT title, owner_discord_id AS owner, game_mode AS mode FROM games WHERE id = $1",
+        [id]
+      );
+      assert(rows.rows.length === 1, `game row missing (${id})`);
+      assert(rows.rows[0].owner === PONEY_ID, `owner_discord_id=${rows.rows[0].owner}`);
+      assert(rows.rows[0].mode === "pvp", `game_mode=${rows.rows[0].mode}`);
+    } finally {
+      await deleteGameViaApi(id);
+    }
+    const gone = await q<{ n: string }>("SELECT count(*)::text n FROM games WHERE id = $1", [id]);
+    assert(gone.rows[0].n === "0", `game not cleaned up (${gone.rows[0].n} rows)`);
+  });
+
+  await check("P3-G2", "Register for a game (logged-in) → DB row; leave removes it", async () => {
+    const { id } = await createGameViaApi();
+    try {
+      const reg = await httpFetch(S, `/api/games/${id}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      assert(reg.status === 200 && (reg.body as { ok?: boolean })?.ok, `register ${reg.status}: ${JSON.stringify(reg.body)}`);
+      const rows = await q<{ n: string }>(
+        "SELECT count(*)::text n FROM game_registrations WHERE game_id = $1 AND discord_id = $2",
+        [id, PONEY_ID]
+      );
+      assert(rows.rows[0].n === "1", `registration rows=${rows.rows[0].n}`);
+      const leave = await httpFetch(S, `/api/games/${id}/register`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      assert(leave.status === 200, `leave ${leave.status}: ${JSON.stringify(leave.body)}`);
+      const after = await q<{ n: string }>(
+        "SELECT count(*)::text n FROM game_registrations WHERE game_id = $1 AND discord_id = $2",
+        [id, PONEY_ID]
+      );
+      assert(after.rows[0].n === "0", `registration rows after leave=${after.rows[0].n}`);
+    } finally {
+      await deleteGameViaApi(id);
+    }
+  });
+
+  await check("P3-G3", "Games routes are gated for anonymous users", async () => {
+    const create = await httpFetch(A, "/api/games", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "x", game_date: new Date().toISOString() }),
+    });
+    assert(create.status === 401, `anon create ${create.status}`);
+    const del = await httpFetch(A, `/api/games/${BOGUS_SHIP_ID}`, { method: "DELETE" });
+    assert(del.status === 401, `anon delete ${del.status}`);
+    const contestants = await httpFetch(A, `/api/games/${BOGUS_SHIP_ID}/contestants`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "x" }),
+    });
+    assert(contestants.status === 401, `anon contestants ${contestants.status}`);
+    const bracket = await httpFetch(A, `/api/games/${BOGUS_SHIP_ID}/bracket`, { method: "POST" });
+    assert(bracket.status === 401, `anon bracket ${bracket.status}`);
+    const roulette = await httpFetch(A, `/api/games/${BOGUS_SHIP_ID}/roulette`, { method: "POST" });
+    assert(roulette.status === 401, `anon roulette ${roulette.status}`);
+    const reg = await httpFetch(A, `/api/games/${BOGUS_SHIP_ID}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    assert(reg.status === 400, `anon register (no username) ${reg.status}`);
+  });
+
+  await check("P3-G4", "Tournament: add contestants + generate bracket → matches created", async () => {
+    const { id } = await createGameViaApi({ mode: "tournament" });
+    try {
+      for (const u of ["qa-p1", "qa-p2", "qa-p3", "qa-p4"]) {
+        const c = await httpFetch(S, `/api/games/${id}/contestants`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: u }),
+        });
+        assert(c.status === 200, `add contestant ${u} ${c.status}: ${JSON.stringify(c.body)}`);
+      }
+      const br = await httpFetch(S, `/api/games/${id}/bracket`, { method: "POST" });
+      assert(br.status === 200 && (br.body as { ok?: boolean })?.ok, `bracket ${br.status}: ${JSON.stringify(br.body)}`);
+      const matches = await q<{ n: string }>("SELECT count(*)::text n FROM game_matches WHERE game_id = $1", [id]);
+      assert(parseInt(matches.rows[0].n, 10) > 0, `no matches (${matches.rows[0].n})`);
+      const cons = await q<{ n: string }>("SELECT count(*)::text n FROM game_contestants WHERE game_id = $1", [id]);
+      assert(cons.rows[0].n === "4", `contestants=${cons.rows[0].n}`);
+    } finally {
+      await deleteGameViaApi(id);
+    }
+  });
+
+  await check("P3-G5", "Roulette deal: linked collection + registered player → draws created", async () => {
+    const { id } = await createGameViaApi({ roulette: true, collectionId: 3 });
+    try {
+      await httpFetch(S, `/api/games/${id}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const ships = await q<{ n: string }>("SELECT count(*)::text n FROM game_ships WHERE game_id = $1", [id]);
+      assert(parseInt(ships.rows[0].n, 10) > 0, `no snapshot ships (${ships.rows[0].n})`);
+      const deal = await httpFetch(S, `/api/games/${id}/roulette`, { method: "POST" });
+      assert(deal.status === 200 && (deal.body as { ok?: boolean })?.ok, `deal ${deal.status}: ${JSON.stringify(deal.body)}`);
+      const draws = await q<{ n: string }>("SELECT count(*)::text n FROM game_ship_draws WHERE game_id = $1", [id]);
+      assert(parseInt(draws.rows[0].n, 10) > 0, `no draws (${draws.rows[0].n})`);
+    } finally {
+      await deleteGameViaApi(id);
+    }
+  });
+
+  await check("P3-G6", "Roulette disabled game refuses deal (owner)", async () => {
+    const { id } = await createGameViaApi({ roulette: false });
+    try {
+      const deal = await httpFetch(S, `/api/games/${id}/roulette`, { method: "POST" });
+      assert(deal.status === 400, `deal on non-roulette ${deal.status}: ${JSON.stringify(deal.body)}`);
+    } finally {
+      await deleteGameViaApi(id);
+    }
+  });
+
+  await check("P3-G7", "Private game requires invite code to register", async () => {
+    const { id, inviteCode } = await createGameViaApi({ visibility: "private" });
+    try {
+      const noCode = await httpFetch(A, `/api/games/${id}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "qa-guest" }),
+      });
+      assert(noCode.status === 403, `register private w/o invite ${noCode.status}: ${JSON.stringify(noCode.body)}`);
+      const withCode = await httpFetch(A, `/api/games/${id}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "qa-guest", invite_code: inviteCode }),
+      });
+      assert(withCode.status === 200, `register private w/ invite ${withCode.status}: ${JSON.stringify(withCode.body)}`);
+      const rows = await q<{ n: string }>(
+        "SELECT count(*)::text n FROM game_registrations WHERE game_id = $1 AND discord_username = 'qa-guest'",
+        [id]
+      );
+      assert(rows.rows[0].n === "1", `guest registration rows=${rows.rows[0].n}`);
+    } finally {
+      await deleteGameViaApi(id);
+    }
   });
 }
 
@@ -926,6 +1116,7 @@ async function main() {
     console.error("Suite aborted:", e);
   } finally {
     const { failed } = summary();
+    stopAllPlaywright();
     await dbClose();
     process.exit(failed > 0 ? 1 : 0);
   }
