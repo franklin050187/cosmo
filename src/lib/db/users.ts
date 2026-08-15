@@ -76,6 +76,21 @@ export async function migrateUsernameOnLogin(
     );
     await queryOnClient(
       client,
+      "UPDATE games SET owner_name = $1, owner_discord_id = $2 WHERE owner_discord_id IS NULL AND owner_name = ANY($3::text[])",
+      [newUsername, userId, candidates],
+    );
+    await queryOnClient(
+      client,
+      "UPDATE game_registrations SET discord_username = $1, discord_id = $2 WHERE discord_id IS NULL AND discord_username = ANY($3::text[])",
+      [newUsername, userId, candidates],
+    );
+    await queryOnClient(
+      client,
+      "UPDATE game_contestants SET discord_username = $1, discord_id = $2 WHERE discord_id IS NULL AND discord_username = ANY($3::text[])",
+      [newUsername, userId, candidates],
+    );
+    await queryOnClient(
+      client,
       "UPDATE shipdb SET submitted_by = $1 WHERE discord_id = $2 AND submitted_by <> $1",
       [newUsername, userId],
     );
@@ -87,6 +102,21 @@ export async function migrateUsernameOnLogin(
     await queryOnClient(
       client,
       "UPDATE favoritedb SET name = $1 WHERE discord_id = $2 AND name <> $1",
+      [newUsername, userId],
+    );
+    await queryOnClient(
+      client,
+      "UPDATE games SET owner_name = $1 WHERE owner_discord_id = $2 AND owner_name <> $1",
+      [newUsername, userId],
+    );
+    await queryOnClient(
+      client,
+      "UPDATE game_registrations SET discord_username = $1 WHERE discord_id = $2 AND discord_username <> $1",
+      [newUsername, userId],
+    );
+    await queryOnClient(
+      client,
+      "UPDATE game_contestants SET discord_username = $1 WHERE discord_id = $2 AND discord_username <> $1",
       [newUsername, userId],
     );
     bumpDbVersion();

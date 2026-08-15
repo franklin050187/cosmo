@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { searchFromQueryString } from "@/lib/db";
+import { searchFromQueryString, listUpcomingGames } from "@/lib/db";
 import HomeContent from "@/components/HomeContent";
+import UpcomingGamesBanner, { type UpcomingGameItem } from "@/components/UpcomingGamesBanner";
+import { upcomingWhenLabel } from "@/lib/format-date";
 
 export const metadata: Metadata = {
   title: "CosmoShip : Cosmoteer Ship Library",
@@ -28,6 +30,14 @@ export default async function HomePage({
   if (!params.has("page")) params.set("page", "1");
 
   const result = await searchFromQueryString(params.toString());
+  const upcomingGames = await listUpcomingGames(3).catch(() => []);
+  const bannerGames: UpcomingGameItem[] = upcomingGames.map((g) => ({
+    id: g.id,
+    title: g.title,
+    game_date: g.game_date,
+    participant_count: g.participant_count,
+    when_label: upcomingWhenLabel(g.game_date),
+  }));
 
   return (
     <Suspense
@@ -37,11 +47,14 @@ export default async function HomePage({
         </div>
       }
     >
-      <HomeContent
-        initialShips={result.data ?? []}
-        initialTotalCount={result.total_count ?? 0}
-        initialMaxPage={result.max_page ?? 1}
-      />
+      <div className="flex flex-col gap-6">
+        <UpcomingGamesBanner games={bannerGames} />
+        <HomeContent
+          initialShips={result.data ?? []}
+          initialTotalCount={result.total_count ?? 0}
+          initialMaxPage={result.max_page ?? 1}
+        />
+      </div>
     </Suspense>
   );
 }
