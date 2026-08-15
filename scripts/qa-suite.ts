@@ -598,17 +598,7 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
     await waitText(S, "Confirm Replace", 40000);
     await clickBtn(S, "Confirm Replace");
     await waitFor(S, `window.location.pathname === "/ship/${scratch.shipId}"`, 30000);
-    try {
-      await waitText(S, "replace-ship", 30000);
-    } catch (e) {
-      try {
-        const dbg = String(cliEval(S, `JSON.stringify({ url: location.href, text: document.body.innerText.slice(0, 600) })`));
-        console.log("P3-S6 DEBUG:", dbg);
-      } catch (e2) {
-        console.log("P3-S6 DEBUG eval failed:", e2);
-      }
-      throw e;
-    }
+    await waitText(S, "replace-ship", 30000);
     const after = (await getShipRow(scratch.shipId))?.data as string;
     assert(after && after !== before, "data URL did not change");
     const row = await getShipRow(scratch.shipId);
