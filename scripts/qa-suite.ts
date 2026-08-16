@@ -645,6 +645,10 @@ async function phase2(scratch: { shipId: number }) {
     const bc = dataOf(byCrew);
     assert(bc.length > 0 && bc.every((s) => s.crew! <= 10), "max-crew filter failed");
 
+    const crewBand = await get("min-crew=5&max-crew=8&order=new&page=1");
+    const cb = dataOf(crewBand);
+    assert(cb.length > 0 && cb.every((s) => s.crew! >= 5 && s.crew! <= 8), "min/max-crew band failed");
+
     const facets = await get("order=new&page=1");
     const facetBody = facets.body?.data ?? {};
     assert(Array.isArray(facetBody.author_counts) && (facetBody.author_counts?.length ?? 0) > 0, "author_counts missing");
@@ -702,6 +706,24 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
     await waitFor(S, "document.querySelectorAll('pre').length > 0", 40000);
     await clickBtn(S, "Price Analysis");
     await waitText(S, "Category", 40000);
+  });
+
+  await check("P3-S14", "Ship detail: Similar ships section (price/crew) renders with comparable values", async () => {
+    openSession(S, HOME + `/ship/2403`);
+    prepTurnstile(S);
+    await waitText(S, "Model-S");
+    await waitText(S, "Similar ships", 40000);
+    const ref = await cliEval(
+      S,
+      `(() => { const m = document.body.innerText.match(/Cost:\\s*([0-9]+)₡/); return m ? m[1] : ""; })()`
+    );
+    const refPrice = parseInt(String(ref), 10) || 0;
+    assert(refPrice > 0, `no reference price parsed (${ref})`);
+    const cards = await cliEval(
+      S,
+      `(() => { const sec = [...document.querySelectorAll('h2')].find(h => h.textContent.trim() === 'Similar ships'); if (!sec) return []; const grid = sec.closest('section').querySelector('a[href^="/ship/"]'); return grid ? 1 : 0; })()`
+    );
+    assert(Number(cards) === 1, "Similar ships grid missing ship links");
   });
 
   await check("P3-S3", `Non-owner ship (${OTHER_SHIP_ID}) edit redirects + API 403`, async () => {

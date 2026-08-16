@@ -8,6 +8,7 @@ export interface SearchFilters {
   minprice?: string;
   maxprice?: string;
   "max-crew"?: string;
+  "min-crew"?: string;
   order?: string;
   dir?: string;
   fulltext?: string;
@@ -35,6 +36,7 @@ export async function getSearchPlus(filters: SearchFilters) {
     if (filters.maxprice) conditions.push(`price <= ${addCond(filters.maxprice)}`);
     if (filters.author) conditions.push(`author ILIKE ${addCond(`%${filters.author}%`)}`);
     if (filters["max-crew"]) conditions.push(`crew <= ${addCond(filters["max-crew"])}`);
+    if (filters["min-crew"]) conditions.push(`crew >= ${addCond(filters["min-crew"])}`);
     if (filters.brand === "exl") conditions.push(`brand = ${addCond("exl")}`);
     if (filters.brand === "gen") conditions.push(`brand = ${addCond("gen")}`);
 
@@ -120,7 +122,7 @@ export async function searchFromQueryString(queryString: string) {
   const tagsOn: string[] = [];
   const tagsOff: string[] = [];
 
-  const SCALAR_KEYS = ["author", "desc", "minprice", "maxprice", "max-crew", "fulltext", "brand"];
+  const SCALAR_KEYS = ["author", "desc", "minprice", "maxprice", "max-crew", "min-crew", "fulltext", "brand"];
 
   const pageStr = params.get("page");
   if (pageStr) page = parseInt(pageStr, 10) || 1;

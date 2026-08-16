@@ -34,6 +34,23 @@ export function stopAllPlaywright() {
 }
 
 /**
+ * Close one named session's browser (daemon + process) so throwaway sessions
+ * don't accumulate and keep RAM/CPU pinned until the suite's final kill-all.
+ * Best-effort: a session that's already gone (or never opened) is a no-op.
+ */
+export function closeSession(session: string) {
+  try {
+    spawnSync("playwright-cli", ["-s=" + session, "close"], {
+      encoding: "utf8",
+      stdio: "ignore",
+      timeout: 15_000,
+    });
+  } catch {
+    /* best-effort cleanup */
+  }
+}
+
+/**
  * Anonymous QA events get a deterministic `anon_id` because the suite always
  * runs from the same loopback IP with the same browser User-Agent and the
  * default ANALYTICS_ANON_SALT: the server derives
@@ -296,7 +313,8 @@ export async function pageUrlAsync(session: string): Promise<string> {
 
 // Run a list of async test fns with bounded concurrency. Each item receives a
 // unique throwaway session name so independent ephemeral browser contexts don't
-// race on a shared session.
+// race on a shared session. Each session's browser is closed as soon as its test
+// finishes so at most `concurrency` browsers are ever alive (they don't pile up).
 export async function parallelChecks(
   items: { id: string; name: string; fn: (session: string) => Promise<void> }[],
   concurrency = 3
@@ -306,7 +324,11 @@ export async function parallelChecks(
   const run = async () => {
     while (queue.length) {
       const item = queue.shift()!;
-      await check(item.id, item.name, () => item.fn(item.session));
+      try {
+        await check(item.id, item.name, () => item.fn(item.session));
+      } finally {
+        closeSession(item.session);
+      }
     }
   };
   for (let i = 0; i < Math.min(concurrency, items.length); i++) workers.push(run());

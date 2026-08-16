@@ -12,10 +12,11 @@ interface RelatedShipsProps {
 interface RelatedBuckets {
   author: ShipRow[];
   tags: ShipRow[];
+  similar: ShipRow[];
 }
 
 export default function RelatedShips({ ship }: RelatedShipsProps) {
-  const [buckets, setBuckets] = useState<RelatedBuckets>({ author: [], tags: [] });
+  const [buckets, setBuckets] = useState<RelatedBuckets>({ author: [], tags: [], similar: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const shipIdRef = useRef(ship.id);
@@ -35,15 +36,41 @@ export default function RelatedShips({ ship }: RelatedShipsProps) {
           return data.filter((s) => s.id !== id);
         };
 
-        const [author, tags] = await Promise.all([
+        const similarParams = new URLSearchParams({ order: "pop", page: "1" });
+        const price = ship.price || 0;
+        const crew = ship.crew || 0;
+        if (price > 0) {
+          similarParams.set("minprice", String(Math.max(0, Math.round(price * 0.7))));
+          similarParams.set("maxprice", String(Math.round(price * 1.3)));
+        }
+        if (crew > 1) {
+          similarParams.set("min-crew", String(Math.max(1, Math.round(crew * 0.75))));
+          similarParams.set("max-crew", String(Math.round(crew * 1.25)));
+        }
+
+        const [author, tags, similar] = await Promise.all([
           ship.author ? get(new URLSearchParams({ author: ship.author, order: "pop", page: "1" })) : Promise.resolve([]),
           ship.tags.length
             ? get(new URLSearchParams({ tag: ship.tags[0], order: "pop", page: "1" }))
             : Promise.resolve([]),
+          similarParams.size ? get(similarParams) : Promise.resolve([]),
         ]);
 
         if (cancelled || shipIdRef.current !== id) return;
-        setBuckets({ author, tags });
+
+        const scored = similar
+          .filter((s) => s.price > 0 || s.crew > 1)
+          .map((s) => {
+            const p = s.price || 0;
+            const c = s.crew || 0;
+            const pScore = price > 0 ? Math.abs(p - price) / price : 0;
+            const cScore = crew > 1 ? Math.abs(c - crew) / crew : 0;
+            return { s, score: pScore + cScore };
+          })
+          .sort((a, b) => a.score - b.score)
+          .map((x) => x.s);
+
+        setBuckets({ author, tags, similar: scored.slice(0, 8) });
       } catch (err) {
         if (cancelled || shipIdRef.current !== id) return;
         console.error("Failed to fetch related ships:", err);
@@ -61,6 +88,9 @@ export default function RelatedShips({ ship }: RelatedShipsProps) {
 
   const byAuthor = buckets.author.filter((s) => s.author === ship.author);
   const byTags = buckets.tags.filter((s) => s.author !== ship.author);
+  const bySimilar = buckets.similar.filter(
+    (s) => s.id !== ship.id && !byAuthor.some((a) => a.id === s.id) && !byTags.some((t) => t.id === s.id)
+  );
 
   if (loading) {
     return (
@@ -83,7 +113,8 @@ export default function RelatedShips({ ship }: RelatedShipsProps) {
 
   const hasAuthor = byAuthor.length > 0;
   const hasTags = byTags.length > 0;
-  if (!hasAuthor && !hasTags) return null;
+  const hasSimilar = bySimilar.length > 0;
+  if (!hasAuthor && !hasTags && !hasSimilar) return null;
 
   return (
     <div className="mt-10 space-y-8" aria-label="Related ships">
@@ -101,6 +132,14 @@ export default function RelatedShips({ ship }: RelatedShipsProps) {
             More ships with {ship.tags[0]}
           </h2>
           <ShipGrid ships={byTags.slice(0, 8)} />
+        </section>
+      )}
+      {hasSimilar && (
+        <section>
+          <h2 className="text-xl text-white font-semibold mb-4">
+            Similar ships
+          </h2>
+          <ShipGrid ships={bySimilar.slice(0, 8)} />
         </section>
       )}
     </div>

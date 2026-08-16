@@ -212,7 +212,13 @@ export default function HomeContent({ initialShips, initialTotalCount, initialMa
             {(["new", "pop", "fav"] as const).map((o) => (
               <button
                 key={o}
-                onClick={() => setFilter("order", o)}
+                onClick={() => {
+                  if (o === filters.order) {
+                    setFilter("order", o);
+                  } else {
+                    setFilters([["order", o], ["dir", ""]]);
+                  }
+                }}
                 aria-pressed={filters.order === o}
                 aria-label={`Sort by ${sortLabels[o] ?? o}`}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
