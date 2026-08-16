@@ -6,7 +6,7 @@ import { useAuthFetch } from "@/hooks/useAuthFetch";
 import { type ShipRow } from "@/lib/db";
 
 function MyShipsContent() {
-  const { data, loading } = useAuthFetch<{ data: ShipRow[] }>("/api/ship/my-ships");
+  const { data, loading, error, refetch } = useAuthFetch<{ data: ShipRow[] }>("/api/ship/my-ships");
   const ships = data?.data ?? [];
 
   return (
@@ -17,6 +17,18 @@ function MyShipsContent() {
 
       {loading ? (
         <p className="text-center text-blue-200" role="status">Loading...</p>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center" role="alert">
+          <p className="text-blue-200 text-lg mb-2">Couldn&apos;t load your ships</p>
+          <p className="text-gray-500 text-sm mb-4">{error}</p>
+          <button
+            onClick={refetch}
+            aria-label="Retry loading your ships"
+            className="px-4 py-2 text-sm text-cyan-400 border border-[#1C598C] rounded-lg hover:bg-cyan-400/10 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       ) : (
         <>
           <p className="text-center text-blue-200 mb-4">

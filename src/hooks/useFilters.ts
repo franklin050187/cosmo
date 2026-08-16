@@ -12,6 +12,7 @@ export interface Filters {
   maxprice: string;
   maxCrew: string;
   order: string;
+  dir: string;
   brand: string;
   page: number;
 }
@@ -30,6 +31,7 @@ export function useFilters() {
     maxprice: searchParams.get("maxprice") ?? "",
     maxCrew: searchParams.get("max-crew") ?? "",
     order: searchParams.get("order") ?? "new",
+    dir: searchParams.get("dir") ?? "",
     brand: searchParams.get("brand") ?? "",
     page: parseInt(searchParams.get("page") ?? "1", 10) || 1,
   }), [searchParams]);

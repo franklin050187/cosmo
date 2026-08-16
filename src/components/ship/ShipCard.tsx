@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -28,6 +28,9 @@ function formatPrice(price: number): string {
 export default function ShipCard({ ship, priority = false }: { ship: ShipRow; priority?: boolean }) {
   const tags = (ship.tags ?? []).filter((t) => DISPLAY_TAGS.includes(t)).slice(0, 4);
   const [downloading, setDownloading] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
+  const [shared, setShared] = useState(false);
   const router = useRouter();
   const { isLoggedIn } = useAuth();
 
@@ -41,11 +44,44 @@ export default function ShipCard({ ship, priority = false }: { ship: ShipRow; pr
     if (downloading) return;
     setDownloading(true);
     try {
-      await downloadShip(ship.id, ship.ship_name);
+      await downloadShip(ship.id, ship.ship_name, ship.data);
     } finally {
       setDownloading(false);
     }
   };
+
+  const handleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isLoggedIn || favLoading) return;
+    setFavLoading(true);
+    setIsFavorited((cur) => !cur);
+    try {
+      const res = await fetch(`/api/ship/${ship.id}/${isFavorited ? "unfavorite" : "favorite"}`, { method: "POST" });
+      if (!res.ok) throw new Error();
+    } catch {
+      setIsFavorited((cur) => !cur);
+    } finally {
+      setFavLoading(false);
+    }
+  };
+
+  const handleShare = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `${window.location.origin}/ship/${ship.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: ship.ship_name, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+      }
+      setShared(true);
+      setTimeout(() => setShared(false), 1500);
+    } catch {
+      /* user cancelled or denied clipboard */
+    }
+  }, [ship.id, ship.ship_name]);
 
   return (
     <li className="group relative border border-[#1C598C]/50 rounded-xl bg-[#021526]/80 backdrop-blur shadow-[0_0_12px_rgba(0,126,255,0.15)] hover:shadow-[0_0_20px_rgba(0,126,255,0.25)] hover:border-cyan-400/30 transition-all duration-200">
@@ -63,7 +99,7 @@ export default function ShipCard({ ship, priority = false }: { ship: ShipRow; pr
           draggable
           fetchPriority={priority ? "high" : undefined}
           loading={priority ? "eager" : "lazy"}
-          className="block w-full aspect-square object-contain bg-[#0a1e33]/50 group-hover:scale-[1.02] transition-transform duration-300 cursor-zoom-in"
+          className="block w-full aspect-square object-contain bg-[#0a1e33]/50 group-hover:scale-[1.02] transition-transform duration-300 cursor-pointer"
           onClick={() => {
             saveBackUrl();
             router.push(`/ship/${ship.id}`);
@@ -96,18 +132,18 @@ export default function ShipCard({ ship, priority = false }: { ship: ShipRow; pr
       </div>
 
       {/* Action buttons — outside the Link so clicks don't navigate */}
-      {isLoggedIn && (
-        <div className="absolute top-0 right-0 mt-9 mr-1 flex flex-col gap-0.5">
-          <button
-            onClick={handleDownload}
-            disabled={downloading}
-            aria-label={`Download ${ship.ship_name}`}
-            className="p-1 rounded bg-[#021526]/80 border border-[#1C598C]/30 text-white/60 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors disabled:opacity-40"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-          </button>
+      <div className="absolute top-0 right-0 mt-9 mr-1 flex flex-col gap-0.5">
+        <button
+          onClick={handleDownload}
+          disabled={downloading}
+          aria-label={`Download ${ship.ship_name}`}
+          className="p-1 rounded bg-[#021526]/80 border border-[#1C598C]/30 text-white/60 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors disabled:opacity-40"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+        </button>
+        {isLoggedIn && (
           <CollectionPicker shipId={ship.id}>
             <button
               aria-label={`Add ${ship.ship_name} to collection`}
@@ -118,13 +154,41 @@ export default function ShipCard({ ship, priority = false }: { ship: ShipRow; pr
               </svg>
             </button>
           </CollectionPicker>
-        </div>
-      )}
+        )}
+        {isLoggedIn && (
+          <button
+            onClick={handleFavorite}
+            disabled={favLoading}
+            aria-label={isFavorited ? `Unfavorite ${ship.ship_name}` : `Favorite ${ship.ship_name}`}
+            aria-pressed={isFavorited}
+            className="p-1 rounded bg-[#021526]/80 border border-[#1C598C]/30 text-white/60 hover:text-yellow-300 hover:border-yellow-400/40 transition-colors disabled:opacity-40"
+          >
+            <svg className="w-3.5 h-3.5" fill={isFavorited ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+          </button>
+        )}
+        <button
+          onClick={handleShare}
+          aria-label={shared ? "Link copied!" : `Copy link to ${ship.ship_name}`}
+          className="p-1 rounded bg-[#021526]/80 border border-[#1C598C]/30 text-white/60 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors"
+        >
+          {shared ? (
+            <svg className="w-3.5 h-3.5 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 015.656 0l1.415 1.415a4 4 0 01-5.656 5.656l-1.415-1.415M10.172 13.828a4 4 0 01-5.656 0l-1.415-1.415a4 4 0 015.656-5.656l1.415 1.415m-.708 9.192l4.242-4.242m-4.242 0l4.242 4.242" />
+            </svg>
+          )}
+        </button>
+      </div>
 
       {/* Info */}
       <div className="px-3 py-2.5 border-t border-[#1C598C]/30">
         <Link href={`/ship/${ship.id}`} className="block" aria-label={`${ship.ship_name} — view details`} onClick={saveBackUrl}>
-          <h3 className="text-white text-sm font-medium truncate hover:text-cyan-300 transition-colors">
+          <h3 className="text-white text-sm font-medium truncate hover:text-cyan-300 transition-colors" title={ship.ship_name}>
             {ship.ship_name}
           </h3>
         </Link>

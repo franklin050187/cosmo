@@ -9,6 +9,7 @@ export interface SearchFilters {
   maxprice?: string;
   "max-crew"?: string;
   order?: string;
+  dir?: string;
   fulltext?: string;
   brand?: string;
   tagsOn?: string[];
@@ -50,8 +51,40 @@ export async function getSearchPlus(filters: SearchFilters) {
     const countRow = await fetchOne(`SELECT COUNT(*) FROM shipdb${where}`, args);
     const maxPage = Math.ceil(parseInt(countRow?.count ?? "0", 10) / PAGE_SIZE);
 
-    const ORDER_BY_ALLOW: Record<string, string> = { fav: "fav DESC", pop: "downloads DESC" };
-    const order = ORDER_BY_ALLOW[filters.order ?? ""] ?? "date DESC";
+    // Faceted counts over the full filtered set (not the limited page), so
+    // badge/option counts reflect the active filters. Uses a snapshot of the
+    // WHERE args (before LIMIT/OFFSET are appended below).
+    const facetArgs = [...args];
+    const whereWith = (extra: string) =>
+      ` WHERE ${[...conditions, extra].join(" AND ")}`;
+    const authorCounts = await fetchAll(
+      `SELECT author, COUNT(*)::int AS count FROM shipdb${where} GROUP BY author ORDER BY count DESC, author`,
+      facetArgs
+    );
+    const tagCounts = await fetchAll(
+      `SELECT tag, COUNT(*)::int AS count FROM (SELECT unnest(tags) AS tag FROM shipdb${where}) sub GROUP BY tag ORDER BY count DESC, tag`,
+      facetArgs
+    );
+    const hasPrice = await fetchOne(
+      `SELECT EXISTS(SELECT 1 FROM shipdb${whereWith("price > 0")}) AS has_price`,
+      facetArgs
+    );
+    const hasCrew = await fetchOne(
+      `SELECT EXISTS(SELECT 1 FROM shipdb${whereWith("crew > 1")}) AS has_crew`,
+      facetArgs
+    );
+
+    const ORDER_COLUMNS: Record<string, [string, "asc" | "desc"]> = {
+      new: ["date", "desc"],
+      pop: ["downloads", "desc"],
+      fav: ["fav", "desc"],
+      name: ["ship_name", "asc"],
+      price: ["price", "desc"],
+      crew: ["crew", "asc"],
+    };
+    const [col, defaultDir] = ORDER_COLUMNS[filters.order ?? ""] ?? ORDER_COLUMNS.new;
+    const dir = filters.dir === "asc" ? "asc" : filters.dir === "desc" ? "desc" : defaultDir;
+    const order = `${col} ${dir.toUpperCase()}`;
 
     const effectivePage = page === -1 ? -1 : Math.min(Math.max(page, 1), Math.max(maxPage, 1));
     const limit = effectivePage === -1 ? 999999 : PAGE_SIZE;
@@ -66,7 +99,16 @@ export async function getSearchPlus(filters: SearchFilters) {
 
     const data = await fetchAll(sql, args);
     const total_count = parseInt(countRow?.count ?? "0", 10);
-    return { data, page: effectivePage, max_page: effectivePage === -1 ? 1 : maxPage, total_count };
+    return {
+      data,
+      page: effectivePage,
+      max_page: effectivePage === -1 ? 1 : maxPage,
+      total_count,
+      author_counts: (authorCounts as Array<{ author: string; count: number | string }>).map((a) => ({ author: a.author, count: Number(a.count) })),
+      tag_counts: (tagCounts as Array<{ tag: string; count: number | string }>).map((t) => ({ tag: t.tag, count: Number(t.count) })),
+      has_price: !!hasPrice?.has_price,
+      has_crew: !!hasCrew?.has_crew,
+    };
   });
 }
 
@@ -84,6 +126,7 @@ export async function searchFromQueryString(queryString: string) {
   if (pageStr) page = parseInt(pageStr, 10) || 1;
 
   if (params.has("order")) filters.order = params.get("order")!;
+  if (params.has("dir")) filters.dir = params.get("dir")!;
   if (params.has("q")) filters.desc = params.get("q")!;
 
   tagsOn.push(...params.getAll("tag"));

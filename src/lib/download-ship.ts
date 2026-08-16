@@ -1,7 +1,8 @@
 "use client";
 
 export async function downloadShip(shipId: number, shipName: string, imageUrl?: string) {
-  await fetch(`/api/ship/${shipId}/download`, { method: "POST" }).catch((e) => console.error("Download tracking failed:", e));
+  // Best-effort download tracking (auth-gated; anonymous users get 401 — that's fine).
+  fetch(`/api/ship/${shipId}/download`, { method: "POST" }).catch(() => undefined);
 
   try {
     const url = imageUrl ?? await (async () => {

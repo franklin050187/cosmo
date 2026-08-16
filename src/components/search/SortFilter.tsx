@@ -2,23 +2,34 @@
 
 interface SortFilterProps {
   value: string;
+  dir: string;
   onChange: (val: string) => void;
+  onDirChange: (dir: string) => void;
 }
 
 const OPTIONS = [
   { value: "new", label: "Newest", icon: "🕐" },
   { value: "pop", label: "Popular", icon: "🔥" },
   { value: "fav", label: "Favorited", icon: "⭐" },
+  { value: "name", label: "Name A–Z", icon: "🔤" },
+  { value: "price", label: "Price", icon: "💰" },
+  { value: "crew", label: "Crew", icon: "🧑‍🚀" },
 ];
 
-export default function SortFilter({ value, onChange }: SortFilterProps) {
+export default function SortFilter({ value, dir, onChange, onDirChange }: SortFilterProps) {
+  const canFlip = ["name", "price", "crew"].includes(value);
+  const isDesc = dir === "desc" || (!dir && !["name", "crew"].includes(value));
+
   return (
     <div className="space-y-1">
       {OPTIONS.map(opt => (
         <button
           key={opt.value}
           type="button"
-          onClick={() => onChange(opt.value)}
+          onClick={() => {
+            onChange(opt.value);
+            if (opt.value !== value) onDirChange("");
+          }}
           aria-pressed={value === opt.value}
           aria-label={`Sort by ${opt.label}`}
           className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all text-left ${
@@ -34,6 +45,27 @@ export default function SortFilter({ value, onChange }: SortFilterProps) {
           )}
         </button>
       ))}
+
+      {canFlip && (
+        <div className="flex items-center gap-1 pt-1.5">
+          {(["asc", "desc"] as const).map(d => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => onDirChange(d)}
+              aria-pressed={(d === "desc") === isDesc}
+              aria-label={`${d === "asc" ? "Ascending" : "Descending"}`}
+              className={`flex-1 px-2 py-1 rounded-md text-[11px] font-medium transition-all ${
+                (d === "desc") === isDesc
+                  ? "bg-cyan-400/20 text-cyan-300 border border-cyan-400/40"
+                  : "bg-[#061220] text-gray-400 border border-[#1C598C]/40 hover:text-gray-200"
+              }`}
+            >
+              {d === "asc" ? "Asc ↑" : "Desc ↓"}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

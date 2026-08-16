@@ -9,12 +9,14 @@ interface TagOption { tag: string; count: number; }
 interface TagFilterProps {
   tagsOn: string[];
   tagsOff: string[];
-  onChange: (tagsOn: string[], tagsOff: string[]) => void;
+  onChange: (tagsOn: string[], tagsOff: [] | string[]) => void;
+  counts?: Map<string, number>;
 }
 
-export default function TagFilter({ tagsOn, tagsOff, onChange }: TagFilterProps) {
+export default function TagFilter({ tagsOn, tagsOff, onChange, counts }: TagFilterProps) {
   const [input, setInput] = useState("");
   const [options, setOptions] = useState<TagOption[]>([]);
+  const [loading, setLoading] = useState(true);
   const { wrapRef, showDD, setShowDD, ddPos, highlight, setHighlight } = useDropdown();
 
   useEffect(() => {
@@ -22,7 +24,8 @@ export default function TagFilter({ tagsOn, tagsOff, onChange }: TagFilterProps)
     fetch("/api/ship/tags", { signal: controller.signal })
       .then(r => r.json())
       .then((d: { data: TagOption[] }) => setOptions(d.data ?? []))
-      .catch((e) => { if ((e as Error).name !== "AbortError") console.error("Failed to fetch tags:", e); });
+      .catch((e) => { if ((e as Error).name !== "AbortError") console.error("Failed to fetch tags:", e); })
+      .finally(() => setLoading(false));
     return () => controller.abort();
   }, []);
 
@@ -31,9 +34,16 @@ export default function TagFilter({ tagsOn, tagsOff, onChange }: TagFilterProps)
     ? options.filter(o => o.tag.toLowerCase().includes(input.toLowerCase()) && !selected.has(o.tag))
     : options.filter(o => !selected.has(o.tag));
 
-  const matches = filtered.slice(0, 10);
+  const matches = filtered.slice(0, 10).map((o) => ({
+    ...o,
+    count: counts ? counts.get(o.tag) ?? 0 : o.count,
+    disabled: counts ? (counts.get(o.tag) ?? 0) === 0 && !tagsOn.includes(o.tag) && !tagsOff.includes(o.tag) : false,
+  }));
+  const LIST_ID = "tag-filter-list";
+  const activeId = highlight >= 0 && highlight < matches.length ? `${LIST_ID}-${matches[highlight].tag}` : undefined;
 
   const add = useCallback((tag: string, excl: boolean) => {
+    if (!excl && counts && (counts.get(tag) ?? 0) === 0) return;
     if (excl) {
       onChange(tagsOn, [...tagsOff, tag]);
     } else {
@@ -42,7 +52,7 @@ export default function TagFilter({ tagsOn, tagsOff, onChange }: TagFilterProps)
     setInput("");
     setShowDD(false);
     setHighlight(-1);
-  }, [tagsOn, tagsOff, onChange, setShowDD, setHighlight]);
+  }, [tagsOn, tagsOff, onChange, setShowDD, setHighlight, counts]);
 
   const remove = useCallback((tag: string) => {
     onChange(tagsOn.filter(t => t !== tag), tagsOff.filter(t => t !== tag));
@@ -65,8 +75,10 @@ export default function TagFilter({ tagsOn, tagsOff, onChange }: TagFilterProps)
     else if (e.key === "Escape") { setShowDD(false); (e.currentTarget as HTMLInputElement).blur(); }
   };
 
-  const dropdown = showDD && matches.length > 0 ? createPortal(
+  const dropdown = showDD ? createPortal(
     <div
+      id={LIST_ID}
+      role="listbox"
       className="fixed z-[9999] bg-[#0a1a2e] border border-[#1C598C]/60 rounded-lg shadow-xl shadow-black/40 max-h-48 overflow-y-auto overscroll-contain scrollbar-themed"
       style={{ top: ddPos.top, left: ddPos.left, width: ddPos.width }}
     >
@@ -75,30 +87,53 @@ export default function TagFilter({ tagsOn, tagsOff, onChange }: TagFilterProps)
           All tags ({options.length})
         </div>
       )}
-      {matches.map((o, i) => (
-        <button
-          key={o.tag}
-          type="button"
-          onMouseDown={e => { e.preventDefault(); add(o.tag, false); }}
-          className={`w-full text-left px-3 py-1.5 flex items-center justify-between gap-2 transition-colors ${
-            i === highlight ? "bg-cyan-400/15 text-white" : "text-gray-300 hover:bg-cyan-400/8"
-          }`}
-        >
-          <span className="text-[12px] truncate">{o.tag}</span>
-          <span className="text-[10px] text-gray-600 tabular-nums shrink-0">{o.count}</span>
-        </button>
-      ))}
+      {loading ? (
+        <div className="px-3 py-2 text-[12px] text-gray-500">Loading tags…</div>
+      ) : matches.length === 0 ? (
+        <div className="px-3 py-2 text-[12px] text-gray-500" role="option" aria-selected="false" aria-disabled="true">
+          No matches
+        </div>
+      ) : (
+        matches.map((m, i) => (
+          <button
+            key={m.tag}
+            id={`${LIST_ID}-${m.tag}`}
+            type="button"
+            role="option"
+            aria-selected={highlight === i}
+            aria-disabled={m.disabled || undefined}
+            aria-posinset={i + 1}
+            aria-setsize={matches.length}
+            onMouseEnter={() => setHighlight(i)}
+            onMouseDown={e => {
+              e.preventDefault();
+              if (!m.disabled) add(m.tag, false);
+            }}
+            className={`w-full text-left px-3 py-1.5 flex items-center justify-between gap-2 transition-colors ${
+              m.disabled
+                ? "cursor-not-allowed opacity-50 text-gray-600"
+                : i === highlight
+                  ? "bg-cyan-400/15 text-white"
+                  : "text-gray-300 hover:bg-cyan-400/8"
+            }`}
+          >
+            <span className="text-[12px] truncate">{m.tag}</span>
+            <span className="text-[10px] text-gray-600 tabular-nums shrink-0">{m.count}</span>
+          </button>
+        ))
+      )}
     </div>,
     document.body
   ) : null;
 
   return (
-    <div ref={wrapRef} className="relative">
+    <div ref={wrapRef} role="combobox" aria-expanded={showDD} aria-haspopup="listbox"
+      aria-controls={showDD ? LIST_ID : undefined} className="relative">
       <div className="relative">
         <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
         </svg>
-        <input
+          <input
           type="text"
           value={input}
           onChange={e => { setInput(e.target.value); setShowDD(true); setHighlight(-1); }}
@@ -106,6 +141,9 @@ export default function TagFilter({ tagsOn, tagsOff, onChange }: TagFilterProps)
           onKeyDown={onKey}
           placeholder='Search tags... prefix "-" to exclude'
           aria-label="Search tags. Prefix with dash to exclude."
+          aria-autocomplete="list"
+          aria-activedescendant={activeId}
+          autoComplete="off"
           className="w-full pl-8 pr-3 py-2 bg-[#061220] border border-[#1C598C]/60 rounded-lg text-white text-[13px] placeholder:text-gray-600 focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/20 transition-all"
         />
       </div>

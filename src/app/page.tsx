@@ -53,6 +53,10 @@ export default async function HomePage({
           initialShips={result.data ?? []}
           initialTotalCount={result.total_count ?? 0}
           initialMaxPage={result.max_page ?? 1}
+          initialAuthorCounts={result.author_counts ?? []}
+          initialTagCounts={result.tag_counts ?? []}
+          initialHasPrice={result.has_price}
+          initialHasCrew={result.has_crew}
         />
       </div>
     </Suspense>

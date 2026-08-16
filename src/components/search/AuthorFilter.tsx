@@ -9,12 +9,14 @@ interface AuthorOption { author: string; count: number; }
 interface AuthorFilterProps {
   value: string;
   onChange: (val: string) => void;
+  counts?: Map<string, number>;
 }
 
-export default function AuthorFilter({ value, onChange }: AuthorFilterProps) {
+export default function AuthorFilter({ value, onChange, counts }: AuthorFilterProps) {
   const [input, setInput] = useState(value);
   const [prevValue, setPrevValue] = useState(value);
   const [options, setOptions] = useState<AuthorOption[]>([]);
+  const [loading, setLoading] = useState(true);
   const { wrapRef, showDD, setShowDD, ddPos, highlight, setHighlight } = useDropdown();
 
   if (value !== prevValue) {
@@ -27,7 +29,8 @@ export default function AuthorFilter({ value, onChange }: AuthorFilterProps) {
     fetch("/api/ship/authors", { signal: controller.signal })
       .then(r => r.json())
       .then((d: { data: AuthorOption[] }) => setOptions(d.data ?? []))
-      .catch((e) => { if ((e as Error).name !== "AbortError") console.error("Failed to fetch authors:", e); });
+      .catch((e) => { if ((e as Error).name !== "AbortError") console.error("Failed to fetch authors:", e); })
+      .finally(() => setLoading(false));
     return () => controller.abort();
   }, []);
 
@@ -35,7 +38,13 @@ export default function AuthorFilter({ value, onChange }: AuthorFilterProps) {
     ? options.filter(o => o.author.toLowerCase().includes(input.toLowerCase()))
     : options;
 
-  const matches = filtered.slice(0, 10);
+  const matches = filtered.slice(0, 10).map((o) => ({
+    ...o,
+    count: counts ? counts.get(o.author) ?? 0 : o.count,
+    disabled: counts ? (counts.get(o.author) ?? 0) === 0 && o.author !== value : false,
+  }));
+  const LIST_ID = "author-filter-list";
+  const activeId = highlight >= 0 && highlight < matches.length ? `${LIST_ID}-${matches[highlight].author}` : undefined;
 
   const select = useCallback((a: string) => {
     setInput(a); onChange(a); setShowDD(false); setHighlight(-1);
@@ -45,15 +54,31 @@ export default function AuthorFilter({ value, onChange }: AuthorFilterProps) {
     if (!showDD) return;
     if (e.key === "Enter") {
       e.preventDefault();
-      if (highlight >= 0 && highlight < matches.length) select(matches[highlight].author);
-      else if (input.trim()) select(input.trim());
-    } else if (e.key === "ArrowDown") { e.preventDefault(); setHighlight(i => Math.min(i + 1, matches.length - 1)); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); setHighlight(i => Math.max(i - 1, -1)); }
-    else if (e.key === "Escape") { setShowDD(false); (e.currentTarget as HTMLInputElement).blur(); }
+      if (highlight >= 0 && highlight < matches.length && !matches[highlight].disabled) {
+        select(matches[highlight].author);
+      } else if (input.trim()) {
+        const firstEnabled = matches.findIndex(m => !m.disabled);
+        if (firstEnabled >= 0) select(matches[firstEnabled].author);
+        else select(input.trim());
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlight(i => Math.min(i + 1, Math.max(matches.length - 1, -1)));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlight(i => Math.max(i - 1, -1));
+    } else if (e.key === "Escape") {
+      setShowDD(false);
+      (e.currentTarget as HTMLInputElement).blur();
+    }
   };
 
-  const dropdown = showDD && matches.length > 0 ? createPortal(
+  const loadingOptions = loading;
+
+  const dropdown = showDD ? createPortal(
     <div
+      id={LIST_ID}
+      role="listbox"
       className="fixed z-[9999] bg-[#0a1a2e] border border-[#1C598C]/60 rounded-lg shadow-xl shadow-black/40 max-h-48 overflow-y-auto overscroll-contain scrollbar-themed"
       style={{ top: ddPos.top, left: ddPos.left, width: ddPos.width }}
     >
@@ -62,25 +87,48 @@ export default function AuthorFilter({ value, onChange }: AuthorFilterProps) {
           All authors ({options.length})
         </div>
       )}
-      {matches.map((o, i) => (
-        <button
-          key={o.author}
-          type="button"
-          onMouseDown={e => { e.preventDefault(); select(o.author); }}
-          className={`w-full text-left px-3 py-1.5 flex items-center justify-between gap-2 transition-colors ${
-            i === highlight ? "bg-cyan-400/15 text-white" : "text-gray-300 hover:bg-cyan-400/8"
-          }`}
-        >
-          <span className="text-[12px] truncate">{o.author}</span>
-          <span className="text-[10px] text-gray-600 tabular-nums shrink-0">{o.count}</span>
-        </button>
-      ))}
+      {loadingOptions ? (
+        <div className="px-3 py-2 text-[12px] text-gray-500">Loading authors…</div>
+      ) : matches.length === 0 ? (
+        <div className="px-3 py-2 text-[12px] text-gray-500" role="option" aria-selected="false" aria-disabled="true">
+          No matches
+        </div>
+      ) : (
+        matches.map((m, i) => (
+          <button
+            key={m.author}
+            id={`${LIST_ID}-${m.author}`}
+            type="button"
+            role="option"
+            aria-selected={highlight === i}
+            aria-disabled={m.disabled || undefined}
+            aria-posinset={i + 1}
+            aria-setsize={matches.length}
+            onMouseEnter={() => setHighlight(i)}
+            onMouseDown={e => {
+              e.preventDefault();
+              if (!m.disabled) select(m.author);
+            }}
+            className={`w-full text-left px-3 py-1.5 flex items-center justify-between gap-2 transition-colors ${
+              m.disabled
+                ? "cursor-not-allowed opacity-50 text-gray-600"
+                : i === highlight
+                  ? "bg-cyan-400/15 text-white"
+                  : "text-gray-300 hover:bg-cyan-400/8"
+            }`}
+          >
+            <span className="text-[12px] truncate">{m.author}</span>
+            <span className="text-[10px] text-gray-600 tabular-nums shrink-0">{m.count}</span>
+          </button>
+        ))
+      )}
     </div>,
     document.body
   ) : null;
 
   return (
-    <div ref={wrapRef} className="relative">
+    <div ref={wrapRef} role="combobox" aria-expanded={showDD} aria-haspopup="listbox"
+      aria-controls={showDD ? LIST_ID : undefined} className="relative">
       <div className="relative">
         <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -93,6 +141,9 @@ export default function AuthorFilter({ value, onChange }: AuthorFilterProps) {
           onKeyDown={onKey}
           placeholder="Search authors..."
           aria-label="Search authors"
+          aria-autocomplete="list"
+          aria-activedescendant={activeId}
+          autoComplete="off"
           className="w-full pl-8 pr-7 py-2 bg-[#061220] border border-[#1C598C]/60 rounded-lg text-white text-[13px] placeholder:text-gray-600 focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/20 transition-all"
         />
         {input && (
