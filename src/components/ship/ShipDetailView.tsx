@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useShipDecode } from "@/hooks/useShipDecode";
@@ -68,7 +67,6 @@ interface ShipDetailViewProps {
 }
 
 export default function ShipDetailView({ shipId, initialShip }: ShipDetailViewProps) {
-  const router = useRouter();
   const { user, isLoggedIn } = useAuth();
   const [ship, setShip] = useState<ShipRow | null>(initialShip);
   const [loading, setLoading] = useState(initialShip === null);
@@ -199,7 +197,7 @@ export default function ShipDetailView({ shipId, initialShip }: ShipDetailViewPr
         method: "DELETE",
         headers: { "x-turnstile-token": token },
       });
-      router.push(backUrl);
+      window.location.href = backUrl;
     } catch (err) {
       console.error("Failed to delete ship:", err);
       setPendingDelete(false);

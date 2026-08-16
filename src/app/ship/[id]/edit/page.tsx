@@ -20,6 +20,7 @@ import { type ShipDetail, type PriceResponse } from "@/lib/types";
 export default function EditShipPage() {
   const params = useParams();
   const router = useRouter();
+  const leaving = useRef(false);
   const { user, isLoggedIn, hydrated } = useAuth();
   const [ship, setShip] = useState<ShipDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -126,6 +127,7 @@ export default function EditShipPage() {
       }
 
       setSaveMessage({ type: "success", text: "Changes saved." });
+      await router.refresh();
       router.push(`/ship/${params.id}`);
     } catch (err) {
       console.error("Failed to save:", err);
@@ -191,7 +193,9 @@ export default function EditShipPage() {
         tags: userTags,
       });
 
-      router.push(`/ship/${ship.id}`);
+      leaving.current = true;
+      // Allow server time to revalidate cache after replace
+      setTimeout(() => { window.location.href = `/ship/${ship.id}?_r=${Date.now()}`; }, 1000);
     } catch (err) {
       console.error("Replace failed:", err);
     } finally {
@@ -220,6 +224,7 @@ export default function EditShipPage() {
   useEffect(() => {
     if (!dirty) return;
     const handler = (e: BeforeUnloadEvent) => {
+      if (leaving.current) return;
       e.preventDefault();
       e.returnValue = "";
     };

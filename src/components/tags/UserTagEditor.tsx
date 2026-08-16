@@ -72,13 +72,13 @@ export default function UserTagEditor({ value, onChange, brand, onBrandChange }:
         Add classification tags to help others find your ship.
       </p>
 
-      {/* Search filters the predefined tags below */}
+      {/* Search filters the predefined tags below — hidden for now */}
       <input
         type="search"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         placeholder="Filter tags…"
-        className="w-full px-3 py-2 text-sm text-white bg-[#021526] border border-[#1C598C]/40 rounded-md focus:outline-none focus:ring-1 focus:ring-cyan-400"
+        className="hidden"
       />
 
       {/* Free-form custom tags */}

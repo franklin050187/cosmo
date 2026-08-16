@@ -41,7 +41,6 @@ export default function UploadPanel() {
   const [description, setDescription] = useState("");
   const [userTags, setUserTags] = useState<string[]>([]);
   const [brand, setBrand] = useState("gen");
-  const [authorOverride, setAuthorOverride] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [totalProgress, setTotalProgress] = useState(0);
@@ -198,7 +197,6 @@ export default function UploadPanel() {
         description,
         brand,
         tags: userTags.length > 0 ? userTags : undefined,
-        author: authorOverride || undefined,
         turnstileToken,
         onUploadProgress: (p: UploadProgress) => setTotalProgress(Math.round(p.totalProgress)),
       });
@@ -237,7 +235,6 @@ export default function UploadPanel() {
     setDescription("");
     setUserTags([]);
     setBrand("gen");
-    setAuthorOverride("");
     setUploadError(null);
     setUploadResults([]);
     setUploadResultText(null);
@@ -321,20 +318,6 @@ export default function UploadPanel() {
 
           {items.length > 0 && hasDecoded && (
             <div className="pt-4 border-t border-[#1C598C]/30 mt-4 space-y-4">
-              <div>
-                <label className="block text-blue-200 mb-1">Author (override)</label>
-                <input
-                  id="author-override"
-                  type="text"
-                  aria-label="Override author name"
-                  value={authorOverride}
-                  onChange={(e) => setAuthorOverride(e.target.value)}
-                  placeholder={items[0]?.priceResult?.author ?? "Leave blank to use PNG author"}
-                  className="w-full px-3 py-2 text-sm text-white bg-[#021526] border border-[#1C598C]/40 rounded focus:outline-none focus:ring-1 focus:ring-cyan-400"
-                  disabled={uploading}
-                />
-              </div>
-
               <UserTagEditor value={userTags} onChange={setUserTags} brand={brand} onBrandChange={setBrand} />
 
               <div>
@@ -397,7 +380,7 @@ export default function UploadPanel() {
               )}
             </div>
           ))}
-          {uploadResultText && (
+          {uploadResultText && uploadResults.length > 1 && (
             <p className={`text-xl mb-4 ${uploadResults.some((r) => r.shipId == null) ? "text-red-400" : "text-[#0AD448]"}`} role="status">
               {uploadResultText}
             </p>

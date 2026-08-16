@@ -1,4 +1,5 @@
 import { createUploadthing } from "uploadthing/next";
+import { revalidatePath } from "next/cache";
 import { UTApi } from "uploadthing/server";
 import { decodeShipFromUrl, decodeShipFromPixels } from "@/lib/server-decode";
 import { calculateShipPrice } from "@/lib/price";
@@ -21,7 +22,6 @@ function commonMiddleware({ req }: { req: Request }) {
 
   const description = headers.get("x-description") ?? "";
   const brand = headers.get("x-brand") ?? "gen";
-  const authorOverride = headers.get("x-author") ?? "";
 
   let userTags: string[] = [];
   const tagsHeader = headers.get("x-tags");
@@ -34,7 +34,7 @@ function commonMiddleware({ req }: { req: Request }) {
     } catch (e) { console.error("Failed to parse user tags:", e); }
   }
 
-  return { user, description, brand, userTags, authorOverride };
+  return { user, description, brand, userTags };
 }
 
 export const uploadRouter = {
@@ -45,7 +45,7 @@ export const uploadRouter = {
     },
   })
     .middleware(async ({ req }) => {
-      const { user, description, brand, userTags, authorOverride } = commonMiddleware({ req });
+      const { user, description, brand, userTags } = commonMiddleware({ req });
 
       if (!user) {
         throw new Error(
@@ -69,7 +69,6 @@ export const uploadRouter = {
         description,
         brand,
         userTags,
-        authorOverride,
       };
     })
     .onUploadComplete(async ({ file, metadata }) => {
@@ -92,7 +91,7 @@ export const uploadRouter = {
           submittedById: metadata.submittedById,
           description: metadata.description,
           shipName,
-          author: metadata.authorOverride || priceInfo.author,
+          author: priceInfo.author,
           price: priceInfo.price,
           brand: metadata.brand,
           crew: priceInfo.crew,
@@ -100,7 +99,12 @@ export const uploadRouter = {
           signature,
         });
 
-        return { shipId: result.success ? parseInt(result.success, 10) : null };
+        const newShipId = result.success ? parseInt(result.success, 10) : null;
+        if (newShipId) {
+          revalidatePath(`/ship/${newShipId}`);
+        }
+
+        return { shipId: newShipId };
       } catch (err) {
         console.error("Failed to process uploaded ship:", err);
         return { shipId: null };
@@ -165,6 +169,8 @@ export const uploadRouter = {
           tags: allTags,
           signature,
         });
+
+        revalidatePath(`/ship/${metadata.shipId}`);
 
         if (metadata.oldData) {
           try {

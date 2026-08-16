@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getImageData, deleteShip, isShipOwner, updateShip } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { verifyTurnstileFromRequest } from "@/lib/turnstile";
@@ -91,6 +92,8 @@ export async function PUT(
       tags: body.tags ?? ship.tags,
     });
 
+    revalidatePath(`/ship/${shipId}`);
+
     return ok({ success: "Ship updated" });
   } catch {
     return error("Failed to update ship");
@@ -120,6 +123,8 @@ export async function DELETE(
     if ("error" in result) {
       return forbidden(result.error);
     }
+
+    revalidatePath(`/ship/${shipId}`);
 
     if (result.data) {
       try {

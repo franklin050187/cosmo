@@ -19,7 +19,6 @@ export async function uploadFiles(opts: {
   description?: string;
   brand?: string;
   tags?: string[];
-  author?: string;
   turnstileToken?: string;
   endpoint?: string;
   shipId?: number;
@@ -34,9 +33,6 @@ export async function uploadFiles(opts: {
   }
   if (opts.tags && opts.tags.length > 0) {
     headers["x-tags"] = JSON.stringify(opts.tags);
-  }
-  if (opts.author) {
-    headers["x-author"] = opts.author;
   }
   if (opts.turnstileToken) {
     headers["x-turnstile-token"] = opts.turnstileToken;

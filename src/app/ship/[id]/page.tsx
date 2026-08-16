@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { getImageData } from "@/lib/db";
 import ShipDetailView from "@/components/ship/ShipDetailView";
 
+export const revalidate = 0;
+
 const cleanName = (raw: string) => raw.replace(/\.ship\.png$/i, "");
 
 export async function generateMetadata({
