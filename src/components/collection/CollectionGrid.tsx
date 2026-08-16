@@ -6,6 +6,7 @@ interface CollectionSummary {
   title: string;
   description: string;
   ship_count: number | null;
+  thumb_url: string | null;
   created_at: string;
 }
 

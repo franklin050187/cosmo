@@ -6,14 +6,24 @@ const { uploadFiles: utUpload } = genUploader({
   url: UPLOADTHING_SERVER_URL,
 });
 
+export interface UploadProgress {
+  file: File;
+  progress: number;
+  loaded: number;
+  totalLoaded: number;
+  totalProgress: number;
+}
+
 export async function uploadFiles(opts: {
   files: File[];
   description?: string;
   brand?: string;
   tags?: string[];
+  author?: string;
   turnstileToken?: string;
   endpoint?: string;
   shipId?: number;
+  onUploadProgress?: (p: UploadProgress) => void;
 }) {
   const headers: Record<string, string> = {};
   if (opts.description) {
@@ -25,6 +35,9 @@ export async function uploadFiles(opts: {
   if (opts.tags && opts.tags.length > 0) {
     headers["x-tags"] = JSON.stringify(opts.tags);
   }
+  if (opts.author) {
+    headers["x-author"] = opts.author;
+  }
   if (opts.turnstileToken) {
     headers["x-turnstile-token"] = opts.turnstileToken;
   }
@@ -34,6 +47,7 @@ export async function uploadFiles(opts: {
   const results = await utUpload(opts.endpoint ?? "pngUploader", {
     files: opts.files,
     headers,
+    onUploadProgress: opts.onUploadProgress,
   });
   return results.map((r) => ({
     ufsUrl: r.ufsUrl,

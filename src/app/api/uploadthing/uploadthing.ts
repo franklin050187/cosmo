@@ -21,6 +21,7 @@ function commonMiddleware({ req }: { req: Request }) {
 
   const description = headers.get("x-description") ?? "";
   const brand = headers.get("x-brand") ?? "gen";
+  const authorOverride = headers.get("x-author") ?? "";
 
   let userTags: string[] = [];
   const tagsHeader = headers.get("x-tags");
@@ -33,18 +34,18 @@ function commonMiddleware({ req }: { req: Request }) {
     } catch (e) { console.error("Failed to parse user tags:", e); }
   }
 
-  return { user, description, brand, userTags };
+  return { user, description, brand, userTags, authorOverride };
 }
 
 export const uploadRouter = {
   pngUploader: f({
     "image/png": {
       maxFileSize: "8MB",
-      maxFileCount: 1,
+      maxFileCount: 10,
     },
   })
     .middleware(async ({ req }) => {
-      const { user, description, brand, userTags } = commonMiddleware({ req });
+      const { user, description, brand, userTags, authorOverride } = commonMiddleware({ req });
 
       if (!user) {
         throw new Error(
@@ -68,6 +69,7 @@ export const uploadRouter = {
         description,
         brand,
         userTags,
+        authorOverride,
       };
     })
     .onUploadComplete(async ({ file, metadata }) => {
@@ -90,7 +92,7 @@ export const uploadRouter = {
           submittedById: metadata.submittedById,
           description: metadata.description,
           shipName,
-          author: priceInfo.author,
+          author: metadata.authorOverride || priceInfo.author,
           price: priceInfo.price,
           brand: metadata.brand,
           crew: priceInfo.crew,

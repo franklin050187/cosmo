@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { TAG_CATEGORIES } from "@/lib/user-tag-data";
+import { useState, useCallback } from "react";
+import { TAG_CATEGORIES, ALL_USER_TAG_VALUES } from "@/lib/user-tag-data";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
@@ -15,20 +15,44 @@ export default function UserTagEditor({ value, onChange, brand, onBrandChange }:
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(
     () => Object.fromEntries(TAG_CATEGORIES.map((c) => [c.id, false]))
   );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [freeForm, setFreeForm] = useState<string[]>([]);
+  const [freeText, setFreeText] = useState("");
   const { user } = useAuth();
   const isExcelsiorMember = user?.guild === "exl";
 
-  const toggle = (v: string, type: "radio" | "checkbox", group?: string) => {
-    if (type === "radio") {
-      const siblings = TAG_CATEGORIES.find((c) => c.id === group)?.options.map((o) => o.value) ?? [];
-      const withoutSiblings = value.filter((t) => !siblings.includes(t));
-      onChange(value.includes(v) ? withoutSiblings : [...withoutSiblings, v]);
-    } else {
-      onChange(
-        value.includes(v) ? value.filter((t) => t !== v) : [...value, v]
-      );
-    }
+  const combinedValue = [...new Set([...value, ...freeForm])];
+  const emit = useCallback(
+    (nextValue: string[]) => {
+      const nextFree = nextValue.filter((t) => !ALL_USER_TAG_VALUES.has(t));
+      setFreeForm(nextFree);
+      onChange(nextValue.filter((t) => ALL_USER_TAG_VALUES.has(t)));
+    },
+    [onChange]
+  );
+
+  const toggle = useCallback(
+    (v: string, type: "radio" | "checkbox", group?: string) => {
+      if (type === "radio") {
+        const siblings = TAG_CATEGORIES.find((c) => c.id === group)?.options.map((o) => o.value) ?? [];
+        const withoutSiblings = value.filter((t) => !siblings.includes(t) && !freeForm.includes(t));
+        const next = value.includes(v) ? withoutSiblings : [...withoutSiblings, v];
+        onChange(next);
+      } else {
+        onChange(value.includes(v) ? value.filter((t) => t !== v) : [...value, v]);
+      }
+    },
+    [value, freeForm, onChange]
+  );
+
+  const addFreeTag = (tag: string) => {
+    const trimmed = tag.trim();
+    if (!trimmed || combinedValue.includes(trimmed)) return;
+    emit([...combinedValue, trimmed]);
+    setFreeText("");
   };
+
+  const removeFreeTag = (tag: string) => emit(combinedValue.filter((t) => t !== tag));
 
   const selectedCount = (categoryId: string) => {
     const cat = TAG_CATEGORIES.find((c) => c.id === categoryId);
@@ -36,19 +60,83 @@ export default function UserTagEditor({ value, onChange, brand, onBrandChange }:
     return cat.options.filter((o) => value.includes(o.value)).length;
   };
 
+  const matchingCategories = searchTerm
+    ? TAG_CATEGORIES.filter((c) =>
+        c.options.some((o) => o.label.toLowerCase().includes(searchTerm.toLowerCase()) || o.value.includes(searchTerm))
+      )
+    : TAG_CATEGORIES;
+
   return (
     <div className="space-y-3">
       <p className="text-blue-200 text-sm mb-2">
         Add classification tags to help others find your ship.
       </p>
 
+      {/* Search filters the predefined tags below */}
+      <input
+        type="search"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="Filter tags…"
+        className="w-full px-3 py-2 text-sm text-white bg-[#021526] border border-[#1C598C]/40 rounded-md focus:outline-none focus:ring-1 focus:ring-cyan-400"
+      />
+
+      {/* Free-form custom tags */}
+      <div>
+        <label className="block text-blue-200 text-xs mb-1">Custom tags</label>
+        <div className="flex flex-wrap gap-2 mb-2">
+          {freeForm.map((t) => (
+            <span key={t} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+              {t}
+              <button
+                type="button"
+                onClick={() => removeFreeTag(t)}
+                aria-label={`Remove tag ${t}`}
+                className="hover:text-cyan-200"
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            addFreeTag(freeText);
+          }}
+          className="flex gap-2"
+        >
+          <input
+            type="text"
+            value={freeText}
+            onChange={(e) => setFreeText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === ",") {
+                e.preventDefault();
+                addFreeTag(freeText);
+              }
+            }}
+            placeholder="Type a custom tag and press Enter"
+            className="flex-1 px-3 py-2 text-sm text-white bg-[#021526] border border-[#1C598C]/40 rounded-md focus:outline-none focus:ring-1 focus:ring-cyan-400"
+          />
+          <button
+            type="submit"
+            onClick={() => addFreeTag(freeText)}
+            className="px-3 py-1.5 text-xs font-medium text-cyan-300 border border-cyan-400/30 rounded-md hover:bg-cyan-400/10"
+          >
+            Add
+          </button>
+        </form>
+      </div>
+
       {/* Desktop: 2-column grid */}
       <div className="hidden sm:grid sm:grid-cols-2 gap-3">
-        {TAG_CATEGORIES.map((cat) => (
+        {matchingCategories.map((cat) => (
           <TagSection
             key={cat.id}
             category={cat}
             value={value}
+            searchTerm={searchTerm}
             onToggle={toggle}
           />
         ))}
@@ -87,7 +175,7 @@ export default function UserTagEditor({ value, onChange, brand, onBrandChange }:
 
       {/* Mobile: collapsible sections */}
       <div className="sm:hidden space-y-2">
-        {TAG_CATEGORIES.map((cat) => {
+        {matchingCategories.map((cat) => {
           const count = selectedCount(cat.id);
           const isOpen = openSections[cat.id];
           return (
@@ -109,6 +197,7 @@ export default function UserTagEditor({ value, onChange, brand, onBrandChange }:
               >
                 <span className="text-blue-200 text-sm font-medium">
                   {cat.label}
+                  {cat.options.length === 0 && searchTerm && <span className="ml-1 text-xs opacity-60">(no matches)</span>}
                 </span>
                 <div className="flex items-center gap-2">
                   {count > 0 && (
@@ -138,6 +227,7 @@ export default function UserTagEditor({ value, onChange, brand, onBrandChange }:
                   <TagSection
                     category={cat}
                     value={value}
+                    searchTerm={searchTerm}
                     onToggle={toggle}
                   />
                 </div>
@@ -184,19 +274,29 @@ export default function UserTagEditor({ value, onChange, brand, onBrandChange }:
 function TagSection({
   category,
   value,
+  searchTerm = "",
   onToggle,
 }: {
   category: (typeof TAG_CATEGORIES)[number];
   value: string[];
+  searchTerm?: string;
   onToggle: (v: string, type: "radio" | "checkbox", group?: string) => void;
 }) {
+  const term = searchTerm.toLowerCase();
+  const options = term
+    ? category.options.filter(
+        (opt) =>
+          opt.label.toLowerCase().includes(term) || opt.value.includes(term)
+      )
+    : category.options;
+
   return (
     <div className="border border-[#1C598C]/30 rounded-lg bg-[#0a1e33]/50 p-3">
       <p className="text-blue-300/80 text-xs font-medium uppercase tracking-wider mb-2">
         {category.label}
       </p>
       <div className="flex flex-wrap gap-1.5">
-        {category.options.map((opt) => {
+        {options.map((opt) => {
           const selected = value.includes(opt.value);
           return (
             <button

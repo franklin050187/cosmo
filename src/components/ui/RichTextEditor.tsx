@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback, useEffect, useState } from "react";
 
 interface Props {
   value: string;
@@ -12,6 +12,9 @@ interface Props {
 
 export default function RichTextEditor({ value, onChange, placeholder, rows = 4, labelId }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
+  const [linkMode, setLinkMode] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const linkInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== value) {
@@ -69,15 +72,16 @@ export default function RichTextEditor({ value, onChange, placeholder, rows = 4,
     onChange(editor.innerHTML);
   }, [onChange]);
 
-  const insertLink = useCallback(() => {
-    const url = window.prompt("Enter URL:");
-    if (!url) return;
+  const confirmLink = useCallback(() => {
+    if (!linkUrl) return;
     wrapSelection("a", (el) => {
-      el.setAttribute("href", url);
+      el.setAttribute("href", linkUrl);
       el.setAttribute("target", "_blank");
       el.setAttribute("rel", "noopener noreferrer");
     });
-  }, [wrapSelection]);
+    setLinkUrl("");
+    setLinkMode(false);
+  }, [linkUrl, wrapSelection]);
 
   const toggleList = useCallback(() => {
     const editor = editorRef.current;
@@ -179,7 +183,7 @@ export default function RichTextEditor({ value, onChange, placeholder, rows = 4,
         <ToolBtn onClick={() => wrapSelection("u")} title="Underline">
           <span className="underline">U</span>
         </ToolBtn>
-        <ToolBtn onClick={insertLink} title="Link">
+        <ToolBtn onClick={() => { setLinkMode(true); setLinkUrl(""); linkInputRef.current?.focus(); }} title="Link">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
           </svg>
@@ -189,6 +193,38 @@ export default function RichTextEditor({ value, onChange, placeholder, rows = 4,
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </ToolBtn>
+        {linkMode && (
+          <>
+            <input
+              ref={linkInputRef}
+              type="url"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="https://…"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  confirmLink();
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  setLinkMode(false);
+                  setLinkUrl("");
+                }
+              }}
+              className="flex-1 px-2 py-1 text-xs text-white bg-[#021526] border border-[#1C598C]/40 rounded focus:outline-none focus:ring-1 focus:ring-cyan-400"
+            />
+            <ToolBtn onClick={confirmLink} title="Set link">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </ToolBtn>
+            <ToolBtn onClick={() => { setLinkMode(false); setLinkUrl(""); }} title="Cancel link">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </ToolBtn>
+          </>
+        )}
         <ToolBtn onClick={removeFormat} title="Clear formatting">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -204,6 +240,8 @@ export default function RichTextEditor({ value, onChange, placeholder, rows = 4,
         data-placeholder={placeholder}
         aria-labelledby={labelId}
         aria-label={labelId ? undefined : placeholder || "Rich text editor"}
+        role="textbox"
+        aria-multiline="true"
         dir="ltr"
         className="w-full bg-[#021526] text-white p-2 focus:outline-none [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-500 [&_a]:text-cyan-400 [&_a]:underline [&_li]:ml-4 [&_ul]:list-disc"
         style={{ direction: "ltr", unicodeBidi: "embed", minHeight: `${rows * 1.5}rem` }}

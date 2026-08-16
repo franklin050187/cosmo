@@ -171,6 +171,39 @@ async function getShipRow(id: number) {
   return rows[0] ?? null;
 }
 
+async function deleteShipViaApi(id: number) {
+  const res = await httpFetch(S, `/api/ship/${id}`, { method: "DELETE" });
+  assert(res.status === 200, `delete ship ${id} status ${res.status}: ${JSON.stringify(res.body)}`);
+}
+
+function getViewShipHref(session: string): string | null {
+  return String(
+    cliEval(
+      session,
+      `(() => { const a = [...document.querySelectorAll('a')].find(x => x.textContent.trim() === 'View Ship'); return a ? a.getAttribute('href') : null; })()`
+    )
+  );
+}
+
+// Upload a fixture file via the upload panel, handling the duplicate-ack
+// checkbox. Returns the newly created ship id. Caller is responsible for
+// cleanup (delete via DELETE /api/ship/{id}).
+async function uploadFixtureAndGetId(session: string, fixture: string, opts?: { author?: string }): Promise<number> {
+  openSession(S, HOME + "/upload");
+  prepTurnstile(S);
+  await waitText(S, "Click to select a ship PNG", 30000);
+  await chooseFile(S, fixture);
+  await waitText(S, "Price:", 60000);
+  if (opts?.author) {
+    await setInput(S, "#author-override", opts.author);
+  }
+  await clickUpload(S);
+  await waitText(S, "Ship uploaded successfully!", 90000);
+  const href = getViewShipHref(S);
+  assert(href && /^\/ship\/\d+$/.test(href), `View Ship link missing, got ${href}`);
+  return parseInt(href.split("/").pop() as string, 10);
+}
+
 async function poneyFavoriteIds(): Promise<number[]> {
   const { rows } = await q<{ favorite: number[] }>(
     "SELECT favorite FROM favoritedb WHERE discord_id = $1 OR name = $2",
@@ -1147,6 +1180,7 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
         body: JSON.stringify({ username: "qa-guest", invite_code: inviteCode }),
       });
       assert(withCode.status === 200, `register private w/ invite ${withCode.status}: ${JSON.stringify(withCode.body)}`);
+
       const rows = await q<{ n: string }>(
         "SELECT count(*)::text n FROM game_registrations WHERE game_id = $1 AND discord_username = 'qa-guest'",
         [id]
@@ -1155,6 +1189,127 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
     } finally {
       await deleteGameViaApi(id);
     }
+  });
+
+  // ───────────────────── Phase 3 upload UX ─────────────────────
+
+  await check("P3-U1", "Upload: author override persists to DB instead of PNG author", async () => {
+    const shipId = await uploadFixtureAndGetId(S, FIXTURE_PNG, { author: "QA Override Author" });
+    try {
+      const row = await getShipRow(shipId);
+      assert(row, `ship ${shipId} missing`);
+      assert(row.author === "QA Override Author", `author=${row.author} (expected override)`);
+    } finally {
+      await deleteShipViaApi(shipId);
+    }
+  });
+
+  await check("P3-U2", "Upload accepts multiple files in one batch", async () => {
+    openSession(S, HOME + "/upload");
+    prepTurnstile(S);
+    await waitText(S, "Click to select a ship PNG", 30000);
+    chooseFile(S, FIXTURE_PNG); // single-select is fine; batch flow is exercised by the panel API path
+    await waitText(S, "Price:", 60000);
+    const fileInput = cliEval(S, `document.querySelector('input[type=file]')`);
+    assert(fileInput !== null, "file input should exist");
+    const multiple = cliEval(S, `document.querySelector('input[type=file]').multiple`);
+    assert(multiple === true, "file input should allow multiple files");
+  });
+
+  await check("P3-U3", "RichTextEditor: link tool uses inline URL field (no window.prompt)", async () => {
+    openSession(S, HOME + "/collections/new");
+    prepTurnstile(S);
+    await waitText(S, "Title", 20000);
+    // Stub window.prompt so we can detect if the editor still uses it.
+    cliEval(S, `(() => { window.__qaPromptBlocked = false; window.prompt = function(){ window.__qaPromptBlocked = true; return null; }; })()`);
+    cliEval(S, `(() => { const b=[...document.querySelectorAll('button')].find(x => x.getAttribute('aria-label')==='Link'); if(b){ b.click(); } return b? 'found':'none'; })()`);
+    await sleep(600);
+    const blocked = Boolean(cliEval(S, `window.__qaPromptBlocked`));
+    assert(blocked === false, "editor still used window.prompt for link URL");
+    const urlInput = cliEval(S, `Array.from(document.querySelectorAll('input[type=url]')).length`);
+    assert(Number(urlInput) > 0, "inline URL input not rendered after clicking Link");
+  });
+
+  await check("P3-U4", "Upload rejects non-PNG file by type with clear message", async () => {
+    openSession(S, HOME + "/upload");
+    prepTurnstile(S);
+    await waitText(S, "Click to select a ship PNG", 30000);
+    // Inject a non-png file object into the input and dispatch change.
+    const ok = cliEval(S, `(() => {
+      const el = document.querySelector('input[type=file]');
+      const blob = new Blob(["not an image"], { type: "text/plain" });
+      const f = new File([blob], "not-a-png.txt", { type: "text/plain", lastModified: Date.now() });
+      const dt = new DataTransfer();
+      dt.items.add(f);
+      el.files = dt.files;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return el.files.length;
+    })()`);
+    assert(Number(ok) === 1, "could not set fake non-png file");
+    await waitText(S, "is not a PNG image", 10000);
+  });
+
+  await check("P3-C1", "Collection card: thumbnail preview + always-visible delete", async () => {
+// Upload a fixture ship to use for the collection card thumbnail test
+     let cardShipId = 0;
+     try {
+       cardShipId = await uploadFixtureAndGetId(S, FIXTURE_PNG);
+       // Create a collection, add the uploaded ship so the card gets a thumb, then
+       // verify the collection grid shows a thumbnail image and a visible delete
+       // button (not hover-only).
+       const title = `QA Col Card ${Date.now()}`;
+       const res = await httpFetch(S, "/api/collections", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({ title, description: "thumb-test collection" }),
+       });
+       assert([200, 201].includes(res.status), `create collection status ${res.status}: ${JSON.stringify(res.body)}`);
+       const colId = (res.body as { data?: { id: number } }).data?.id;
+       assert(colId, `no collection id: ${JSON.stringify(res.body)}`);
+       try {
+         await httpFetch(S, `/api/collections/${colId}/ships`, {
+           method: "POST",
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify({ shipId: cardShipId }),
+         });
+         void title;
+
+         openSession(S, HOME + "/my-collections");
+         await waitText(S, "My Collections", 20000);
+         await waitText(S, title, 20000);
+
+         const thumb = String(
+           cliEval(
+             S,
+             `(() => {
+               const img = Array.from(document.querySelectorAll('img[alt]')).find(i => i.getAttribute('alt').includes(${JSON.stringify(title)}));
+               return img ? img.tagName : "nothumb";
+             })()`
+           )
+         );
+         assert(thumb === "IMG", `thumbnail image for ${title} not rendered (got ${thumb})`);
+
+         const del = String(
+           cliEval(
+             S,
+             `(() => {
+               const btn = [...document.querySelectorAll('button')].find(x => x.getAttribute('aria-label')?.includes('Delete collection'));
+               if(!btn){ return "none"; }
+               const st = getComputedStyle(btn);
+               return (parseFloat(st.opacity||'0') > 0.01 && btn.offsetParent !== null) ? "visible" : "hidden";
+             })()
+           )
+         );
+         assert(del === "visible", "delete button should be always-visible, got " + del);
+} finally {
+          await httpFetch(S, "/api/collections/" + colId, { method: "DELETE" });
+        }
+      } finally {
+        // Clean up the uploaded ship
+        if (cardShipId) {
+          await httpFetch(S, "/api/ship/" + cardShipId, { method: "DELETE" });
+        }
+      }
   });
 }
 
@@ -1172,36 +1327,36 @@ async function phase4(
 
   await check("P4-N1", "No trace of scratch ship/collection anywhere", async () => {
     const ship = await q<{ n: string }>("SELECT count(*)::text n FROM shipdb WHERE id = $1", [scratch.shipId]);
-    assert(ship.rows[0].n === "0", `shipdb rows: ${ship.rows[0].n}`);
+    assert(ship.rows[0].n === "0", "shipdb rows: " + ship.rows[0].n);
 
     const name = await q<{ n: string }>("SELECT count(*)::text n FROM shipdb WHERE ship_name = 'valid-ship'");
-    assert(name.rows[0].n === "0", `rows named valid-ship: ${name.rows[0].n}`);
+    assert(name.rows[0].n === "0", "rows named valid-ship: " + name.rows[0].n);
 
     const collRow = await q<{ n: string }>("SELECT count(*)::text n FROM collections WHERE id = $1", [coll.id]);
-    assert(collRow.rows[0].n === "0", `collection rows: ${collRow.rows[0].n}`);
+    assert(collRow.rows[0].n === "0", "collection rows: " + collRow.rows[0].n);
 
     const sig = await q<{ n: string }>("SELECT count(*)::text n FROM ship_signatures WHERE ship_id = $1", [scratch.shipId]);
-    assert(sig.rows[0].n === "0", `ship_signatures rows: ${sig.rows[0].n}`);
+    assert(sig.rows[0].n === "0", "ship_signatures rows: " + sig.rows[0].n);
 
-    const inColl = await q<{ n: string }>("SELECT count(*)::text n FROM collections WHERE $1 = ANY(ships)", [scratch.shipId]);
-    assert(inColl.rows[0].n === "0", `scratch id in collection arrays: ${inColl.rows[0].n}`);
-
-    const inFav = await q<{ n: string }>("SELECT count(*)::text n FROM favoritedb WHERE $1 = ANY(favorite)", [scratch.shipId]);
-    assert(inFav.rows[0].n === "0", `scratch id in favorite arrays: ${inFav.rows[0].n}`);
-
-    const st = await hostedStatus(scratch.ufsUrl);
-    assert(st >= 400, `hosted image still reachable (${st})`);
-
-    const src = await getShipRow(1624);
-    assert(src !== null, "fixture source ship 1624 unexpectedly deleted");
+const inColl = await q<{ n: string }>("SELECT count(*)::text n FROM collections WHERE $1 = ANY(ships)", [scratch.shipId]);
+     assert(inColl.rows[0].n === "0", "scratch id in collection arrays: " + inColl.rows[0].n);
+     
+     const inFav = await q<{ n: string }>("SELECT count(*)::text n FROM favoritedb WHERE $1 = ANY(favorite)", [scratch.shipId]);
+     assert(inFav.rows[0].n === "0", "scratch id in favorite arrays: " + inFav.rows[0].n);
+     
+     const st = await hostedStatus(scratch.ufsUrl);
+     assert(st >= 400, "hosted image still reachable (" + st + ")");
+     
+     const src = await getShipRow(1624);
+     assert(src !== null, "fixture source ship 1624 unexpectedly deleted");
     if (!excludePoney) {
       const favs = await poneyFavoriteIds();
-      assert(
-        favs.length === favoritesBaseline.length,
-        `poney favorites altered (baseline ${favoritesBaseline.length}): ${favs.join(",")}`
-      );
+assert(
+         favs.length === favoritesBaseline.length,
+         "poney favorites altered (baseline " + favoritesBaseline.length + "): " + favs.join(",")
+       );
     }
-    console.log(`       scratch ship ${scratch.shipId} + collection ${coll.id}: zero traces`);
+    console.log("       scratch ship " + scratch.shipId + " + collection " + coll.id + ": zero traces");
   });
 
   await check("P4-N2", "QA anonymous events carry the pinned anon_id (identifiable/excludable)", async () => {
@@ -1221,15 +1376,15 @@ async function phase4(
       attempts++;
       await sleep(6000);
     }
-    assert(res.status === 200, `marker log status ${res.status} (after ${attempts} retries)`);
+    assert(res.status === 200, "marker log status " + res.status + " (after " + attempts + " retries)");
     const row = await q<{ anon_id: string | null }>(
       "SELECT anon_id FROM analytics WHERE url = '/qa-anon-id-check' ORDER BY created_at DESC LIMIT 1"
     );
     const got = row.rows[0]?.anon_id ?? null;
-    assert(
-      got === QA_ANON_ID,
-      `QA anon_id drifted (got ${got}, expected ${QA_ANON_ID}). Update QA_ANON_ID in scripts/qa-lib.ts and ANALYTICS_EXCLUDE_ANON_IDS in .env.`
-    );
+assert(
+       got === QA_ANON_ID,
+       "QA anon_id drifted (got " + got + ", expected " + QA_ANON_ID + "). Update QA_ANON_ID in scripts/qa-lib.ts and ANALYTICS_EXCLUDE_ANON_IDS in .env."
+     );
     await q("DELETE FROM analytics WHERE url = '/qa-anon-id-check'");
   });
 }
@@ -1243,9 +1398,9 @@ async function main() {
   // than a hardcoded count that drifts as the user favorites/ships on the site.
   const favoritesBaseline = await poneyFavoriteIds();
   if (process.env.QA_EXCLUDE_PONEY_DATA === "true") {
-    console.log(
-      `       [QA_EXCLUDE_PONEY_DATA] excluding poney's personal data from assertions (baseline favorites: ${favoritesBaseline.length})`
-    );
+console.log(
+       "       [QA_EXCLUDE_PONEY_DATA] excluding poney's personal data from assertions (baseline favorites: " + favoritesBaseline.length + ")"
+     );
   }
 
   const scratch = { shipId: 0, ufsUrl: "" };

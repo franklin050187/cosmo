@@ -17,6 +17,8 @@ interface Props {
   className?: string;
 }
 
+const PANEL_WIDTH = 256;
+
 export default function CollectionPicker({ shipId, children, className }: Props) {
   const { isLoggedIn } = useAuth();
   const [open, setOpen] = useState(false);
@@ -28,11 +30,12 @@ export default function CollectionPicker({ shipId, children, className }: Props)
   const triggerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const msgTimer = useRef<number | undefined>(undefined);
+  const firstItemRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open || !isLoggedIn) return;
     const ac = new AbortController();
-     fetch(`/api/collections/mine?shipId=${shipId}`, { signal: ac.signal })
+    void fetch(`/api/collections/mine?shipId=${shipId}`, { signal: ac.signal })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -53,7 +56,12 @@ export default function CollectionPicker({ shipId, children, className }: Props)
   useEffect(() => {
     if (!open || !triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
-    setPos({ top: rect.bottom + 4, left: rect.left });
+    let left = rect.left;
+    const viewportRight = window.innerWidth;
+    if (left + PANEL_WIDTH > viewportRight) {
+      left = Math.max(viewportRight - PANEL_WIDTH - 8, 0);
+    }
+    setPos({ top: Math.min(rect.bottom + 4, window.innerHeight - 40), left });
 
     function handleClick(e: MouseEvent) {
       if (
@@ -63,8 +71,18 @@ export default function CollectionPicker({ shipId, children, className }: Props)
         setOpen(false);
       }
     }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+      }
+    }
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -76,12 +94,20 @@ export default function CollectionPicker({ shipId, children, className }: Props)
     };
   }, []);
 
+  useEffect(() => {
+    if (open) {
+      const t = setTimeout(() => firstItemRef.current?.focus(), 100);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
+
   const handleToggle = () => {
     if (open) {
       setOpen(false);
     } else {
       setOpen(true);
       setLoading(true);
+      setMsg(null);
     }
   };
 
@@ -136,6 +162,15 @@ export default function CollectionPicker({ shipId, children, className }: Props)
     }
   };
 
+  const moveFocus = (panel: HTMLElement, delta: number) => {
+    const items = Array.from(panel.querySelectorAll<HTMLButtonElement>("button"));
+    const cur = document.activeElement as HTMLButtonElement | null;
+    let idx = items.indexOf(cur as HTMLButtonElement);
+    if (idx < 0) idx = 0;
+    const next = items[((idx + delta) % items.length + items.length) % items.length];
+    next?.focus();
+  };
+
   return (
     <>
       <div
@@ -145,6 +180,7 @@ export default function CollectionPicker({ shipId, children, className }: Props)
         tabIndex={0}
         aria-expanded={open}
         aria-haspopup="listbox"
+        onClick={handleToggle}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -152,9 +188,7 @@ export default function CollectionPicker({ shipId, children, className }: Props)
           }
         }}
       >
-        <div onClick={handleToggle} className="cursor-pointer">
-          {children}
-        </div>
+        {children}
       </div>
 
       {typeof document !== "undefined" && createPortal(
@@ -174,6 +208,18 @@ export default function CollectionPicker({ shipId, children, className }: Props)
               ref={panelRef}
               role="listbox"
               aria-label="Your collections"
+              onKeyDown={(e) => {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  moveFocus(e.currentTarget, 1);
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  moveFocus(e.currentTarget, -1);
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  setOpen(false);
+                }
+              }}
               className="fixed w-64 bg-[#021526] border border-[#1C598C] rounded-md shadow-lg z-[9999] max-h-60 overflow-y-auto"
               style={{ top: pos.top, left: pos.left }}
             >
@@ -187,9 +233,10 @@ export default function CollectionPicker({ shipId, children, className }: Props)
                   </Link>
                 </p>
               ) : (
-                collections.map((col) => (
+                collections.map((col, i) => (
                   <button
                     key={col.id}
+                    ref={i === 0 ? firstItemRef : null}
                     onClick={() => toggleShip(col)}
                     disabled={toggling === col.id}
                     aria-label={col.has_ship ? `Remove from ${col.title}` : `Add to ${col.title}`}

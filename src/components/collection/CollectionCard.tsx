@@ -1,5 +1,6 @@
 import Card from "@/components/ui/Card";
 import Link from "next/link";
+import Image from "next/image";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 interface CollectionSummary {
@@ -8,6 +9,7 @@ interface CollectionSummary {
   title: string;
   description: string;
   ship_count: number | null;
+  thumb_url: string | null;
   created_at: string;
 }
 
@@ -17,12 +19,32 @@ interface Props {
 }
 
 export default function CollectionCard({ collection, onDelete }: Props) {
+  const confirmDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (confirm(`Delete collection "${collection.title}"?`)) {
+      onDelete?.(collection.id);
+    }
+  };
+
   return (
     <Card className="relative hover:border-cyan-400/40 transition-colors group">
       <Link
         href={`/collections/${collection.id}`}
         className="block"
       >
+        {collection.thumb_url && (
+          <div className="aspect-[4/3] w-full overflow-hidden rounded-md mb-2">
+            <Image
+              src={collection.thumb_url}
+              alt={`Preview of ${collection.title}`}
+              width={300}
+              height={225}
+              className="w-full h-32 object-cover object-center"
+              unoptimized
+            />
+          </div>
+        )}
         <h3 className="text-white font-semibold text-lg truncate">
           {collection.title}
         </h3>
@@ -38,9 +60,9 @@ export default function CollectionCard({ collection, onDelete }: Props) {
       </Link>
       {onDelete && (
         <button
-          onClick={(e) => { e.preventDefault(); onDelete(collection.id); }}
+          onClick={confirmDelete}
           aria-label={`Delete collection "${collection.title}"`}
-          className="absolute top-2 right-2 p-1.5 rounded text-gray-500 hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-all"
+          className="absolute top-2 right-2 p-1.5 rounded text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition-all focus:outline-none focus:ring-2 focus:ring-red-400/40"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

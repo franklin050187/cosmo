@@ -35,14 +35,15 @@ export interface PriceResponse {
   tags: string[];
 }
 
-export interface CollectionSummary {
+ export interface CollectionSummary {
   id: number;
   owner: string;
   title: string;
   description: string;
   ship_count: number | null;
+  thumb_url: string | null;
   created_at: string;
-}
+ }
 
 export interface CollectionDetail {
   id: number;
