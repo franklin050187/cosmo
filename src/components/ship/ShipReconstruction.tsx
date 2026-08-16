@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { centerOfMass, type ShipStats } from "@/lib/physics";
 import { partPhysics } from "@/lib/physics-data";
 
@@ -14,6 +14,12 @@ interface Part {
 interface Props {
   stats: ShipStats;
   parts: Part[];
+}
+
+interface Overlays {
+  com: boolean;
+  thrust: boolean;
+  tractor: boolean;
 }
 
 const UP_TURRET_PARTS = new Set([
@@ -100,9 +106,50 @@ function getRotatedSize(partId: string, rotation: number): [number, number] {
   return [p.size[0], p.size[1]];
 }
 
+const ZOOM_STEP = 1.25;
+
 export default function ShipReconstruction({ stats, parts }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const [rendering, setRendering] = useState(true);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [renderError, setRenderError] = useState<string | null>(null);
+  const [overlays, setOverlays] = useState<Overlays>({ com: true, thrust: true, tractor: true });
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null);
+
+  const zoomBy = useCallback((factor: number) => {
+    setZoom((z) => Math.min(16, Math.max(0.25, z * factor)));
+  }, []);
+
+  const resetView = useCallback(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, []);
+
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    dragRef.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y };
+    (e.currentTarget as HTMLCanvasElement).setPointerCapture(e.pointerId);
+  }, [pan]);
+
+  const onPointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const dx = e.clientX - drag.startX;
+    const dy = e.clientY - drag.startY;
+    setPan({ x: drag.panX + dx, y: drag.panY + dy });
+  }, []);
+
+  const onPointerUp = useCallback(() => {
+    dragRef.current = null;
+  }, []);
+
+  const onWheel = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
+    setZoom((z) => Math.min(16, Math.max(0.25, z * factor)));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,6 +162,8 @@ export default function ShipReconstruction({ stats, parts }: Props) {
       if (!canvas) return;
 
       setRendering(true);
+      setProgress(0);
+      setRenderError(null);
 
       let minX = Infinity;
       let maxX = -Infinity;
@@ -154,9 +203,10 @@ export default function ShipReconstruction({ stats, parts }: Props) {
       ctx.fillRect(0, 0, SIZE, SIZE);
 
       const SPRITE_REF_PX = 16;
-      const scale = SIZE / side;
-      const offsetX = SIZE / 2 - centerX * scale;
-      const offsetY = SIZE / 2 - centerY * scale;
+      const baseScale = SIZE / side;
+      const scale = baseScale * zoom;
+      const offsetX = SIZE / 2 - centerX * baseScale + pan.x;
+      const offsetY = SIZE / 2 - centerY * baseScale + pan.y;
 
       const toX = (cellX: number) => cellX * scale + offsetX;
       const toY = (cellY: number) => cellY * scale + offsetY;
@@ -170,15 +220,21 @@ export default function ShipReconstruction({ stats, parts }: Props) {
         }
       }
 
-      const loadPromises = orderedParts.map((p) => loadSprite(p.ID).catch(() => null));
-      const sprites = await Promise.all(loadPromises);
+      const loadResults = await Promise.all(
+        orderedParts.map((p) => loadSprite(p.ID).then((img) => ({ img, ok: true as const })).catch(() => ({ img: null, ok: false as const })))
+      );
+      const failed = loadResults.filter((r) => !r.ok).length;
 
       if (cancelled) return;
 
+      if (failed > 0) {
+        setRenderError(`${failed} sprite${failed > 1 ? "s" : ""} could not be loaded.`);
+      }
+
       for (let i = 0; i < orderedParts.length; i++) {
         const part = orderedParts[i];
-        const sprite = sprites[i];
-        if (!sprite) continue;
+        const result = loadResults[i];
+        if (!result.ok || !result.img) continue;
 
         const p = partPhysics[part.ID];
         if (!p) continue;
@@ -191,8 +247,8 @@ export default function ShipReconstruction({ stats, parts }: Props) {
         const sx = toX(xCoord);
         const sy = toY(yCoord);
 
-        const spriteW = (sprite.naturalWidth / 4) / SPRITE_REF_PX * scale;
-        const spriteH = (sprite.naturalHeight / 4) / SPRITE_REF_PX * scale;
+        const spriteW = (result.img.naturalWidth / 4) / SPRITE_REF_PX * scale;
+        const spriteH = (result.img.naturalHeight / 4) / SPRITE_REF_PX * scale;
 
         const rotation = part.Rotation ?? 0;
         const hasSpriteSize = !!p.spriteSize;
@@ -213,93 +269,100 @@ export default function ShipReconstruction({ stats, parts }: Props) {
         }
 
         if (hasSpriteSize && (rotation === 1 || rotation === 3)) {
-          ctx.drawImage(sprite, -spriteH / 2, -spriteW / 2, spriteH, spriteW);
+          ctx.drawImage(result.img, -spriteH / 2, -spriteW / 2, spriteH, spriteW);
         } else {
-          ctx.drawImage(sprite, -spriteW / 2, -spriteH / 2, spriteW, spriteH);
+          ctx.drawImage(result.img, -spriteW / 2, -spriteH / 2, spriteW, spriteH);
         }
 
         ctx.restore();
 
         if (i > 0 && i % DRAW_CHUNK === 0) {
+          setProgress(Math.round(((i + 1) / orderedParts.length) * 100));
           await yieldToMain();
           if (cancelled) return;
         }
       }
 
-      const comX = toX(stats.centerX);
-      const comY = toY(stats.centerY);
-
-      const tractorParts = parts.filter(
-        (p) => p.ID === "cosmoteer.tractor_beam_emitter"
-      );
-      if (tractorParts.length > 0) {
-        const tbCom = centerOfMass(tractorParts);
-        const tbX = toX(tbCom.x);
-        const tbY = toY(tbCom.y);
-        ctx.fillStyle = "#ff0000";
+      if (overlays.com) {
+        const comX = toX(stats.centerX);
+        const comY = toY(stats.centerY);
+        ctx.fillStyle = "#00ff00";
         ctx.beginPath();
-        ctx.arc(tbX, tbY, 6, 0, Math.PI * 2);
+        ctx.arc(comX, comY, Math.max(4, 8 * zoom), 0, Math.PI * 2);
         ctx.fill();
       }
 
-      ctx.fillStyle = "#00ff00";
-      ctx.beginPath();
-      ctx.arc(comX, comY, 8, 0, Math.PI * 2);
-      ctx.fill();
-
-      const arrowLen = 35;
-      const drawArrow = (
-        ox: number,
-        oy: number,
-        dx: number,
-        dy: number,
-        color: string
-      ) => {
-        const startX = toX(ox);
-        const startY = toY(oy);
-        const endX = toX(ox + dx * arrowLen);
-        const endY = toY(oy + dy * arrowLen);
-
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
-
-        const angle = Math.atan2(endY - startY, endX - startX);
-        const headLen = 8;
-        ctx.beginPath();
-        ctx.moveTo(endX, endY);
-        ctx.lineTo(
-          endX - headLen * Math.cos(angle - Math.PI / 6),
-          endY - headLen * Math.sin(angle - Math.PI / 6)
+      if (overlays.tractor) {
+        const tractorParts = parts.filter(
+          (p) => p.ID === "cosmoteer.tractor_beam_emitter"
         );
-        ctx.moveTo(endX, endY);
-        ctx.lineTo(
-          endX - headLen * Math.cos(angle + Math.PI / 6),
-          endY - headLen * Math.sin(angle + Math.PI / 6)
-        );
-        ctx.stroke();
-
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(startX, startY, 3, 0, Math.PI * 2);
-        ctx.fill();
-      };
-
-      const totalThrust = stats.thrustDirection.reduce((a, b) => a + b, 0) || 1;
-
-      for (let i = 0; i < 8; i++) {
-        const origin = stats.originThrust[i];
-        if (!origin) continue;
-        if (stats.thrustDirection[i] === 0) continue;
-
-        const dx = (stats.thrustVector[i].x - origin.x) / totalThrust;
-        const dy = (stats.thrustVector[i].y - origin.y) / totalThrust;
-        drawArrow(origin.x, origin.y, dx, dy, i === 7 ? "#00c800" : "#ffff00");
+        if (tractorParts.length > 0) {
+          const tbCom = centerOfMass(tractorParts);
+          const tbX = toX(tbCom.x);
+          const tbY = toY(tbCom.y);
+          ctx.fillStyle = "#ff0000";
+          ctx.beginPath();
+          ctx.arc(tbX, tbY, Math.max(4, 6 * zoom), 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
 
+      if (overlays.thrust) {
+        const arrowLen = 35;
+        const drawArrow = (
+          ox: number,
+          oy: number,
+          dx: number,
+          dy: number,
+          color: string
+        ) => {
+          const startX = toX(ox);
+          const startY = toY(oy);
+          const endX = toX(ox + dx * arrowLen);
+          const endY = toY(oy + dy * arrowLen);
+
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+
+          const angle = Math.atan2(endY - startY, endX - startX);
+          const headLen = 8;
+          ctx.beginPath();
+          ctx.moveTo(endX, endY);
+          ctx.lineTo(
+            endX - headLen * Math.cos(angle - Math.PI / 6),
+            endY - headLen * Math.sin(angle - Math.PI / 6)
+          );
+          ctx.moveTo(endX, endY);
+          ctx.lineTo(
+            endX - headLen * Math.cos(angle + Math.PI / 6),
+            endY - headLen * Math.sin(angle + Math.PI / 6)
+          );
+          ctx.stroke();
+
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(startX, startY, 3, 0, Math.PI * 2);
+          ctx.fill();
+        };
+
+        const totalThrust = stats.thrustDirection.reduce((a, b) => a + b, 0) || 1;
+
+        for (let i = 0; i < 8; i++) {
+          const origin = stats.originThrust[i];
+          if (!origin) continue;
+          if (stats.thrustDirection[i] === 0) continue;
+
+          const dx = (stats.thrustVector[i].x - origin.x) / totalThrust;
+          const dy = (stats.thrustVector[i].y - origin.y) / totalThrust;
+          drawArrow(origin.x, origin.y, dx, dy, i === 7 ? "#00c800" : "#ffff00");
+        }
+      }
+
+      setProgress(100);
       if (!cancelled) setRendering(false);
     }
 
@@ -307,21 +370,85 @@ export default function ShipReconstruction({ stats, parts }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [stats, parts]);
+  }, [stats, parts, overlays, zoom, pan]);
 
   return (
-    <div className="relative">
+    <div ref={wrapRef} className="relative">
       <canvas
         ref={canvasRef}
-        className="w-full h-auto border border-[#1C598C] rounded"
+        className="w-full h-auto border border-[#1C598C] rounded cursor-grab active:cursor-grabbing touch-none"
+        aria-label="Ship reconstruction"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onWheel={onWheel}
       />
+
+      <div className="flex items-center gap-1 absolute top-2 right-2">
+        <button
+          type="button"
+          onClick={() => zoomBy(ZOOM_STEP)}
+          aria-label="Zoom in"
+          className="w-7 h-7 rounded bg-[#021526]/85 border border-[#1C598C]/60 text-cyan-300 hover:bg-cyan-400/15 transition-colors text-sm"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          onClick={() => zoomBy(1 / ZOOM_STEP)}
+          aria-label="Zoom out"
+          className="w-7 h-7 rounded bg-[#021526]/85 border border-[#1C598C]/60 text-cyan-300 hover:bg-cyan-400/15 transition-colors text-sm"
+        >
+          −
+        </button>
+        <button
+          type="button"
+          onClick={resetView}
+          aria-label="Reset zoom"
+          className="w-7 h-7 rounded bg-[#021526]/85 border border-[#1C598C]/60 text-cyan-300 hover:bg-cyan-400/15 transition-colors text-[10px] font-semibold"
+        >
+          1:1
+        </button>
+      </div>
+
+      <div className="flex items-center gap-3 mt-2 flex-wrap">
+        <span className="text-[11px] text-gray-400">Overlays:</span>
+        {([
+          ["com", "Center of mass"],
+          ["thrust", "Thrust"],
+          ["tractor", "Tractor CoM"],
+        ] as [keyof Overlays, string][]).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setOverlays((o) => ({ ...o, [key]: !o[key] }))}
+            aria-pressed={overlays[key]}
+            className={`px-2 py-0.5 rounded text-[11px] border transition-colors ${
+              overlays[key]
+                ? "border-cyan-400 bg-cyan-400/15 text-cyan-300"
+                : "border-[#1C598C]/50 text-gray-400 hover:text-cyan-300"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {rendering && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#021526]/70 rounded" role="status" aria-label="Generating ship image">
           <div className="flex items-center gap-3">
             <div className="h-5 w-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-            <p className="text-blue-200 text-sm">Generating ship image…</p>
+            <p className="text-blue-200 text-sm">
+              {progress !== null ? `Generating ship image… ${progress}%` : "Generating ship image…"}
+            </p>
           </div>
         </div>
+      )}
+      {!rendering && renderError && (
+        <p className="text-amber-300 text-xs mt-2" role="status">
+          {renderError}
+        </p>
       )}
     </div>
   );

@@ -26,10 +26,7 @@ export default function SortFilter({ value, dir, onChange, onDirChange }: SortFi
         <button
           key={opt.value}
           type="button"
-          onClick={() => {
-            onChange(opt.value);
-            if (opt.value !== value) onDirChange("");
-          }}
+          onClick={() => onChange(opt.value)}
           aria-pressed={value === opt.value}
           aria-label={`Sort by ${opt.label}`}
           className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all text-left ${

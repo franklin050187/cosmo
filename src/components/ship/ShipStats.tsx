@@ -92,7 +92,7 @@ export default function ShipStats({ imageUrl }: Props) {
           <ShipReconstruction stats={cached.stats} parts={cached.parts} />
         </div>
         <div className="flex-1 min-w-0">
-          <ShipStatsPanel stats={cached.stats} />
+          <ShipStatsPanel stats={cached.stats} parts={cached.parts} />
         </div>
       </div>
     </Card>

@@ -95,7 +95,13 @@ export default function FilterBody({ filters, setFilter, setFilters, clearFilter
           <SortFilter
             value={filters.order}
             dir={filters.dir}
-            onChange={v => setFilter("order", v)}
+            onChange={v => {
+              if (v === filters.order) {
+                setFilter("order", v);
+                return;
+              }
+              setFilters([["order", v], ["dir", ""]]);
+            }}
             onDirChange={v => setFilter("dir", v)}
           />
         </FilterSection>

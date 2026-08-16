@@ -25,6 +25,11 @@ export default function EditShipPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notOwner, setNotOwner] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [initialShipName, setInitialShipName] = useState("");
+  const [initialDescription, setInitialDescription] = useState("");
+  const [initialUserTags, setInitialUserTags] = useState<string[]>([]);
+  const [initialBrand, setInitialBrand] = useState("gen");
 
   const [shipName, setShipName] = useState("");
   const [description, setDescription] = useState("");
@@ -71,6 +76,10 @@ export default function EditShipPage() {
         const { userTags: ut, autoTags: at } = extractUserTags(data.tags ?? []);
         setUserTags(ut);
         setAutoTags(at);
+        setInitialShipName(data.ship_name);
+        setInitialDescription(data.description);
+        setInitialUserTags(ut);
+        setInitialBrand(data.brand === "exl" ? "exl" : "gen");
       } catch (err) {
         if (active) console.error("Failed to fetch ship:", err);
       } finally {
@@ -86,6 +95,7 @@ export default function EditShipPage() {
     if (!isLoggedIn) return;
 
     setSaving(true);
+    setSaveMessage(null);
     try {
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -93,7 +103,7 @@ export default function EditShipPage() {
       const token = turnstileRef.current?.getToken();
       if (token) headers["x-turnstile-token"] = token;
 
-      await fetch(`/api/ship/${params.id}`, {
+      const res = await fetch(`/api/ship/${params.id}`, {
         method: "PUT",
         headers,
         body: JSON.stringify({
@@ -103,16 +113,33 @@ export default function EditShipPage() {
           brand,
         }),
       });
+
+      if (!res.ok) {
+        let errorText = `Failed to save (${res.status})`;
+        try {
+          const body = await res.json();
+          if (body?.error) errorText = body.error;
+        } catch {
+          // ignore parse errors, keep default message
+        }
+        throw new Error(errorText);
+      }
+
+      setSaveMessage({ type: "success", text: "Changes saved." });
       router.push(`/ship/${params.id}`);
     } catch (err) {
       console.error("Failed to save:", err);
+      setSaveMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "Failed to save changes.",
+      });
     } finally {
       setSaving(false);
     }
   };
 
   const handleCancel = () => {
-    router.push(`/ship/${params.id}`);
+    guardNavigation(() => router.push(`/ship/${params.id}`));
   };
 
   const handleReplaceShip = () => {
@@ -181,6 +208,29 @@ export default function EditShipPage() {
       router.push(`/ship/${params.id}`);
     }
   }, [notOwner, params.id, router]);
+
+  const dirty =
+    !!ship &&
+    (shipName !== initialShipName ||
+      description !== initialDescription ||
+      brand !== initialBrand ||
+      userTags.length !== initialUserTags.length ||
+      userTags.some((t, i) => t !== initialUserTags[i]));
+
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty]);
+
+  const guardNavigation = (action: () => void) => {
+    if (dirty && !window.confirm("You have unsaved changes. Leave this page?")) return;
+    action();
+  };
 
   if (loading) return <p className="text-center text-blue-200" role="status">Loading...</p>;
   if (notOwner) return null;
@@ -263,7 +313,7 @@ export default function EditShipPage() {
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || !dirty}
               >
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
@@ -272,6 +322,15 @@ export default function EditShipPage() {
               </Button>
               <AddToCollectionButton shipId={ship.id} />
             </div>
+
+            {saveMessage && (
+              <p
+                role={saveMessage.type === "error" ? "alert" : "status"}
+                className={`text-sm ${saveMessage.type === "error" ? "text-red-400" : "text-[#0AD448]"}`}
+              >
+                {saveMessage.text}
+              </p>
+            )}
           </div>
         </div>
       </Card>

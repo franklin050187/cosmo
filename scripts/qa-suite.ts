@@ -450,6 +450,67 @@ async function phase2(scratch: { shipId: number }) {
       await waitTextAsync(s, "Login was cancelled.", 20000);
     },
   });
+  parallelBatch.push({
+    id: "P2-F2",
+    name: "Home search UI: sort chip updates order param + re-sorts results",
+    fn: async (s) => {
+      await openSessionAsync(s, HOME + "/");
+      await waitTextAsync(s, "Newest", 25000);
+      const beforeFirst = String(
+        await cliEvalAsync(
+          s,
+          `(() => { const a = document.querySelector('a[href^="/ship/"] h3'); return a ? (a.textContent || "").trim().slice(0, 40) : ""; })()`
+        )
+      );
+      assert(beforeFirst !== "", "no ship card rendered on home");
+      const clickSort = await cliEvalAsync(
+        s,
+        `(() => { const b = document.querySelector('button[aria-label="Sort by Popular"]'); if (!b) return false; b.click(); return true; })()`
+      );
+      assert(clickSort === true, "Popular sort chip not found");
+      await waitForAsync(
+        s,
+        `location.search.includes('order=pop')`,
+        15000
+      );
+      const afterFirst = String(
+        await cliEvalAsync(
+          s,
+          `(() => { const a = document.querySelector('a[href^="/ship/"] h3'); return a ? (a.textContent || "").trim().slice(0, 40) : ""; })()`
+        )
+      );
+      assert(afterFirst !== "", "no ship card rendered after sort");
+      assert(beforeFirst !== afterFirst, `results did not re-sort (before="${beforeFirst}" after="${afterFirst}")`);
+    },
+  });
+  parallelBatch.push({
+    id: "P2-F3",
+    name: "Home search UI: tag filter narrows results + updates URL",
+    fn: async (s) => {
+      const readTotal = async () => {
+        const v = await cliEvalAsync(
+          s,
+          `(() => { const m = document.body.innerText.match(/(\\d+) of ([\\d,.]+) ships?/); return m ? m[2].replace(/,/g, "") : ""; })()`
+        );
+        return parseInt(String(v), 10);
+      };
+      await openSessionAsync(s, HOME + "/?order=new");
+      await waitTextAsync(s, "Newest", 25000);
+      const beforeCount = await readTotal();
+      assert(!Number.isNaN(beforeCount) && beforeCount > 0, "could not read unfiltered count");
+
+      await openSessionAsync(s, HOME + "/?tag=railgun&order=new");
+      await waitForAsync(s, `location.search.includes('tag=railgun')`, 10000);
+      const afterCount = await readTotal();
+      assert(!Number.isNaN(afterCount) && afterCount > 0, "tag-filtered search returned no count");
+      assert(afterCount < beforeCount, `tag filter did not narrow (before=${beforeCount}, after=${afterCount})`);
+      const hasTagLinks = await cliEvalAsync(
+        s,
+        `(() => document.querySelectorAll('a[href*="tag=railgun"]').length > 0)()`
+      );
+      assert(hasTagLinks === true, "no railgun tag links rendered after filtering");
+    },
+  });
   await parallelChecks(parallelBatch, 3);
 
   // Sequential tests below: they POST to API endpoints or burst rate-limited
@@ -533,6 +594,63 @@ async function phase2(scratch: { shipId: number }) {
     assert(del.status === 401, `DELETE status ${del.status}`);
   });
 
+  await check("P2-F1", "Search API: ordering + tag/author/brand/crew filters + facets", async () => {
+    type SearchRes = { data?: { data?: Array<{ price: number; ship_name: string; tags?: string[]; author?: string; brand?: string; crew?: number; date?: string; downloads?: number }>; total_count?: number; author_counts?: unknown[]; tag_counts?: unknown[] } };
+    const get = async (qs: string) => (await httpFetch(A, "/api/ship/search?" + qs)) as { status: number; body: SearchRes };
+    const dataOf = (r: { body: SearchRes }) => r.body?.data?.data ?? [];
+
+    const priceDesc = await get("order=price&dir=desc&page=1");
+    assert(priceDesc.status === 200, `price desc status ${priceDesc.status}`);
+    const pd = dataOf(priceDesc);
+    assert(pd.length > 0, "price desc empty");
+    for (let i = 1; i < pd.length; i++) {
+      assert(pd[i].price <= pd[i - 1].price, `price desc not ordered at ${i}: ${pd[i - 1].price} → ${pd[i].price}`);
+    }
+
+    const priceAsc = await get("order=price&dir=asc&page=1");
+    assert(priceAsc.status === 200, `price asc status ${priceAsc.status}`);
+    const pa = dataOf(priceAsc);
+    for (let i = 1; i < pa.length; i++) {
+      assert(pa[i].price >= pa[i - 1].price, `price asc not ordered at ${i}: ${pa[i - 1].price} → ${pa[i].price}`);
+    }
+
+    const pop = await get("order=pop&page=1");
+    const po = dataOf(pop);
+    for (let i = 1; i < po.length; i++) {
+      assert(po[i].downloads! <= po[i - 1].downloads!, `pop not ordered at ${i}`);
+    }
+
+    const byTag = await get("tag=railgun&order=new&page=1");
+    assert(byTag.status === 200, `tag status ${byTag.status}`);
+    const bt = dataOf(byTag);
+    assert(bt.length > 0, "tag=railgun empty");
+    assert(bt.every((s) => s.tags?.includes("railgun")), "tag=railgun returned ships without it");
+    assert((byTag.body?.data?.total_count ?? 0) > 0, "tag total_count missing");
+
+    const noTag = await get("notag=railgun&order=new&page=1");
+    const nt = dataOf(noTag);
+    assert(nt.length > 0, "notag=railgun empty");
+    assert(nt.every((s) => !s.tags?.includes("railgun")), "notag=railgun leaked tagged ships");
+
+    const byAuthor = await get("author=Shaw%20Fujikawa&order=new&page=1");
+    const ba = dataOf(byAuthor);
+    assert(ba.length > 0, "author filter empty");
+    assert(ba.every((s) => (s.author ?? "").includes("Shaw Fujikawa")), "author filter returned wrong author");
+
+    const byBrand = await get("brand=exl&order=new&page=1");
+    const bb = dataOf(byBrand);
+    assert(bb.length > 0 && bb.every((s) => s.brand === "exl"), "brand=exl filter failed");
+
+    const byCrew = await get("max-crew=10&order=new&page=1");
+    const bc = dataOf(byCrew);
+    assert(bc.length > 0 && bc.every((s) => s.crew! <= 10), "max-crew filter failed");
+
+    const facets = await get("order=new&page=1");
+    const facetBody = facets.body?.data ?? {};
+    assert(Array.isArray(facetBody.author_counts) && (facetBody.author_counts?.length ?? 0) > 0, "author_counts missing");
+    assert(Array.isArray(facetBody.tag_counts) && (facetBody.tag_counts?.length ?? 0) > 0, "tag_counts missing");
+  });
+
   await check("F1", "Decode valid fixture matches expected JSON (valid-ship.json)", async () => {
     openSession(A, HOME + "/decode");
     await waitText(A, "Decode Ship Blueprint");
@@ -579,7 +697,7 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
       assert(text.includes(item), `detail missing: ${item}`);
     }
     await clickBtn(S, "Stats");
-    await waitText(S, "Mass:");
+    await waitText(S, "Mass (t):");
     await clickBtn(S, "JSON");
     await waitFor(S, "document.querySelectorAll('pre').length > 0", 40000);
     await clickBtn(S, "Price Analysis");
