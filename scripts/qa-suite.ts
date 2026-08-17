@@ -808,7 +808,7 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
     runCli(["-s=" + S, "upload", FIXTURE_REPLACE_PNG]);
     await waitText(S, "Confirm Replace", 40000);
     await clickBtn(S, "Confirm Replace");
-    await waitFor(S, `window.location.pathname.startsWith("/ship/${scratch.shipId}")`, 30000);
+    await waitFor(S, `window.location.pathname === "/ship/${scratch.shipId}"`, 30000);
     console.log(`       P3-S6 debug page text: ${(await pageTextAsync(S)).slice(0, 400)}`);
     await waitText(S, "replace-ship", 30000);
     const after = (await getShipRow(scratch.shipId))?.data as string;
