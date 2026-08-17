@@ -1,6 +1,8 @@
 export type GameMode = "pvp" | "tournament" | "campaign";
 export type GameVisibility = "public" | "private";
 export type GameStatus = "open" | "closed" | "finished";
+export type BracketType = "single_elim" | "double_elim";
+export type BracketName = "winners" | "losers" | "grand_final";
 
 export interface GameSummary {
   id: number;
@@ -19,6 +21,7 @@ export interface GameSummary {
   created_at: string;
   participant_count: number;
   ship_count: number;
+  bracket_type: BracketType;
 }
 
 export interface GameParticipant {
@@ -32,10 +35,12 @@ export interface GameContestant {
   discord_id: string | null;
   discord_username: string;
   seed: number;
+  losses: number;
 }
 
 export interface GameMatch {
   id: number;
+  bracket: BracketName;
   round: number;
   position: number;
   contestant_a: number | null;

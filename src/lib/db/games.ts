@@ -1,9 +1,10 @@
 import { randomBytes } from "node:crypto";
-import { query, fetchAll, fetchOne, transaction, queryOnClient, fetchOneOnClient } from "./core";
+import type { PoolClient } from "pg";
+import { query, fetchAll, fetchOne, transaction, queryOnClient, fetchOneOnClient, fetchAllOnClient } from "./core";
 import { bumpDbVersion } from "@/lib/cache";
-import type { GameMode, GameStatus, GameVisibility } from "@/lib/games-types";
+import type { GameMode, GameStatus, GameVisibility, BracketType, BracketName } from "@/lib/games-types";
 
-export type { GameMode, GameVisibility, GameStatus } from "@/lib/games-types";
+export type { GameMode, GameStatus, GameVisibility, BracketType, BracketName } from "@/lib/games-types";
 
 export interface GameRow {
   id: number;
@@ -20,6 +21,7 @@ export interface GameRow {
   register_open_at: string | null;
   register_close_at: string | null;
   roulette_enabled: boolean;
+  bracket_type: BracketType;
   created_at: string;
 }
 
@@ -29,17 +31,17 @@ export interface GameSummaryRow extends GameRow {
 }
 
 const GAME_COLUMNS =
-  "id, owner_discord_id, owner_name, title, description, game_mode, visibility, invite_code, collection_id, status, game_date, register_open_at, register_close_at, roulette_enabled, created_at";
+  "id, owner_discord_id, owner_name, title, description, game_mode, visibility, invite_code, collection_id, status, game_date, register_open_at, register_close_at, roulette_enabled, bracket_type, created_at";
 
 // Public share-sheet: includes participant/ship tallies.
 const GAME_LIST_SELECT = `SELECT g.id, g.owner_discord_id, g.owner_name, g.title, g.description, g.game_mode,
-  g.visibility, g.invite_code, g.collection_id, g.status, g.game_date, g.register_open_at, g.register_close_at, g.roulette_enabled, g.created_at,
+  g.visibility, g.invite_code, g.collection_id, g.status, g.game_date, g.register_open_at, g.register_close_at, g.roulette_enabled, g.bracket_type, g.created_at,
   (SELECT count(*)::int FROM game_registrations r WHERE r.game_id = g.id) AS participant_count,
   (SELECT count(*)::int FROM game_ships s WHERE s.game_id = g.id) AS ship_count
   FROM games g`;
 
 export function isGameOwner(
-  game: Pick<GameRow, "owner_discord_id" | "owner_name">,
+  game: Pick<GameRow, "owner_name"> & { owner_discord_id: string | null },
   { id, username }: { id: string; username: string },
 ): boolean {
   if (game.owner_discord_id) return game.owner_discord_id === id;
@@ -82,11 +84,13 @@ export async function createGame(opts: {
   registerOpenAt?: string | null;
   registerCloseAt?: string | null;
   rouletteEnabled?: boolean;
+  bracketType?: BracketType;
 }) {
   const inviteCode = await makeInviteCode();
+  const bracketType = opts.bracketType ?? "single_elim";
   const { rows } = await query(
-    `INSERT INTO games (owner_discord_id, owner_name, title, description, game_mode, visibility, invite_code, collection_id, status, game_date, register_open_at, register_close_at, roulette_enabled)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12) RETURNING id`,
+    `INSERT INTO games (owner_discord_id, owner_name, title, description, game_mode, visibility, invite_code, collection_id, status, game_date, register_open_at, register_close_at, roulette_enabled, bracket_type)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12, $13) RETURNING id`,
     [
       opts.ownerId,
       opts.ownerName,
@@ -100,6 +104,7 @@ export async function createGame(opts: {
       opts.registerOpenAt ?? null,
       opts.registerCloseAt ?? null,
       opts.rouletteEnabled ?? false,
+      bracketType,
     ],
   );
   const id = rows[0]?.id;
@@ -163,11 +168,11 @@ async function getGameDetail(game: GameRow) {
     [game.id],
   );
   const contestants = await fetchAll(
-    "SELECT id, discord_id, discord_username, seed FROM game_contestants WHERE game_id = $1 ORDER BY seed, id",
+    "SELECT id, discord_id, discord_username, seed, losses FROM game_contestants WHERE game_id = $1 ORDER BY seed, id",
     [game.id],
   );
   const matchRows = await fetchAll(
-    "SELECT id, round, position, contestant_a, contestant_b, winner FROM game_matches WHERE game_id = $1 ORDER BY round, position",
+    "SELECT id, bracket, round, position, contestant_a, contestant_b, winner FROM game_matches WHERE game_id = $1 ORDER BY bracket, round, position",
     [game.id],
   );
   const names = new Map<number, string>();
@@ -236,6 +241,7 @@ export async function updateGame(
     register_open_at?: string | null;
     register_close_at?: string | null;
     roulette_enabled?: boolean;
+    bracket_type?: BracketType;
   },
 ) {
   const game = await fetchOne("SELECT owner_discord_id, owner_name FROM games WHERE id = $1", [id]);
@@ -284,6 +290,10 @@ export async function updateGame(
   if (fields.roulette_enabled !== undefined) {
     sets.push(`roulette_enabled = $${idx++}`);
     args.push(fields.roulette_enabled);
+  }
+  if (fields.bracket_type !== undefined) {
+    sets.push(`bracket_type = $${idx++}`);
+    args.push(fields.bracket_type);
   }
   if (sets.length === 0) return { error: "nothing to update" };
 
@@ -445,16 +455,148 @@ function nextPowerOfTwo(n: number) {
   return size;
 }
 
+/**
+ * Standard (Challonge-style) seed order for a power-of-two bracket, top to
+ * bottom. For 8 seeds this yields [1, 8, 4, 5, 2, 7, 3, 6] so round 1 pairs
+ * 1v8, 4v5, 2v7, 3v6. Seeds that exceed the real contestant count become byes,
+ * which naturally fall to the bottom of the order (i.e. the top seeds get byes).
+ */
+function bracketSlotOrder(size: number): number[] {
+  if (size <= 1) return [1];
+  const prev = bracketSlotOrder(size / 2);
+  const out: number[] = [];
+  for (const seed of prev) {
+    out.push(seed, size + 1 - seed);
+  }
+  return out;
+}
+
+/** First-round matches built from bracket slot order; byes are `null`. */
+function pairFirstRound(ids: number[]): Array<[number | null, number | null]> {
+  const size = nextPowerOfTwo(ids.length);
+  const slots = bracketSlotOrder(size);
+  const slotIds = slots.map((seed) => (seed <= ids.length ? ids[seed - 1] : null));
+  const pairs: Array<[number | null, number | null]> = [];
+  for (let i = 0; i < slotIds.length; i += 2) {
+    pairs.push([slotIds[i], slotIds[i + 1]]);
+  }
+  return pairs;
+}
+
+interface GenMatch {
+  bracket: BracketName;
+  round: number;
+  position: number;
+  a: number | null;
+  b: number | null;
+  winner: number | null;
+}
+
+/**
+ * Build a single-elimination bracket. Round 1 auto-advances byes; later rounds
+ * leave the unknown slot as null ("TBD") until a winner is recorded.
+ */
+function buildSingleElim(ids: number[]): GenMatch[] {
+  const size = nextPowerOfTwo(ids.length);
+  const rounds = Math.round(Math.log2(size));
+  const matches: GenMatch[] = [];
+  let current: Array<number | null> = [];
+  for (const [a, b] of pairFirstRound(ids)) current.push(a, b);
+  for (let round = 1; round <= rounds; round++) {
+    const next: Array<number | null> = [];
+    for (let i = 0; i < current.length; i += 2) {
+      const a = current[i];
+      const b = current[i + 1];
+      const position = i / 2;
+      let winner: number | null = null;
+      if (round === 1) {
+        if (a != null && b == null) winner = a;
+        else if (b != null && a == null) winner = b;
+      }
+      matches.push({ bracket: "winners", round, position, a, b, winner });
+      next.push(winner);
+    }
+    current = next;
+  }
+  return matches;
+}
+
+/**
+ * Build a double-elimination bracket: a standard winners bracket, a losers
+ * bracket whose rounds absorb the winners-bracket losers (Challonge-style),
+ * and a grand final with an optional bracket-reset round.
+ *
+ * Winners rounds (k = log2(P)): round r winners advance; the final winner
+ * waits in the grand final. Losers rounds (2k-2): even rounds pair the
+ * winners-bracket losers (slot A) against the previous losers winners (slot B),
+ * odd rounds just carry the previous losers winners. WB round 1 losers enter
+ * losers round 1; WB round r>=2 losers enter losers round 2r-2. The losers
+ * champion and the winners champion meet in the grand final; if the losers
+ * side wins round 1, the reset round (grand_final round 2) is played.
+ */
+function buildDoubleElim(ids: number[]): GenMatch[] {
+  const size = nextPowerOfTwo(ids.length);
+  const k = Math.round(Math.log2(size));
+  const matches: GenMatch[] = [];
+
+  // Winners bracket (same structure as single elimination).
+  let current: Array<number | null> = [];
+  for (const [a, b] of pairFirstRound(ids)) current.push(a, b);
+  for (let round = 1; round <= k; round++) {
+    const next: Array<number | null> = [];
+    for (let i = 0; i < current.length; i += 2) {
+      const a = current[i];
+      const b = current[i + 1];
+      const position = i / 2;
+      let winner: number | null = null;
+      if (round === 1) {
+        if (a != null && b == null) winner = a;
+        else if (b != null && a == null) winner = b;
+      }
+      matches.push({ bracket: "winners", round, position, a, b, winner });
+      next.push(winner);
+    }
+    current = next;
+  }
+
+  // Losers bracket: 2k-2 rounds, match count halves every two rounds.
+  const lbCount = 2 * k - 2;
+  for (let j = 1; j <= lbCount; j++) {
+    const mCount = Math.pow(2, k - 1 - Math.ceil(j / 2));
+    for (let p = 0; p < mCount; p++) {
+      matches.push({ bracket: "losers", round: j, position: p, a: null, b: null, winner: null });
+    }
+  }
+
+  // Grand final: round 1 is the final, round 2 is the bracket reset (played
+  // only when the losers-bracket champion wins round 1).
+  matches.push({ bracket: "grand_final", round: 1, position: 0, a: null, b: null, winner: null });
+  matches.push({ bracket: "grand_final", round: 2, position: 0, a: null, b: null, winner: null });
+
+  return matches;
+}
+
+/** Winners-bracket round count (k) for a game. */
+async function winnersRounds(gameId: number): Promise<number> {
+  const row = await fetchOne(
+    "SELECT COALESCE(MAX(round), 0)::int AS r FROM game_matches WHERE game_id = $1 AND bracket = 'winners'",
+    [gameId],
+  );
+  return row?.r ?? 0;
+}
+
 export async function generateBracket(
   gameId: number,
   ownerName: string,
   ownerId: string,
-  opts: { shuffle?: boolean } = {},
+  opts: { shuffle?: boolean; bracketType?: BracketType } = {},
 ) {
-  const game = await fetchOne("SELECT owner_discord_id, owner_name, game_mode FROM games WHERE id = $1", [gameId]);
+  const game = await fetchOne("SELECT owner_discord_id, owner_name, game_mode, bracket_type FROM games WHERE id = $1", [gameId]);
   if (!game) return { error: "not found" };
   if (!isGameOwner(game, { id: ownerId, username: ownerName })) return { error: "not the owner" };
   if (game.game_mode !== "tournament") return { error: "not a tournament" };
+
+  const bracketType: BracketType = opts.bracketType ?? game.bracket_type ?? "single_elim";
 
   const contestants = await fetchAll(
     "SELECT id FROM game_contestants WHERE game_id = $1 ORDER BY seed, id",
@@ -470,24 +612,11 @@ export async function generateBracket(
     }
   }
 
-  const n = order.length;
-  const size = nextPowerOfTwo(n);
-  const rounds = Math.round(Math.log2(size));
-  const pairsCount = size / 2;
-  const fullPairs = n - pairsCount;
-
-  // Round-1 pairing: `fullPairs` matches of two real contestants, then the
-  // remaining contestants each get a single bye (one contestant vs null).
-  // Byes only ever occur in round 1 and no pair is null-vs-null, so a player
-  // can never chain empty-slot auto-wins into the final.
-  const r1: Array<[number | null, number | null]> = [];
-  let cidx = 0;
-  for (let p = 0; p < pairsCount; p++) {
-    r1.push(p < fullPairs ? [order[cidx++], order[cidx++]] : [order[cidx++], null]);
-  }
+  const built = bracketType === "double_elim" ? buildDoubleElim(order) : buildSingleElim(order);
 
   await transaction(async (client) => {
     await queryOnClient(client, "DELETE FROM game_matches WHERE game_id = $1", [gameId]);
+    await queryOnClient(client, "UPDATE game_contestants SET losses = 0 WHERE game_id = $1", [gameId]);
     for (let i = 0; i < order.length; i++) {
       await queryOnClient(
         client,
@@ -495,34 +624,330 @@ export async function generateBracket(
         [i, order[i], gameId],
       );
     }
-    let current: Array<number | null> = [];
-    for (const [a, b] of r1) current.push(a, b);
-    for (let round = 1; round <= rounds; round++) {
-      const next: Array<number | null> = [];
-      for (let i = 0; i < current.length; i += 2) {
-        const a = current[i];
-        const b = current[i + 1];
-        const position = i / 2;
-        // Byes only exist in round 1; in later rounds a null side means "TBD"
-        // (that round's winner hasn't been recorded yet) and is never an auto-win.
-        let winner: number | null = null;
-        if (round === 1) {
-          if (a != null && b == null) winner = a;
-          else if (b != null && a == null) winner = b;
-        }
-        await queryOnClient(
-          client,
-          "INSERT INTO game_matches (game_id, round, position, contestant_a, contestant_b, winner) VALUES ($1, $2, $3, $4, $5, $6)",
-          [gameId, round, position, a, b, winner],
-        );
-        next.push(winner);
-      }
-      current = next;
+    for (const m of built) {
+      await queryOnClient(
+        client,
+        "INSERT INTO game_matches (game_id, bracket, round, position, contestant_a, contestant_b, winner) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        [gameId, m.bracket, m.round, m.position, m.a, m.b, m.winner],
+      );
     }
   });
 
   bumpDbVersion();
-  return { success: "bracket generated", size, rounds };
+  return {
+    success: "bracket generated",
+    bracket_type: bracketType,
+    size: nextPowerOfTwo(order.length),
+    rounds: Math.round(Math.log2(nextPowerOfTwo(order.length))),
+    matches: built.length,
+  };
+}
+
+interface MatchRow {
+  id: number;
+  game_id: number;
+  bracket: BracketName;
+  round: number;
+  position: number;
+  contestant_a: number | null;
+  contestant_b: number | null;
+  winner: number | null;
+  owner_discord_id: string | null;
+  owner_name: string;
+  bracket_type: BracketType;
+}
+
+async function fetchMatchWithGame(matchId: number, gameId: number): Promise<MatchRow | null> {
+  return fetchOne(
+    `SELECT gm.id, gm.game_id, gm.bracket, gm.round, gm.position, gm.contestant_a, gm.contestant_b, gm.winner,
+            g.owner_discord_id, g.owner_name, g.bracket_type
+     FROM game_matches gm JOIN games g ON g.id = gm.game_id
+     WHERE gm.id = $1 AND gm.game_id = $2`,
+    [matchId, gameId],
+  );
+}
+
+/**
+ * Fill the slots a recorded winner advances to. The loser of a winners-bracket
+ * match drops into the losers bracket (double elimination only).
+ */
+async function applyWinner(
+  client: PoolClient,
+  match: MatchRow,
+  winnerId: number,
+  loserId: number | null,
+  k: number,
+) {
+  if (match.bracket_type === "single_elim") {
+    // Winner advances into the next winners round; the final round is the champion.
+    const next = await fetchOneOnClient(
+      client,
+      "SELECT id FROM game_matches WHERE game_id = $1 AND bracket = 'winners' AND round = $2 AND position = $3",
+      [match.game_id, match.round + 1, Math.floor(match.position / 2)],
+    );
+    if (next) {
+      const slot = match.position % 2 === 0 ? "contestant_a" : "contestant_b";
+      await queryOnClient(client, `UPDATE game_matches SET ${slot} = $1 WHERE id = $2 AND ${slot} IS NULL`, [winnerId, next.id]);
+    }
+    return;
+  }
+
+  if (match.bracket === "winners") {
+    // Winner advances in the winners bracket; the final winner takes GF slot A.
+    const next = await fetchOneOnClient(
+      client,
+      "SELECT id FROM game_matches WHERE game_id = $1 AND bracket = 'winners' AND round = $2 AND position = $3",
+      [match.game_id, match.round + 1, Math.floor(match.position / 2)],
+    );
+    if (next) {
+      const slot = match.position % 2 === 0 ? "contestant_a" : "contestant_b";
+      await queryOnClient(client, `UPDATE game_matches SET ${slot} = $1 WHERE id = $2 AND ${slot} IS NULL`, [winnerId, next.id]);
+    } else if (match.round === k) {
+      await queryOnClient(
+        client,
+        "UPDATE game_matches SET contestant_a = $1 WHERE game_id = $2 AND bracket = 'grand_final' AND round = 1 AND contestant_a IS NULL",
+        [winnerId, match.game_id],
+      );
+    }
+    // Loser drops into the losers bracket (or straight to the grand final for
+    // a 2-player bracket).
+    if (loserId != null) {
+      if (k <= 1) {
+        await queryOnClient(
+          client,
+          "UPDATE game_matches SET contestant_b = $1 WHERE game_id = $2 AND bracket = 'grand_final' AND round = 1 AND contestant_b IS NULL",
+          [loserId, match.game_id],
+        );
+      } else if (match.round === 1) {
+        const slot = match.position % 2 === 0 ? "contestant_a" : "contestant_b";
+        await queryOnClient(
+          client,
+          `UPDATE game_matches SET ${slot} = $1 WHERE game_id = $2 AND bracket = 'losers' AND round = 1 AND position = $3`,
+          [loserId, match.game_id, Math.floor(match.position / 2)],
+        );
+      } else {
+        await queryOnClient(
+          client,
+          "UPDATE game_matches SET contestant_a = $1 WHERE game_id = $2 AND bracket = 'losers' AND round = $3 AND position = $4 AND contestant_a IS NULL",
+          [loserId, match.game_id, 2 * match.round - 2, match.position],
+        );
+      }
+    }
+    return;
+  }
+
+  if (match.bracket === "losers") {
+    const lbCount = 2 * k - 2;
+    if (match.round >= lbCount) {
+      // Losers-bracket champion advances into the grand final (slot B).
+      await queryOnClient(
+        client,
+        "UPDATE game_matches SET contestant_b = $1 WHERE game_id = $2 AND bracket = 'grand_final' AND round = 1 AND contestant_b IS NULL",
+        [winnerId, match.game_id],
+      );
+    } else {
+      const nextJ = match.round + 1;
+      if (nextJ % 2 === 0) {
+        // Injection round: previous losers winners take slot B.
+        await queryOnClient(
+          client,
+          "UPDATE game_matches SET contestant_b = $1 WHERE game_id = $2 AND bracket = 'losers' AND round = $3 AND position = $4 AND contestant_b IS NULL",
+          [winnerId, match.game_id, nextJ, match.position],
+        );
+      } else {
+        // Carry round: pair the previous losers winners consecutively.
+        const slot = match.position % 2 === 0 ? "contestant_a" : "contestant_b";
+        await queryOnClient(
+          client,
+          `UPDATE game_matches SET ${slot} = $1 WHERE game_id = $2 AND bracket = 'losers' AND round = $3 AND position = $4`,
+          [winnerId, match.game_id, nextJ, Math.floor(match.position / 2)],
+        );
+      }
+    }
+    return;
+  }
+
+  // grand_final round 1: a losers-side win forces the bracket reset.
+  if (match.round === 1 && winnerId === match.contestant_b) {
+    await queryOnClient(
+      client,
+      "UPDATE game_matches SET contestant_a = $1, contestant_b = $2 WHERE game_id = $3 AND bracket = 'grand_final' AND round = 2",
+      [match.contestant_a, winnerId, match.game_id],
+    );
+  }
+}
+
+/** Reverse the fills made by applyWinner when a winner is cleared. */
+async function undoWinner(
+  client: PoolClient,
+  match: MatchRow,
+  prevWinner: number,
+  loserId: number | null,
+  k: number,
+) {
+  if (match.bracket_type === "single_elim") {
+    const next = await fetchOneOnClient(
+      client,
+      "SELECT id FROM game_matches WHERE game_id = $1 AND bracket = 'winners' AND round = $2 AND position = $3",
+      [match.game_id, match.round + 1, Math.floor(match.position / 2)],
+    );
+    if (next) {
+      const slot = match.position % 2 === 0 ? "contestant_a" : "contestant_b";
+      await queryOnClient(client, `UPDATE game_matches SET ${slot} = NULL WHERE id = $1 AND ${slot} = $2`, [next.id, prevWinner]);
+    }
+    return;
+  }
+
+  if (match.bracket === "winners") {
+    if (match.round === k) {
+      await queryOnClient(
+        client,
+        "UPDATE game_matches SET contestant_a = NULL WHERE game_id = $1 AND bracket = 'grand_final' AND round = 1 AND contestant_a = $2",
+        [match.game_id, prevWinner],
+      );
+    } else {
+      const next = await fetchOneOnClient(
+        client,
+        "SELECT id FROM game_matches WHERE game_id = $1 AND bracket = 'winners' AND round = $2 AND position = $3",
+        [match.game_id, match.round + 1, Math.floor(match.position / 2)],
+      );
+      if (next) {
+        const slot = match.position % 2 === 0 ? "contestant_a" : "contestant_b";
+        await queryOnClient(client, `UPDATE game_matches SET ${slot} = NULL WHERE id = $1 AND ${slot} = $2`, [next.id, prevWinner]);
+      }
+    }
+    if (loserId != null) {
+      if (k <= 1) {
+        await queryOnClient(
+          client,
+          "UPDATE game_matches SET contestant_b = NULL WHERE game_id = $1 AND bracket = 'grand_final' AND round = 1 AND contestant_b = $2",
+          [match.game_id, loserId],
+        );
+      } else if (match.round === 1) {
+        const slot = match.position % 2 === 0 ? "contestant_a" : "contestant_b";
+        await queryOnClient(
+          client,
+          `UPDATE game_matches SET ${slot} = NULL WHERE game_id = $1 AND bracket = 'losers' AND round = 1 AND position = $2 AND ${slot} = $3`,
+          [match.game_id, Math.floor(match.position / 2), loserId],
+        );
+      } else {
+        await queryOnClient(
+          client,
+          "UPDATE game_matches SET contestant_a = NULL WHERE game_id = $1 AND bracket = 'losers' AND round = $2 AND position = $3 AND contestant_a = $4",
+          [match.game_id, 2 * match.round - 2, match.position, loserId],
+        );
+      }
+    }
+    return;
+  }
+
+  if (match.bracket === "losers") {
+    const lbCount = 2 * k - 2;
+    if (match.round >= lbCount) {
+      await queryOnClient(
+        client,
+        "UPDATE game_matches SET contestant_b = NULL WHERE game_id = $1 AND bracket = 'grand_final' AND round = 1 AND contestant_b = $2",
+        [match.game_id, prevWinner],
+      );
+    } else {
+      const nextJ = match.round + 1;
+      if (nextJ % 2 === 0) {
+        await queryOnClient(
+          client,
+          "UPDATE game_matches SET contestant_b = NULL WHERE game_id = $1 AND bracket = 'losers' AND round = $2 AND position = $3 AND contestant_b = $4",
+          [match.game_id, nextJ, match.position, prevWinner],
+        );
+      } else {
+        const slot = match.position % 2 === 0 ? "contestant_a" : "contestant_b";
+        await queryOnClient(
+          client,
+          `UPDATE game_matches SET ${slot} = NULL WHERE game_id = $1 AND bracket = 'losers' AND round = $2 AND position = $3 AND ${slot} = $4`,
+          [match.game_id, nextJ, Math.floor(match.position / 2), prevWinner],
+        );
+      }
+    }
+    return;
+  }
+
+  // grand_final round 1: clear the reset match.
+  if (match.round === 1) {
+    await queryOnClient(
+      client,
+      "UPDATE game_matches SET contestant_a = NULL, contestant_b = NULL, winner = NULL WHERE game_id = $1 AND bracket = 'grand_final' AND round = 2",
+      [match.game_id],
+    );
+  }
+}
+
+/**
+ * Losers round 1 can be a single-contestant match when the winners round 1
+ * match that would have fed the other slot was a bye (a bye has no loser to
+ * drop). Such a match is already decided, so the lone contestant auto-advances
+ * like a normal pick instead of stalling the whole losers bracket. If an undo
+ * empties a slot or turns the feeder back into a live match, the advancement is
+ * reverted. Idempotent — re-run after any winner mutation in double elimination.
+ */
+async function reconcileLosersRound1(client: PoolClient, gameId: number, k: number) {
+  if (k <= 1) return;
+  const rows = await fetchAllOnClient(
+    client,
+    "SELECT id, position, contestant_a, contestant_b, winner FROM game_matches WHERE game_id = $1 AND bracket = 'losers' AND round = 1 ORDER BY position",
+    [gameId],
+  );
+  for (const row of rows) {
+    const id = row.id as number;
+    const position = row.position as number;
+    const a = row.contestant_a as number | null;
+    const b = row.contestant_b as number | null;
+    const currentWinner = row.winner as number | null;
+
+    let expected: number | null;
+    if (a != null && b != null) {
+      expected = currentWinner; // full match — leave any recorded winner alone
+    } else if (a == null && b == null) {
+      expected = null;
+    } else {
+      const lone = a ?? b;
+      if (lone == null) continue;
+      const missing = a == null ? "contestant_a" : "contestant_b";
+      const wb = await fetchOneOnClient(
+        client,
+        "SELECT contestant_a, contestant_b FROM game_matches WHERE game_id = $1 AND bracket = 'winners' AND round = 1 AND position = $2",
+        [gameId, position * 2 + (missing === "contestant_a" ? 0 : 1)],
+      );
+      const bye = wb != null && wb.contestant_a != null && wb.contestant_b == null;
+      expected = bye ? lone : null;
+    }
+
+    if (expected === currentWinner) continue;
+
+    const match = await fetchOneOnClient(
+      client,
+      `SELECT gm.id, gm.game_id, gm.bracket, gm.round, gm.position, gm.contestant_a, gm.contestant_b, gm.winner,
+              g.owner_discord_id, g.owner_name, g.bracket_type
+       FROM game_matches gm JOIN games g ON g.id = gm.game_id
+       WHERE gm.id = $1 AND gm.game_id = $2`,
+      [id, gameId],
+    );
+    if (!match) continue;
+
+    if (currentWinner != null) {
+      const prevLoser = currentWinner === match.contestant_a ? match.contestant_b : match.contestant_a;
+      await undoWinner(client, match, currentWinner, prevLoser, k);
+      if (prevLoser != null) {
+        await queryOnClient(
+          client,
+          "UPDATE game_contestants SET losses = GREATEST(losses - 1, 0) WHERE id = $1 AND game_id = $2",
+          [prevLoser, gameId],
+        );
+      }
+      await queryOnClient(client, "UPDATE game_matches SET winner = NULL WHERE id = $1 AND game_id = $2", [id, gameId]);
+    }
+    if (expected != null) {
+      await queryOnClient(client, "UPDATE game_matches SET winner = $1 WHERE id = $2 AND game_id = $3", [expected, id, gameId]);
+      await applyWinner(client, match, expected, null, k);
+    }
+  }
 }
 
 export async function setMatchWinner(
@@ -532,39 +957,44 @@ export async function setMatchWinner(
   matchId: number,
   winnerId: number,
 ) {
-  const match = await fetchOne(
-    `SELECT gm.id, gm.round, gm.position, gm.contestant_a, gm.contestant_b,
-            g.owner_discord_id, g.owner_name
-     FROM game_matches gm JOIN games g ON g.id = gm.game_id
-     WHERE gm.id = $1 AND gm.game_id = $2`,
-    [matchId, gameId],
-  );
+  const match = await fetchMatchWithGame(matchId, gameId);
   if (!match) return { error: "not found" };
   if (!isGameOwner(match, { id: ownerId, username: ownerName })) return { error: "not the owner" };
   if (winnerId !== match.contestant_a && winnerId !== match.contestant_b) {
     return { error: "invalid winner" };
   }
 
+  const k = match.bracket_type === "double_elim" ? await winnersRounds(match.game_id) : 0;
+
   await transaction(async (client) => {
+    // Re-picks are applied as clear-then-set so the bracket never corrupts.
+    if (match.winner != null) {
+      const prevLoser = match.winner === match.contestant_a ? match.contestant_b : match.contestant_a;
+      await undoWinner(client, match, match.winner, prevLoser, k);
+      if (prevLoser != null) {
+        await queryOnClient(
+          client,
+          "UPDATE game_contestants SET losses = GREATEST(losses - 1, 0) WHERE id = $1 AND game_id = $2",
+          [prevLoser, gameId],
+        );
+      }
+    }
     await queryOnClient(
       client,
       "UPDATE game_matches SET winner = $1 WHERE id = $2 AND game_id = $3",
       [winnerId, matchId, gameId],
     );
-    // Advance the winner into the next round (position of this match, left side
-    // if even, right side if odd). Bye slots are refilled only when still empty.
-    const next = await fetchOneOnClient(
-      client,
-      "SELECT id FROM game_matches WHERE game_id = $1 AND round = $2 AND position = $3",
-      [gameId, match.round + 1, Math.floor(match.position / 2)],
-    );
-    if (next) {
-      const slot = match.position % 2 === 0 ? "contestant_a" : "contestant_b";
+    const loserId = winnerId === match.contestant_a ? match.contestant_b : match.contestant_a;
+    await applyWinner(client, match, winnerId, loserId, k);
+    if (loserId != null) {
       await queryOnClient(
         client,
-        `UPDATE game_matches SET ${slot} = $1 WHERE id = $2 AND ${slot} IS NULL`,
-        [winnerId, next.id],
+        "UPDATE game_contestants SET losses = losses + 1 WHERE id = $1 AND game_id = $2",
+        [loserId, gameId],
       );
+    }
+    if (match.bracket_type === "double_elim") {
+      await reconcileLosersRound1(client, match.game_id, k);
     }
   });
 
@@ -579,37 +1009,31 @@ export async function resetMatchWinner(
   ownerId: string,
   matchId: number,
 ) {
-  const match = await fetchOne(
-    `SELECT gm.id, gm.round, gm.position, gm.winner,
-            g.owner_discord_id, g.owner_name
-     FROM game_matches gm JOIN games g ON g.id = gm.game_id
-     WHERE gm.id = $1 AND gm.game_id = $2`,
-    [matchId, gameId],
-  );
+  const match = await fetchMatchWithGame(matchId, gameId);
   if (!match) return { error: "not found" };
   if (!isGameOwner(match, { id: ownerId, username: ownerName })) return { error: "not the owner" };
   if (match.winner == null) return { warning: "no winner set" };
+  const prevWinner = match.winner;
+
+  const k = match.bracket_type === "double_elim" ? await winnersRounds(match.game_id) : 0;
 
   await transaction(async (client) => {
+    const loserId = prevWinner === match.contestant_a ? match.contestant_b : match.contestant_a;
+    await undoWinner(client, match, prevWinner, loserId, k);
     await queryOnClient(
       client,
       "UPDATE game_matches SET winner = NULL WHERE id = $1 AND game_id = $2",
       [matchId, gameId],
     );
-    // Remove the winner from the next round slot it advanced into (only if it
-    // still holds that exact contestant).
-    const next = await fetchOneOnClient(
-      client,
-      "SELECT id FROM game_matches WHERE game_id = $1 AND round = $2 AND position = $3",
-      [gameId, match.round + 1, Math.floor(match.position / 2)],
-    );
-    if (next) {
-      const slot = match.position % 2 === 0 ? "contestant_a" : "contestant_b";
+    if (loserId != null) {
       await queryOnClient(
         client,
-        `UPDATE game_matches SET ${slot} = NULL WHERE id = $1 AND ${slot} = $2`,
-        [next.id, match.winner],
+        "UPDATE game_contestants SET losses = GREATEST(losses - 1, 0) WHERE id = $1 AND game_id = $2",
+        [loserId, gameId],
       );
+    }
+    if (match.bracket_type === "double_elim") {
+      await reconcileLosersRound1(client, match.game_id, k);
     }
   });
 

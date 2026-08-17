@@ -21,8 +21,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   try {
+    const bracketType = body.bracketType === "double_elim" ? "double_elim" : "single_elim";
     const result = await generateBracket(gameId, user.username, user.id, {
       shuffle: body.shuffle !== false,
+      bracketType,
     });
     if ("error" in result) {
       if (result.error === "not found") return notFound("Not found");

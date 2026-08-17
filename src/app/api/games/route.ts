@@ -50,6 +50,8 @@ export async function POST(req: NextRequest) {
   const gameMode = typeof body.game_mode === "string" ? body.game_mode : "pvp";
   if (!VALID_MODES.has(gameMode)) return badRequest("Invalid game mode");
 
+  const bracketType = body.bracket_type === "double_elim" ? "double_elim" : "single_elim";
+
   const visibility = typeof body.visibility === "string" ? body.visibility : "public";
   if (!VALID_VISIBILITY.has(visibility)) return badRequest("Invalid visibility");
 
@@ -96,6 +98,7 @@ export async function POST(req: NextRequest) {
       registerOpenAt,
       registerCloseAt,
       rouletteEnabled: body.roulette_enabled === true,
+      bracketType,
     });
     return ok(result, 201);
   } catch (err) {

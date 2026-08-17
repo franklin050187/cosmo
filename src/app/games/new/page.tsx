@@ -29,6 +29,7 @@ function NewGameContent() {
   const [regOpen, setRegOpen] = useState("");
   const [regClose, setRegClose] = useState("");
   const [roulette, setRoulette] = useState(false);
+  const [bracketType, setBracketType] = useState<"single_elim" | "double_elim">("single_elim");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileWidgetHandle>(null);
@@ -73,6 +74,7 @@ function NewGameContent() {
           register_open_at: regOpenIso,
           register_close_at: regCloseIso,
           roulette_enabled: roulette,
+          bracket_type: bracketType,
           "cf-turnstile-response": turnstileToken,
         }),
       });
@@ -154,6 +156,22 @@ function NewGameContent() {
             </select>
           </div>
         </div>
+
+        {gameMode === "tournament" && (
+          <div>
+            <label htmlFor="game-bracket" className="block text-blue-200 mb-1">Bracket format</label>
+            <select
+              id="game-bracket"
+              name="bracket_type"
+              value={bracketType}
+              onChange={(e) => setBracketType(e.target.value as "single_elim" | "double_elim")}
+              className={inputClass}
+            >
+              <option value="single_elim">Single elimination</option>
+              <option value="double_elim">Double elimination</option>
+            </select>
+          </div>
+        )}
 
         <div>
           <label htmlFor="game-date" className="block text-blue-200 mb-1">

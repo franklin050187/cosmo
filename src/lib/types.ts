@@ -1,6 +1,7 @@
 import { type ShipRow } from "./db";
 
 export type {
+  BracketType,
   GameDetail,
   GameMatch,
   GameMode,

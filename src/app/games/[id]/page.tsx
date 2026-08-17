@@ -11,7 +11,7 @@ import type { TurnstileWidgetHandle } from "@/components/TurnstileWidget";
 import Bracket from "@/components/games/Bracket";
 import CollectionSelect from "@/components/games/CollectionSelect";
 import { useAuth } from "@/hooks/useAuth";
-import { type GameDetail, type GameMode, type GameStatus, type GameVisibility } from "@/lib/types";
+import { type GameDetail, type GameMode, type GameStatus, type GameVisibility, type BracketType } from "@/lib/types";
 import { trackEvent } from "@/lib/analytics-client";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { formatDate, formatDateTime, toDatetimeLocal, fromDatetimeLocal } from "@/lib/format-date";
@@ -53,6 +53,7 @@ export default function GameDetailPage() {
   const [editRegOpen, setEditRegOpen] = useState("");
   const [editRegClose, setEditRegClose] = useState("");
   const [editRoulette, setEditRoulette] = useState(false);
+  const [editBracketType, setEditBracketType] = useState<BracketType>("single_elim");
   const editTurnstileRef = useRef<TurnstileWidgetHandle>(null);
   const [pendingDelete, setPendingDelete] = useState(false);
 
@@ -108,6 +109,7 @@ export default function GameDetailPage() {
           setEditRegOpen(data.register_open_at ? toDatetimeLocal(new Date(data.register_open_at)) : "");
           setEditRegClose(data.register_close_at ? toDatetimeLocal(new Date(data.register_close_at)) : "");
           setEditRoulette(data.roulette_enabled);
+          setEditBracketType(data.bracket_type);
         }
         trackEvent("game_view");
       })
@@ -234,6 +236,7 @@ export default function GameDetailPage() {
           register_open_at: regOpenIso,
           register_close_at: regCloseIso,
           roulette_enabled: editRoulette,
+          bracket_type: editBracketType,
           "cf-turnstile-response": turnstileToken,
         }),
       });
@@ -316,7 +319,7 @@ export default function GameDetailPage() {
       const res = await fetch(`/api/games/${game.id}/bracket`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shuffle }),
+        body: JSON.stringify({ shuffle, bracketType: editBracketType }),
       });
       const json = await res.json();
       if (!res.ok || json.error) {
@@ -365,7 +368,7 @@ export default function GameDetailPage() {
   );
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="w-full">
       <Link href="/games" className="inline-flex items-center gap-1.5 text-sm text-blue-300 hover:text-cyan-300 transition-colors mb-6">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -382,6 +385,9 @@ export default function GameDetailPage() {
               {game.visibility === "private" ? "Private" : "Public"}
             </span>{" "}
             · {STATUS_LABELS[game.status] ?? game.status}
+            {game.game_mode === "tournament" && (
+              <> · {game.bracket_type === "double_elim" ? "Double elimination" : "Single elimination"}</>
+            )}
           </p>
           <p className="text-cyan-300 text-sm mt-1">Game day: {formatDateTime(game.game_date)}</p>
           <p className="text-gray-400 text-xs">
@@ -562,6 +568,15 @@ export default function GameDetailPage() {
               </select>
             </div>
           </div>
+          {editMode === "tournament" && (
+            <div>
+              <label htmlFor="edit-game-bracket" className="block text-blue-200 mb-1">Bracket format</label>
+              <select id="edit-game-bracket" name="bracket_type" value={editBracketType} onChange={(e) => setEditBracketType(e.target.value as BracketType)} className="w-full p-2 bg-[#021526] border border-gray-400 rounded text-white">
+                <option value="single_elim">Single elimination</option>
+                <option value="double_elim">Double elimination</option>
+              </select>
+            </div>
+          )}
           <div>
             <label htmlFor="edit-game-collection" className="block text-blue-200 mb-1">Linked collection</label>
             <CollectionSelect id="edit-game-collection" name="collection_id" value={editCollectionId} onChange={setEditCollectionId} />
@@ -713,6 +728,17 @@ export default function GameDetailPage() {
                   <input type="checkbox" checked={shuffle} onChange={(e) => setShuffle(e.target.checked)} />
                   Shuffle seeds
                 </label>
+                <label className="flex items-center gap-2 text-sm text-blue-200">
+                  Format
+                  <select
+                    value={editBracketType}
+                    onChange={(e) => setEditBracketType(e.target.value as BracketType)}
+                    className="p-2 bg-[#021526] border border-gray-400 rounded text-white text-sm"
+                  >
+                    <option value="single_elim">Single elimination</option>
+                    <option value="double_elim">Double elimination</option>
+                  </select>
+                </label>
                 <Button onClick={handleGenerateBracket} disabled={bracketBusy || game.contestants.length < 2}>
                   {bracketBusy ? "Generating..." : game.matches.length > 0 ? "Regenerate Bracket" : "Generate Bracket"}
                 </Button>
@@ -724,6 +750,7 @@ export default function GameDetailPage() {
                   matches={game.matches}
                   contestants={game.contestants}
                   isOwner={isOwner}
+                  bracketType={game.bracket_type}
                   onChanged={async () => setGame(await load())}
                 />
               </div>
@@ -741,6 +768,7 @@ export default function GameDetailPage() {
               matches={game.matches}
               contestants={game.contestants}
               isOwner={false}
+              bracketType={game.bracket_type}
             />
           )}
         </Card>
