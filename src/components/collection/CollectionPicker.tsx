@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, cloneElement, isValidElement } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,7 +13,7 @@ interface Collection {
 
 interface Props {
   shipId: number;
-  children: React.ReactNode;
+  children: React.ReactElement<{ className?: string }>;
   className?: string;
 }
 
@@ -27,7 +27,7 @@ export default function CollectionPicker({ shipId, children, className }: Props)
   const [toggling, setToggling] = useState<number | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
-  const triggerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const msgTimer = useRef<number | undefined>(undefined);
   const firstItemRef = useRef<HTMLButtonElement>(null);
@@ -171,25 +171,26 @@ export default function CollectionPicker({ shipId, children, className }: Props)
     next?.focus();
   };
 
+  const trigger = isValidElement(children)
+    ? cloneElement(
+        children as React.ReactElement<Record<string, unknown>>,
+        {
+          onClick: (e: React.MouseEvent) => {
+            (children.props as { onClick?: (ev: React.MouseEvent) => void } | null)?.onClick?.(e);
+            handleToggle();
+          },
+          "aria-expanded": open,
+          "aria-haspopup": "listbox",
+          "aria-controls": "collection-picker-panel",
+        },
+      )
+    : children;
+
   return (
     <>
-      <div
-        ref={triggerRef}
-        className={["relative inline-block", className].filter(Boolean).join(" ")}
-        role="button"
-        tabIndex={0}
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        onClick={handleToggle}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            handleToggle();
-          }
-        }}
-      >
-        {children}
-      </div>
+      <span ref={triggerRef} className={className}>
+        {trigger}
+      </span>
 
       {typeof document !== "undefined" && createPortal(
         <>
@@ -205,6 +206,7 @@ export default function CollectionPicker({ shipId, children, className }: Props)
 
           {open && (
             <div
+              id="collection-picker-panel"
               ref={panelRef}
               role="listbox"
               aria-label="Your collections"

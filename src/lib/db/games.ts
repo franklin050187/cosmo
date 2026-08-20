@@ -43,9 +43,37 @@ const GAME_LIST_SELECT = `SELECT g.id, g.owner_discord_id, g.owner_name, g.title
 export function isGameOwner(
   game: Pick<GameRow, "owner_name"> & { owner_discord_id: string | null },
   { id, username }: { id: string; username: string },
-): boolean {
+) {
   if (game.owner_discord_id) return game.owner_discord_id === id;
   return game.owner_name === username;
+}
+
+interface ChampionMatchRow {
+  id: number;
+  bracket: BracketName;
+  round: number;
+  position: number;
+  contestant_a: number | null;
+  contestant_b: number | null;
+  winner: number | null;
+}
+
+/** Champion from raw match rows (no usernames) — mirrors computeChampion. */
+export function computeChampionFromRows(rows: ChampionMatchRow[], bracketType: BracketType): number | null {
+  const winners = rows.filter((m) => m.bracket === "winners");
+  const grandFinal = rows.filter((m) => m.bracket === "grand_final");
+
+  if (bracketType !== "double_elim") {
+    const maxRound = winners.reduce((mx, m) => Math.max(mx, m.round), 0);
+    const final = winners.find((m) => m.round === maxRound && m.position === 0) ?? null;
+    return final?.winner ?? null;
+  }
+
+  const gf1 = grandFinal.find((m) => m.round === 1) ?? null;
+  const gf2 = grandFinal.find((m) => m.round === 2) ?? null;
+  if (gf2?.winner != null) return gf2.winner;
+  if (gf1?.winner != null && gf1.winner === gf1.contestant_a) return gf1.winner;
+  return null;
 }
 
 async function makeInviteCode(): Promise<string> {
@@ -143,6 +171,15 @@ export async function listMyGames(discordId: string, username: string) {
   );
 }
 
+/** Game ids the given user is registered in (used to badge "you're registered"). */
+export async function listRegisteredGameIds(discordId: string, username: string): Promise<Set<number>> {
+  const rows = await fetchAll(
+    "SELECT game_id FROM game_registrations WHERE discord_id = $1 OR LOWER(discord_username) = LOWER($2)",
+    [discordId, username],
+  );
+  return new Set(rows.map((r) => r.game_id));
+}
+
 export async function getGame(id: number) {
   const game = await fetchOne(`SELECT ${GAME_COLUMNS} FROM games WHERE id = $1`, [id]);
   if (!game) return null;
@@ -160,7 +197,7 @@ async function getGameDetail(game: GameRow) {
     ? await fetchOne("SELECT id, title FROM collections WHERE id = $1", [game.collection_id])
     : null;
   const ships = await fetchAll(
-    "SELECT s.id, s.ship_name, s.data FROM game_ships gs JOIN shipdb s ON s.id = gs.ship_id WHERE gs.game_id = $1 ORDER BY gs.id",
+    "SELECT s.id, s.ship_name, s.data, s.downloads, s.fav FROM game_ships gs JOIN shipdb s ON s.id = gs.ship_id WHERE gs.game_id = $1 ORDER BY gs.id",
     [game.id],
   );
   const participants = await fetchAll(
@@ -184,7 +221,7 @@ async function getGameDetail(game: GameRow) {
     winner_username: m.winner != null ? names.get(m.winner) ?? null : null,
   }));
   const draws = await fetchAll(
-    "SELECT d.participant_username, d.ship_id, s.ship_name FROM game_ship_draws d JOIN shipdb s ON s.id = d.ship_id WHERE d.game_id = $1 ORDER BY d.id",
+    "SELECT d.participant_username, d.participant_discord_id, d.ship_id, s.ship_name, s.data, s.downloads, s.fav FROM game_ship_draws d JOIN shipdb s ON s.id = d.ship_id WHERE d.game_id = $1 ORDER BY d.id",
     [game.id],
   );
   return { ...game, collection, ships, participants, contestants, matches, draws };
@@ -307,6 +344,38 @@ export async function updateGame(
   }
   bumpDbVersion();
   return { success: "game updated" };
+}
+
+/**
+ * Mark a tournament game as finished (owner only). Optional: when `requireChampion`
+ * is set, the game is only finished if a champion is actually decided in the
+ * bracket — so owners can't mark a tournament finished with no winner.
+ */
+export async function markGameFinished(
+  id: number,
+  ownerName: string,
+  ownerId: string,
+  opts: { requireChampion?: boolean } = {},
+) {
+  const game = await fetchOne(
+    "SELECT owner_discord_id, owner_name, status, bracket_type FROM games WHERE id = $1",
+    [id],
+  );
+  if (!game) return { error: "not found" };
+  if (!isGameOwner(game, { id: ownerId, username: ownerName })) return { error: "not the owner" };
+
+  if (opts.requireChampion) {
+    const matchRows = await fetchAll(
+      "SELECT id, bracket, round, position, contestant_a, contestant_b, winner FROM game_matches WHERE game_id = $1 ORDER BY bracket, round, position",
+      [id],
+    );
+    const champion = computeChampionFromRows(matchRows, game.bracket_type);
+    if (champion == null) return { error: "no champion yet" };
+  }
+
+  await query("UPDATE games SET status = 'finished' WHERE id = $1", [id]);
+  bumpDbVersion();
+  return { success: "game finished" };
 }
 
 export async function deleteGame(id: number, ownerName: string, ownerId: string) {

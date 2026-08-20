@@ -3,18 +3,22 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import type { TurnstileWidgetHandle } from "@/components/TurnstileWidget";
 import Bracket from "@/components/games/Bracket";
 import CollectionSelect from "@/components/games/CollectionSelect";
+import { computeChampion, computeRunnerUp } from "@/lib/bracket-util";
 import { useAuth } from "@/hooks/useAuth";
 import { type GameDetail, type GameMode, type GameStatus, type GameVisibility, type BracketType } from "@/lib/types";
 import { trackEvent } from "@/lib/analytics-client";
 import { sanitizeHtml } from "@/lib/sanitize";
-import { formatDate, formatDateTime, toDatetimeLocal, fromDatetimeLocal } from "@/lib/format-date";
+import { rarityForRank, RARITY_META, type Rarity } from "@/lib/roulette";
+import { formatDate, formatDateTime, formatDateTimeWithTz, countdownLabel, toDatetimeLocal, fromDatetimeLocal } from "@/lib/format-date";
 
 const MODE_LABELS: Record<string, string> = { pvp: "PvP", tournament: "Tournament", campaign: "Campaign" };
 const STATUS_LABELS: Record<string, string> = { open: "Open", closed: "Closed", finished: "Finished" };
@@ -37,7 +41,7 @@ export default function GameDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ text: string; kind: "error" | "success" | "info" } | null>(null);
   const [guestName, setGuestName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [copied, setCopied] = useState(false);
@@ -56,6 +60,8 @@ export default function GameDetailPage() {
   const [editBracketType, setEditBracketType] = useState<BracketType>("single_elim");
   const editTurnstileRef = useRef<TurnstileWidgetHandle>(null);
   const [pendingDelete, setPendingDelete] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmRedeal, setConfirmRedeal] = useState(false);
 
   const [shuffle, setShuffle] = useState(true);
   const [bracketBusy, setBracketBusy] = useState(false);
@@ -126,10 +132,12 @@ export default function GameDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id, user?.id, user?.username]);
 
-  const showMsg = (text: string) => {
-    setMsg(text);
-    window.setTimeout(() => setMsg(null), 3000);
+  const showMsg = (text: string, kind: "error" | "success" | "info" = "success") => {
+    setMsg({ text, kind });
+    window.setTimeout(() => setMsg(null), kind === "error" ? 5000 : 3000);
   };
+
+  const showError = (text: string) => showMsg(text, "error");
 
   const membership = game ? game.participants.some((p) => sameIdentity(p, user)) : false;
   const memberGuestMatch = guestName
@@ -150,14 +158,14 @@ export default function GameDetailPage() {
       });
       const json = await res.json();
       if (!res.ok || json.error) {
-        setMsg(json.error ?? "Failed to register");
+        showError(json.error ?? "Failed to register");
         return;
       }
       showMsg(json.data?.success ?? "Registered");
       trackEvent("game_register");
       setGame(await load());
     } catch {
-      setMsg("Failed to register");
+      showError("Failed to register");
     } finally {
       setBusy(false);
     }
@@ -175,13 +183,13 @@ export default function GameDetailPage() {
       });
       const json = await res.json();
       if (!res.ok || json.error) {
-        setMsg(json.error ?? "Failed to leave");
+        showError(json.error ?? "Failed to leave");
         return;
       }
       showMsg(json.data?.warning ?? "Left game");
       setGame(await load());
     } catch {
-      setMsg("Failed to leave");
+      showError("Failed to leave");
     } finally {
       setBusy(false);
     }
@@ -196,28 +204,28 @@ export default function GameDetailPage() {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       })
-      .catch(() => showMsg("Could not copy link"));
+      .catch(() => showMsg("Could not copy link", "error"));
   };
 
   const saveEdit = async () => {
     if (!game) return;
     const turnstileToken = editTurnstileRef.current?.getToken();
     if (!turnstileToken) {
-      setMsg("Please complete the Turnstile captcha.");
+      showError("Please complete the Turnstile captcha.");
       return;
     }
     setBusy(true);
     setMsg(null);
     const gameDateIso = fromDatetimeLocal(editGameDate);
     if (!gameDateIso) {
-      setMsg("Day of the game is required.");
+      showError("Day of the game is required.");
       setBusy(false);
       return;
     }
     const regOpenIso = fromDatetimeLocal(editRegOpen);
     const regCloseIso = fromDatetimeLocal(editRegClose);
     if (regOpenIso && regCloseIso && new Date(regOpenIso) > new Date(regCloseIso)) {
-      setMsg("Registration window ends before it starts.");
+      showError("Registration window ends before it starts.");
       setBusy(false);
       return;
     }
@@ -242,22 +250,21 @@ export default function GameDetailPage() {
       });
       const json = await res.json();
       if (!res.ok || json.error) {
-        setMsg(json.error ?? "Failed to save");
+        showError(json.error ?? "Failed to save");
         return;
       }
       showMsg("Saved");
       setEditing(false);
       setGame(await load());
     } catch {
-      setMsg("Failed to save");
+      showError("Failed to save");
     } finally {
       setBusy(false);
     }
   };
 
   const handleDelete = () => {
-    if (!confirm("Delete this game? This also removes all registrations and brackets.")) return;
-    setPendingDelete(true);
+    setConfirmDelete(true);
   };
 
   const onDeleteVerify = async (token: string) => {
@@ -284,7 +291,7 @@ export default function GameDetailPage() {
   const handleManualAdd = async () => {
     if (!game || !manualAdd.trim()) return;
     if (manualAdd.trim().length > 40) {
-      showMsg("Username too long");
+      showMsg("Username too long", "error");
       return;
     }
     const res = await fetch(`/api/games/${game.id}/contestants`, {
@@ -294,7 +301,7 @@ export default function GameDetailPage() {
     });
     const json = await res.json().catch(() => null);
     if (!res.ok || json?.error) {
-      showMsg(json?.error ?? "Failed to add player");
+      showMsg(json?.error ?? "Failed to add player", "error");
       return;
     }
     showMsg(json?.data?.warning ?? "Player added to bracket");
@@ -323,13 +330,13 @@ export default function GameDetailPage() {
       });
       const json = await res.json();
       if (!res.ok || json.error) {
-        showMsg(json.error ?? "Failed to generate bracket");
+        showMsg(json.error ?? "Failed to generate bracket", "error");
         return;
       }
       showMsg("Bracket generated");
       setGame(await load());
     } catch {
-      showMsg("Failed to generate bracket");
+      showMsg("Failed to generate bracket", "error");
     } finally {
       setBracketBusy(false);
     }
@@ -345,15 +352,35 @@ export default function GameDetailPage() {
       });
       const json = await res.json();
       if (!res.ok || json.error) {
-        showMsg(json.error ?? "Failed to deal ships");
+        showMsg(json.error ?? "Failed to deal ships", "error");
         return;
       }
       showMsg(`Dealt ${json.data?.players ?? 0} ship${(json.data?.players ?? 1) === 1 ? "" : "s"}`);
       setGame(await load());
     } catch {
-      showMsg("Failed to deal ships");
+      showMsg("Failed to deal ships", "error");
     } finally {
       setRouletteBusy(false);
+    }
+  };
+
+  const [finishBusy, setFinishBusy] = useState(false);
+  const handleFinish = async () => {
+    if (!game) return;
+    setFinishBusy(true);
+    try {
+      const res = await fetch(`/api/games/${game.id}/finish`, { method: "POST" });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        showMsg(json.error ?? "Failed to mark finished", "error");
+        return;
+      }
+      showMsg("Game marked finished");
+      setGame(await load());
+    } catch {
+      showMsg("Failed to mark finished", "error");
+    } finally {
+      setFinishBusy(false);
     }
   };
 
@@ -367,9 +394,31 @@ export default function GameDetailPage() {
     ),
   );
 
+  const championId = computeChampion(game.matches, game.bracket_type);
+  const runnerUpId = computeRunnerUp(game.matches, game.bracket_type);
+  const championName = championId != null ? game.contestants.find((c) => c.id === championId)?.discord_username ?? null : null;
+  const runnerUpName = runnerUpId != null ? game.contestants.find((c) => c.id === runnerUpId)?.discord_username ?? null : null;
+  const hasChampion = championName != null;
+
+  // Rarity per drawn ship, derived from popularity rank within the game's ships
+  // (same derivation as the roulette picker).
+  const rarityByShipId = (() => {
+    const sorted = [...game.ships].sort(
+      (a, b) => (b.downloads ?? 0) * 3 + (b.fav ?? 0) - ((a.downloads ?? 0) * 3 + (a.fav ?? 0)) || a.id - b.id,
+    );
+    const map = new Map<number, Rarity>();
+    sorted.forEach((s, rank) => map.set(s.id, rarityForRank(rank, sorted.length)));
+    return map;
+  })();
+  const drawsWithRarity = game.draws.map((d) => ({
+    ...d,
+    rarity: RARITY_META[rarityByShipId.get(d.ship_id) ?? "common"],
+    isMine: sameIdentity({ discord_id: d.participant_discord_id, discord_username: d.participant_username }, user),
+  }));
+
   return (
     <div className="w-full">
-      <Link href="/games" className="inline-flex items-center gap-1.5 text-sm text-blue-300 hover:text-cyan-300 transition-colors mb-6">
+      <Link href="/games" aria-label="Back to all games" className="inline-flex items-center gap-1.5 text-sm text-blue-300 hover:text-cyan-300 transition-colors mb-6">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
@@ -389,13 +438,15 @@ export default function GameDetailPage() {
               <> · {game.bracket_type === "double_elim" ? "Double elimination" : "Single elimination"}</>
             )}
           </p>
-          <p className="text-cyan-300 text-sm mt-1">Game day: {formatDateTime(game.game_date)}</p>
+          <p className="text-cyan-300 text-sm mt-1" title={formatDateTimeWithTz(game.game_date)}>
+            Game day: {formatDateTimeWithTz(game.game_date)} · {countdownLabel(game.game_date)}
+          </p>
           <p className="text-gray-400 text-xs">
             {game.register_open_at || game.register_close_at ? (
               <>
                 Registration window:{" "}
-                {game.register_open_at ? `opens ${formatDateTime(game.register_open_at)}` : "open"}
-                {game.register_close_at ? ` · closes ${formatDateTime(game.register_close_at)}` : ""}
+                {game.register_open_at ? `opens ${formatDateTimeWithTz(game.register_open_at)}` : "open"}
+                {game.register_close_at ? ` · closes ${formatDateTimeWithTz(game.register_close_at)}` : ""}
               </>
             ) : (
               "No registration window"
@@ -407,12 +458,16 @@ export default function GameDetailPage() {
         <div className="flex flex-wrap gap-2">
           {isOwner && (
             <>
-              <Button onClick={() => setEditing((v) => !v)}>{editing ? "Close Editor" : "Edit"}</Button>
-              <Button variant="danger" onClick={handleDelete}>Delete</Button>
+              <Button onClick={() => setEditing((v) => !v)} aria-label={editing ? "Close game editor" : "Edit game settings"}>
+                {editing ? "Close Editor" : "Edit"}
+              </Button>
+              <Button variant="danger" onClick={handleDelete} aria-label="Delete this game">
+                Delete
+              </Button>
             </>
           )}
           {game.visibility === "private" && isOwner && (
-            <Button variant="amber" onClick={copyInvite}>
+            <Button variant="amber" onClick={copyInvite} aria-label="Copy private invite link">
               {copied ? "Link copied!" : "Copy invite link"}
             </Button>
           )}
@@ -427,7 +482,7 @@ export default function GameDetailPage() {
         <Card className="mb-6">
           <p className="text-sm text-blue-200">
             Linked collection:{" "}
-            <Link href={`/collections/${game.collection.id}`} className="text-cyan-400 hover:underline">
+            <Link href={`/collections/${game.collection.id}`} aria-label={`View collection ${game.collection.title}`} className="text-cyan-400 hover:underline">
               {game.collection.title}
             </Link>{" "}
             · {game.ships.length} ship{game.ships.length === 1 ? "" : "s"}
@@ -465,11 +520,11 @@ export default function GameDetailPage() {
             {canRegister && (isLoggedIn ? (
               <div className="flex gap-2">
                 {membership ? (
-                  <Button variant="danger" onClick={() => leave()} disabled={busy}>
+                  <Button variant="danger" onClick={() => leave()} disabled={busy} aria-label="Leave game">
                     {busy ? "Leaving..." : "Leave game"}
                   </Button>
                 ) : (
-                  <Button onClick={() => register()} disabled={busy}>
+                  <Button onClick={() => register()} disabled={busy} aria-label="Register for this game">
                     {busy ? "Registering..." : "Register"}
                   </Button>
                 )}
@@ -489,11 +544,11 @@ export default function GameDetailPage() {
                     className="w-48 p-2 bg-[#021526] border border-gray-400 rounded text-white text-sm"
                   />
                   {memberGuestMatch ? (
-                    <Button variant="danger" onClick={() => leave({ username: guestName })} disabled={busy}>
+                    <Button variant="danger" onClick={() => leave({ username: guestName })} disabled={busy} aria-label={`Leave game as ${guestName}`}>
                       {busy ? "Leaving..." : "Leave"}
                     </Button>
                   ) : (
-                    <Button onClick={() => register({ username: guestName })} disabled={busy || !guestName.trim()}>
+                    <Button onClick={() => register({ username: guestName })} disabled={busy || !guestName.trim()} aria-label={`Register as ${guestName}`}>
                       {busy ? "Registering..." : "Register"}
                     </Button>
                   )}
@@ -519,7 +574,20 @@ export default function GameDetailPage() {
         )}
       </Card>
 
-      {msg && <p className="text-cyan-400 text-sm mb-4" role="status">{msg}</p>}
+      {msg && (
+        <p
+          className={`text-sm mb-4 px-3 py-2 rounded border ${
+            msg.kind === "error"
+              ? "text-red-300 border-red-500/40 bg-red-950/40"
+              : msg.kind === "info"
+                ? "text-blue-200 border-[#1C598C]/40 bg-[#021526]/60"
+                : "text-emerald-300 border-emerald-500/40 bg-emerald-950/40"
+          }`}
+          role={msg.kind === "error" ? "alert" : "status"}
+        >
+          {msg.text}
+        </p>
+      )}
 
       {isOwner && editing && (
         <Card className="mb-6 space-y-4">
@@ -633,10 +701,34 @@ export default function GameDetailPage() {
             <span>Ship roulette — deal each player a random ship from the linked collection.</span>
           </label>
           <TurnstileWidget ref={editTurnstileRef} />
-          <Button onClick={saveEdit} disabled={busy || !editTitle.trim()}>
-            {busy ? "Saving..." : "Save Changes"}
-          </Button>
+<Button onClick={saveEdit} disabled={busy || !editTitle.trim()} aria-label="Save game changes">
+          {busy ? "Saving..." : "Save Changes"}
+        </Button>
         </Card>
+      )}
+
+      {isOwner && confirmDelete && (
+        <ConfirmDialog
+          title="Delete this game?"
+          message={
+            <>
+              <p className="mb-2">
+                This permanently deletes <strong className="text-white">{game.title}</strong> and removes all
+                registrations, contestants, brackets, and ship deals. This cannot be undone.
+              </p>
+              <p className="text-gray-400 text-xs">
+                Complete the captcha on the next step to confirm.
+              </p>
+            </>
+          }
+          confirmLabel="Delete game"
+          variant="danger"
+          onConfirm={() => {
+            setConfirmDelete(false);
+            setPendingDelete(true);
+          }}
+          onCancel={() => setConfirmDelete(false)}
+        />
       )}
 
       {isOwner && pendingDelete && <TurnstileWidget onVerify={onDeleteVerify} />}
@@ -646,7 +738,12 @@ export default function GameDetailPage() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg text-white uppercase">Ship Roulette</h2>
             {isOwner && game.ships.length > 0 && (
-              <Button size="sm" onClick={handleDealShips} disabled={rouletteBusy}>
+              <Button
+                size="sm"
+                onClick={() => (game.draws.length > 0 ? setConfirmRedeal(true) : handleDealShips())}
+                disabled={rouletteBusy}
+                aria-label={game.draws.length > 0 ? "Re-deal ships to all players" : "Deal ships to all players"}
+              >
                 {rouletteBusy ? "Dealing..." : game.draws.length > 0 ? "Re-deal ships" : "Deal ships"}
               </Button>
             )}
@@ -655,14 +752,35 @@ export default function GameDetailPage() {
             <p className="text-blue-200 text-sm">
               Ship roulette is enabled but no ships are linked — attach a collection to the game.
             </p>
-          ) : game.draws.length > 0 ? (
-            <ul className="space-y-1">
-              {game.draws.map((d) => (
-                <li key={d.participant_username} className="flex items-center justify-between gap-2 text-sm text-blue-100">
-                  <span>{d.participant_username}</span>
-                  <Link href={`/ship/${d.ship_id}`} className="text-cyan-400 hover:underline truncate max-w-[60%]">
-                    {d.ship_name}
-                  </Link>
+          ) : drawsWithRarity.length > 0 ? (
+            <ul className="space-y-2">
+              {drawsWithRarity.map((d) => (
+                <li
+                  key={d.participant_username}
+                  className={`flex items-center gap-3 rounded border p-2 ${
+                    d.isMine ? "border-cyan-400/60 bg-cyan-950/30" : "border-[#1C598C]/40"
+                  }`}
+                >
+                  <Image
+                    src={d.data}
+                    alt={d.ship_name}
+                    width={48}
+                    height={48}
+                    unoptimized
+                    className="w-12 h-12 rounded border border-[#1C598C]/60 bg-black/40 object-contain"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm truncate ${d.isMine ? "text-cyan-200 font-semibold" : "text-blue-100"}`}>
+                        {d.participant_username}
+                        {d.isMine && <span className="ml-1.5 text-xs text-cyan-400">(you)</span>}
+                      </span>
+                      <span className={`text-[10px] uppercase tracking-wide ${d.rarity.text}`}>{d.rarity.label}</span>
+                    </div>
+                    <Link href={`/ship/${d.ship_id}`} aria-label={`View ship ${d.ship_name}`} className="text-cyan-400 hover:underline text-sm truncate block">
+                      {d.ship_name}
+                    </Link>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -671,6 +789,46 @@ export default function GameDetailPage() {
               {isOwner ? "Ships not dealt yet — click “Deal ships”." : "Ships haven’t been dealt yet."}
             </p>
           )}
+
+          {isOwner && confirmRedeal && (
+            <ConfirmDialog
+              title="Re-deal ships?"
+              message="Re-dealing replaces every player’s current ship draw. This cannot be undone."
+              confirmLabel="Re-deal"
+              variant="amber"
+              onConfirm={() => {
+                setConfirmRedeal(false);
+                handleDealShips();
+              }}
+              onCancel={() => setConfirmRedeal(false)}
+            />
+          )}
+        </Card>
+      )}
+
+      {game.game_mode === "tournament" && (hasChampion || game.status === "finished") && (
+        <Card className="mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg text-white uppercase mb-2">Results</h2>
+              {game.status === "finished" ? (
+                <p className="text-amber-300 text-sm mb-2" role="status">
+                  🏆 Champion: <span className="font-semibold">{championName ?? "—"}</span>
+                  {runnerUpName ? ` · Runner-up: ${runnerUpName}` : ""}
+                </p>
+              ) : (
+                <p className="text-amber-300/90 text-sm mb-2" role="status">
+                  🏆 Champion: <span className="font-semibold">{championName}</span>
+                  {runnerUpName ? ` · Runner-up: ${runnerUpName}` : ""}
+                </p>
+              )}
+            </div>
+            {isOwner && hasChampion && game.status !== "finished" && (
+              <Button onClick={handleFinish} disabled={finishBusy} aria-label="Mark game as finished">
+                {finishBusy ? "Marking..." : "Mark game finished"}
+              </Button>
+            )}
+          </div>
         </Card>
       )}
 
@@ -687,7 +845,7 @@ export default function GameDetailPage() {
                       {notInBracket.map((p) => (
                         <li key={`${p.discord_id ?? p.discord_username}`} className="flex items-center justify-between gap-2 text-sm text-blue-100">
                           <span className="truncate">{p.discord_username}</span>
-                          <Button size="sm" onClick={() => handleAddContestant(p)}>Add</Button>
+                          <Button size="sm" onClick={() => handleAddContestant(p)} aria-label={`Add ${p.discord_username} to bracket`}>Add</Button>
                         </li>
                       ))}
                     </ul>
@@ -703,7 +861,7 @@ export default function GameDetailPage() {
                       placeholder="Add player manually (discord username)"
                       className="w-full p-2 bg-[#021526] border border-gray-400 rounded text-white text-sm"
                     />
-                    <Button size="sm" onClick={handleManualAdd} disabled={!manualAdd.trim()}>Add</Button>
+                    <Button size="sm" onClick={handleManualAdd} disabled={!manualAdd.trim()} aria-label={`Add player ${manualAdd.trim()} to bracket`}>Add</Button>
                   </div>
                   <p className="text-gray-500 text-xs mt-1">Anyone can be added directly — no registration required.</p>
                 </div>
@@ -714,7 +872,7 @@ export default function GameDetailPage() {
                       {game.contestants.map((c) => (
                         <li key={c.id} className="flex items-center justify-between gap-2 text-sm text-blue-100">
                           <span className="truncate">{c.discord_username}</span>
-                          <Button size="sm" variant="danger" onClick={() => handleRemoveContestant(c)}>Remove</Button>
+                          <Button size="sm" variant="danger" onClick={() => handleRemoveContestant(c)} aria-label={`Remove ${c.discord_username} from bracket`}>Remove</Button>
                         </li>
                       ))}
                     </ul>
@@ -732,14 +890,18 @@ export default function GameDetailPage() {
                   Format
                   <select
                     value={editBracketType}
-                    onChange={(e) => setEditBracketType(e.target.value as BracketType)}
-                    className="p-2 bg-[#021526] border border-gray-400 rounded text-white text-sm"
+                    disabled
+                    aria-describedby="bracket-format-hint"
+                    className="p-2 bg-[#021526] border border-gray-400 rounded text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <option value="single_elim">Single elimination</option>
                     <option value="double_elim">Double elimination</option>
                   </select>
                 </label>
-                <Button onClick={handleGenerateBracket} disabled={bracketBusy || game.contestants.length < 2}>
+                <span id="bracket-format-hint" className="text-xs text-gray-500">
+                  Change the format from the Edit button above.
+                </span>
+                <Button onClick={handleGenerateBracket} disabled={bracketBusy || game.contestants.length < 2} aria-label={game.matches.length > 0 ? "Regenerate tournament bracket" : "Generate tournament bracket"}>
                   {bracketBusy ? "Generating..." : game.matches.length > 0 ? "Regenerate Bracket" : "Generate Bracket"}
                 </Button>
               </div>
@@ -756,7 +918,9 @@ export default function GameDetailPage() {
               </div>
               {game.matches.length > 0 && (
                 <p className="text-gray-500 text-xs mt-2">
-                  Use the check (✓) to mark who advanced; byes advance automatically. The cross (✗) undoes a pick.
+                  Use the check (✓) to mark who advanced; the cross (✗) undoes a pick.
+                  Empty slots labelled <span className="text-cyan-500/70">BYE</span> auto-advance — those players skip
+                  straight to the next round. Dashed lines show where a loser drops into the losers bracket.
                   The final winner becomes the champion.
                 </p>
               )}

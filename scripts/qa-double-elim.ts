@@ -12,6 +12,8 @@ import {
   dbInit,
   dbClose,
   q,
+  waitFor,
+  cliEval,
 } from "./qa-lib.ts";
 
 const HOME = "http://localhost:8000";
@@ -302,6 +304,117 @@ async function main() {
       await q("DELETE FROM game_ship_draws WHERE game_id = $1", [seId]);
       await q("DELETE FROM game_ships WHERE game_id = $1", [seId]);
       await q("DELETE FROM games WHERE id = $1", [seId]);
+    }
+
+    // [14] Double-elim bye → losers-R1 singleton auto-advance + undo revert + bracket UI.
+    console.log("\n[14] Double-elim bye (7 players) → LB singleton auto-advance, undo revert, bracket UI...");
+    const { id: byeId } = await createGameViaApi({ bracketType: "double_elim" });
+    try {
+      for (const u of ["qa-b1", "qa-b2", "qa-b3", "qa-b4", "qa-b5", "qa-b6", "qa-b7"]) {
+        await addContestant(byeId, u);
+      }
+      const byeBr = await httpFetch(S, `${HOME}/api/games/${byeId}/bracket`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shuffle: false, bracketType: "double_elim" }),
+      });
+      assert(byeBr.status === 200 && (byeBr.body as { ok?: boolean })?.ok, `bye bracket ${byeBr.status}: ${JSON.stringify(byeBr.body)}`);
+
+      const consB = await q<{ id: number; discord_username: string }>(
+        "SELECT id, discord_username FROM game_contestants WHERE game_id = $1 ORDER BY seed",
+        [byeId]
+      );
+      const nameByIdB = new Map<number, string>(consB.rows.map((r) => [r.id, r.discord_username]));
+
+      // 7 players → 8 slots: slot order 1,8,4,5,2,7,3,6 → m0 is the bye.
+      const msB = await matchesFor(byeId);
+      const wbR1B = msB.filter((m) => m.bracket === "winners" && m.round === 1).sort((a, b) => a.position - b.position);
+      assert(wbR1B.length === 4, `bye WB R1 count=${wbR1B.length}`);
+      const m0 = wbR1B[0];
+      const m1 = wbR1B[1];
+      assert(m0.contestant_a != null && m0.contestant_b == null, "m0 should be the bye match");
+      assert(m1.contestant_a != null && m1.contestant_b != null, "m1 should be a real match");
+
+      // Play m1: its loser drops into LB R1 p0, whose other slot is fed by the
+      // bye (no loser) → the lone contestant auto-advances.
+      await setWinner(byeId, m1.id, m1.contestant_a!);
+      const m1Loser = m1.contestant_b!;
+      const loserName = nameByIdB.get(m1Loser)!;
+      let msB2 = await matchesFor(byeId);
+      const lbR1p0 = msB2.find((m) => m.bracket === "losers" && m.round === 1 && m.position === 0)!;
+      assert(lbR1p0.contestant_b === m1Loser, "LB R1 p0 slot B should hold the WB loser");
+      assert(lbR1p0.contestant_a == null, "LB R1 p0 slot A stays empty (bye feeder)");
+      assert(lbR1p0.winner === m1Loser, "LB R1 p0 singleton should auto-advance");
+      const lbR2p0 = msB2.find((m) => m.bracket === "losers" && m.round === 2 && m.position === 0)!;
+      assert(lbR2p0.contestant_b === m1Loser, "LB R2 p0 slot B should hold the auto-advanced singleton");
+      const lbR1p1 = msB2.find((m) => m.bracket === "losers" && m.round === 1 && m.position === 1)!;
+      assert(lbR1p1.contestant_a == null && lbR1p1.contestant_b == null && lbR1p1.winner == null, "LB R1 p1 (unfed slots) should stay untouched");
+      console.log("       LB R1 singleton auto-advanced; LB R1 p1 untouched OK");
+
+      // UI: BYE labels + winner-drop connector line in the rendered bracket.
+      console.log("       bracket UI (BYE labels + winner-drop line)...");
+      openSession(S, HOME + "/games/" + byeId);
+      await waitFor(
+        S,
+        `(() => { const svgs = [...document.querySelectorAll('svg')]; const br = svgs.find((s) => s.className && s.className.baseVal !== undefined && s.className.baseVal.includes('pointer-events-none')); return br ? br.querySelectorAll('path').length > 0 : false; })()`,
+        15000
+      );
+      const ui = cliEval(
+        S,
+        `(() => {
+          const svgs = [...document.querySelectorAll('svg')];
+          const br = svgs.find((s) => s.className && s.className.baseVal !== undefined && s.className.baseVal.includes('pointer-events-none'));
+          const paths = br ? [...br.querySelectorAll('path')] : [];
+          const drops = paths.filter((p) => p.getAttribute('stroke-dasharray'));
+          const cards = [...document.querySelectorAll('[data-match-id]')];
+          const byes = cards.filter((c) => c.textContent.includes('BYE')).length;
+          const loserCard = cards.find((c) => c.textContent.includes('BYE') && c.textContent.includes(${JSON.stringify(loserName)}));
+          return { cards: cards.length, byes, drops: drops.length, totalPaths: paths.length, loserHasBye: !!loserCard && loserCard.textContent.includes('BYE') };
+        })()`
+      ) as { cards: number; byes: number; drops: number; totalPaths: number; loserHasBye: boolean };
+      assert(ui.cards >= 8, `bracket cards=${ui.cards}`);
+      assert(ui.byes === 2, `BYE labels=${ui.byes} (expected 2: WB R1 bye + LB singleton slot)`);
+      assert(ui.drops === 1, `winner-drop lines=${ui.drops} (expected 1 from the decided WB R1 match)`);
+      assert(ui.totalPaths >= 3, `connector paths=${ui.totalPaths}`);
+      assert(ui.loserHasBye, "the loser should sit in the LB singleton card next to its BYE slot");
+      console.log("       BYE labels + winner-drop connector line rendered OK");
+
+      // Play m2 and m3: their losers fill LB R1 p1 — a FULL losers match must
+      // NOT auto-advance (only singles fed by a bye do).
+      const m2 = wbR1B[2];
+      const m3 = wbR1B[3];
+      await setWinner(byeId, m2.id, m2.contestant_a!);
+      await setWinner(byeId, m3.id, m3.contestant_a!);
+      const msB2b = await matchesFor(byeId);
+      const lbR1p1b = msB2b.find((m) => m.bracket === "losers" && m.round === 1 && m.position === 1)!;
+      assert(lbR1p1b.contestant_a != null && lbR1p1b.contestant_b != null, "LB R1 p1 should now be full (m2/m3 losers)");
+      assert(lbR1p1b.winner == null, "full LB R1 p1 must NOT auto-advance");
+      console.log("       full LB match stays undecided (no auto-advance) OK");
+
+      // Undo m1 → slot B cleared, auto-advance reverted, LB R2 fill reverted.
+      await resetWinner(byeId, m1.id);
+      let msB3 = await matchesFor(byeId);
+      const lbR1p0b = msB3.find((m) => m.bracket === "losers" && m.round === 1 && m.position === 0)!;
+      assert(lbR1p0b.contestant_b == null, "LB R1 p0 slot B cleared on undo");
+      assert(lbR1p0b.winner == null, "auto-advance reverted on undo");
+      const lbR2p0b = msB3.find((m) => m.bracket === "losers" && m.round === 2 && m.position === 0)!;
+      assert(lbR2p0b.contestant_b == null, "LB R2 p0 slot B cleared on undo");
+      console.log("       undo reverted the singleton auto-advance OK");
+
+      // Re-pick m1 the other way → the new singleton auto-advances.
+      await setWinner(byeId, m1.id, m1.contestant_b!);
+      const msB4 = await matchesFor(byeId);
+      const lbR1p0c = msB4.find((m) => m.bracket === "losers" && m.round === 1 && m.position === 0)!;
+      const newLoser = m1.contestant_a!;
+      assert(lbR1p0c.contestant_b === newLoser && lbR1p0c.winner === newLoser, "re-pick should auto-advance the new singleton");
+      console.log("       re-pick auto-advanced the new singleton OK");
+    } finally {
+      await q("DELETE FROM game_matches WHERE game_id = $1", [byeId]);
+      await q("DELETE FROM game_contestants WHERE game_id = $1", [byeId]);
+      await q("DELETE FROM game_registrations WHERE game_id = $1", [byeId]);
+      await q("DELETE FROM game_ship_draws WHERE game_id = $1", [byeId]);
+      await q("DELETE FROM game_ships WHERE game_id = $1", [byeId]);
+      await q("DELETE FROM games WHERE id = $1", [byeId]);
     }
 
     console.log("\n═══ TEST COMPLETE: ALL ASSERTIONS PASSED ═══");

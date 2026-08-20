@@ -44,8 +44,13 @@ function fetchSession(force = false): Promise<User | null> {
 }
 
 export function useAuth(): UseAuthReturn {
-  const [user, setUser] = useState<User | null>(null);
-  const [hydrated, setHydrated] = useState(false);
+  // Hydrate synchronously from the in-memory cache (set by a prior mount in
+  // this SPA session). RequireAuth pages then render immediately instead of
+  // flashing their spinner on every client-side navigation. A hard reload
+  // still has an empty cache (module state resets), so the initial session
+  // fetch and spinner only happen once per page load.
+  const [user, setUser] = useState<User | null>(cachedUser !== undefined ? cachedUser : null);
+  const [hydrated, setHydrated] = useState(cachedUser !== undefined);
 
   useEffect(() => {
     let active = true;

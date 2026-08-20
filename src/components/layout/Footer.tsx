@@ -38,7 +38,7 @@ export default function Footer() {
           </li>
           <li>
             <Link
-              href="/game"
+              href="/about-game"
               className="text-white text-xs hover:border-b hover:border-white transition-colors"
             >
               About the Game

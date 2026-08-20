@@ -22,6 +22,8 @@ export interface GameSummary {
   participant_count: number;
   ship_count: number;
   bracket_type: BracketType;
+  /** Whether the current viewer is registered (annotated by the games API). */
+  registered?: boolean;
 }
 
 export interface GameParticipant {
@@ -53,14 +55,18 @@ export interface GameMatch {
 
 export interface GameShipDraw {
   participant_username: string;
+  participant_discord_id: string | null;
   ship_id: number;
   ship_name: string;
+  data: string;
+  downloads: number;
+  fav: number;
 }
 
 export interface GameDetail extends GameSummary {
   owner_discord_id: string;
   collection: { id: number; title: string } | null;
-  ships: Array<{ id: number; ship_name: string; data: string }>;
+  ships: Array<{ id: number; ship_name: string; data: string; downloads: number; fav: number }>;
   participants: GameParticipant[];
   contestants: GameContestant[];
   matches: GameMatch[];

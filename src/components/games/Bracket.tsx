@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import type { GameMatch, GameContestant, BracketType } from "@/lib/types";
+import { computeChampion } from "@/lib/bracket-util";
 
 interface Props {
   gameId: number;
@@ -18,12 +19,14 @@ function PlayerRow({
   onWin,
   onClear,
   busy,
+  placeholder,
 }: {
   name: string | null;
   isWinner: boolean;
   onWin?: () => void;
   onClear?: () => void;
   busy?: boolean;
+  placeholder?: string;
 }) {
   const icons = name && (onWin || onClear) && (
     <span className="ml-2 flex items-center gap-1">
@@ -56,6 +59,8 @@ function PlayerRow({
 
   const namePart = name ? (
     <span className="truncate">{name}</span>
+  ) : placeholder ? (
+    <span className="text-xs uppercase tracking-wider text-cyan-500/70">{placeholder}</span>
   ) : (
     <span className="text-gray-600">—</span>
   );
@@ -89,6 +94,10 @@ function MatchCard({
 }) {
   const a = match.contestant_a != null ? nameById.get(match.contestant_a) ?? null : null;
   const b = match.contestant_b != null ? nameById.get(match.contestant_b) ?? null : null;
+  // A slot whose match is already decided with a lone contestant is a bye — its
+  // other slot can never be filled, so label it instead of a generic "—".
+  const byeSlotA = match.contestant_b != null && match.contestant_a == null && match.winner === match.contestant_b;
+  const byeSlotB = match.contestant_a != null && match.contestant_b == null && match.winner === match.contestant_a;
   const undecided = match.winner == null && isOwner;
   // The match only becomes playable once BOTH contestants are decided — i.e.
   // every match feeding into it has recorded a winner (slots are only filled
@@ -103,6 +112,7 @@ function MatchCard({
         onWin={playable ? () => setWinner(match, match.contestant_a!) : undefined}
         onClear={isOwner && match.winner === match.contestant_a ? () => resetWinner(match) : undefined}
         busy={busy}
+        placeholder={byeSlotA ? "BYE" : undefined}
       />
       <div className="border-t border-[#1C598C]/40" />
       <PlayerRow
@@ -111,6 +121,7 @@ function MatchCard({
         onWin={playable ? () => setWinner(match, match.contestant_b!) : undefined}
         onClear={isOwner && match.winner === match.contestant_b ? () => resetWinner(match) : undefined}
         busy={busy}
+        placeholder={byeSlotB ? "BYE" : undefined}
       />
     </div>
   );
@@ -159,10 +170,13 @@ export default function Bracket({
 }: Props) {
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [segments, setSegments] = useState<{ d: string; active: boolean }[]>([]);
+  const [segments, setSegments] = useState<{ d: string; active: boolean; drop?: boolean }[]>([]);
   const [cellH, setCellH] = useState(0);
   const [headerH, setHeaderH] = useState(0);
+  const [liveMsg, setLiveMsg] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const prevDecidedRef = useRef<Set<number>>(new Set());
+  const prevChampionRef = useRef<string | null>(null);
 
   const nameById = useMemo(() => {
     const map = new Map<number, string>();
@@ -236,19 +250,41 @@ export default function Bracket({
   const gf1 = grandFinal.find((m) => m.round === 1) ?? null;
   const gf2 = grandFinal.find((m) => m.round === 2) ?? null;
 
-  const championId = useMemo(() => {
-    if (!isDouble) {
-      const finalRound = winnerRounds[winnerRounds.length - 1] ?? [];
-      return finalRound[0]?.winner ?? null;
-    }
-    // Double elimination: a losers-side win in the grand final round 1 forces a
-    // reset — the reset-round winner is the champion.
-    if (gf2?.winner != null) return gf2.winner;
-    if (gf1?.winner != null && gf1.winner === gf1.contestant_a) return gf1.winner;
-    return null;
-  }, [isDouble, winnerRounds, gf1, gf2]);
+  const championId = useMemo(
+    () => computeChampion(matches, bracketType),
+    [matches, bracketType],
+  );
 
   const champion = championId != null ? nameById.get(championId) ?? null : null;
+
+  // Announce winner changes and a crowned champion for screen readers. Only the
+  // decided set (winner recorded) and the champion change, not every re-render.
+  useEffect(() => {
+    const decided = new Set<number>(matches.filter((m) => m.winner != null).map((m) => m.id));
+    const prev = prevDecidedRef.current;
+    let added: GameMatch | null = null;
+    for (const m of matches) {
+      if (decided.has(m.id) && !prev.has(m.id)) {
+        added = m;
+        break;
+      }
+    }
+    prevDecidedRef.current = decided;
+    if (added?.winner_username) {
+      const msg = `${added.winner_username} advances`;
+      setLiveMsg(msg);
+    } else if (champion && prevChampionRef.current !== champion) {
+      prevChampionRef.current = champion;
+      setLiveMsg(`${champion} is the champion`);
+    }
+  }, [matches, champion]);
+
+  useEffect(() => {
+    if (liveMsg) {
+      const t = window.setTimeout(() => setLiveMsg(null), 4000);
+      return () => window.clearTimeout(t);
+    }
+  }, [liveMsg]);
 
   const setWinner = async (match: GameMatch, contestantId: number) => {
     if (!isOwner) return;
@@ -349,7 +385,7 @@ export default function Bracket({
         addChild("grand_final:2:0", gf1.id);
       }
 
-      const out: { d: string; active: boolean }[] = [];
+      const out: { d: string; active: boolean; drop?: boolean }[] = [];
       for (const [parentKey, childIds] of groups) {
         const parentId = byKey.get(parentKey);
         const pr = parentId != null ? rects.get(parentId) : undefined;
@@ -400,6 +436,42 @@ export default function Bracket({
         if (leftChildren.length > 0) emit(leftChildren, true);
         if (rightChildren.length > 0) emit(rightChildren, false);
       }
+
+      // Winner-drop lines (double elimination): a decided winners-bracket match
+      // drops its loser into the losers bracket below — WB round 1 → LB round 1
+      // (slot by position parity), WB round r≥2 → LB round 2r−2 (slot A). A bye
+      // has no loser, so it draws nothing. The line lights up once decided.
+      if (isDouble) {
+        for (const m of winners) {
+          if (m.winner == null) continue;
+          const a = m.contestant_a;
+          const b = m.contestant_b;
+          if (a == null || b == null) continue; // bye — no loser to drop
+          const sr = rects.get(m.id);
+          if (!sr) continue;
+          let targetKey: string;
+          let tSlot: "A" | "B";
+          if (m.round === 1) {
+            targetKey = `losers:1:${Math.floor(m.position / 2)}`;
+            tSlot = m.position % 2 === 0 ? "A" : "B";
+          } else {
+            targetKey = `losers:${2 * m.round - 2}:${m.position}`;
+            tSlot = "A";
+          }
+          const targetId = byKey.get(targetKey);
+          const tr = targetId != null ? rects.get(targetId) : undefined;
+          if (!tr) continue;
+          const exitX = (sr.left + sr.right) / 2;
+          const entryX = (tr.left + tr.right) / 2;
+          const gutterY = (sr.bottom + tr.top) / 2;
+          const entryY = tSlot === "A" ? tr.top + cellH * 0.5 : tr.top + cellH * 1.5;
+          out.push({
+            d: `M ${exitX} ${sr.bottom} L ${exitX} ${gutterY} L ${entryX} ${gutterY} L ${entryX} ${entryY}`,
+            active: true,
+            drop: true,
+          });
+        }
+      }
       setSegments(out);
     };
 
@@ -442,6 +514,13 @@ export default function Bracket({
     return <p className="text-blue-200 text-sm">Bracket not generated yet.</p>;
   }
 
+  // Screen-reader announcements (winner advances / champion crowned).
+  const liveRegion = (
+    <p className="sr-only" role="status" aria-live="polite">
+      {liveMsg}
+    </p>
+  );
+
   const gridStyle: React.CSSProperties = {
     gridTemplateColumns: `repeat(${cols}, minmax(11rem, 1fr))`,
     gridTemplateRows: `auto repeat(${R}, minmax(0, 1fr))`,
@@ -466,6 +545,7 @@ export default function Bracket({
 
   return (
     <div className="space-y-3">
+      {liveRegion}
       <div className="overflow-x-auto pb-2">
         <div className="relative min-w-max" ref={containerRef}>
           <svg
@@ -479,7 +559,8 @@ export default function Bracket({
                 fill="none"
                 stroke={seg.active ? "#67E8F9" : "#1C598C"}
                 strokeOpacity={seg.active ? 1 : 0.7}
-                strokeWidth={seg.active ? 2 : 1.5}
+                strokeWidth={seg.active ? (seg.drop ? 1.5 : 2) : 1.5}
+                strokeDasharray={seg.drop ? "5 4" : undefined}
                 strokeLinecap="round"
               />
             ))}
@@ -535,6 +616,27 @@ export default function Bracket({
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded border border-amber-500/50 text-amber-300">
           <span>🏆</span>
           <span className="font-semibold">{champion}</span>
+        </div>
+      )}
+
+      {(isDouble || matches.some((m) => m.winner != null)) && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-4 border-t-2 border-cyan-400" aria-hidden="true" />
+            decided match — winner advances
+          </span>
+          {isDouble && (
+            <span className="flex items-center gap-1.5">
+              <svg className="w-4 h-2.5" viewBox="0 0 16 6" aria-hidden="true">
+                <path d="M1 3h14" stroke="currentColor" strokeDasharray="3 2" strokeWidth="1.5" />
+              </svg>
+              loser drops to losers bracket
+            </span>
+          )}
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block px-1 text-[10px] uppercase tracking-wide text-cyan-500/70 border border-cyan-500/40 rounded">BYE</span>
+            empty slot — auto-advances
+          </span>
         </div>
       )}
 

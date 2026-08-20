@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { requireAuth, getUserFromRequest } from "@/lib/auth";
 import { verifyTurnstileFromRequest } from "@/lib/turnstile";
-import { getCollection, listGames, listPastGames, listMyGames, createGame } from "@/lib/db";
+import { getCollection, listGames, listPastGames, listMyGames, createGame, listRegisteredGameIds } from "@/lib/db";
 import { ok, badRequest, forbidden, error } from "@/lib/api";
 
 const VALID_MODES = new Set(["pvp", "tournament", "campaign"]);
@@ -21,6 +21,14 @@ export async function GET(req: NextRequest) {
     const publicGames = await listGames();
     const past = await listPastGames();
     const mine = user ? await listMyGames(user.id, user.username) : [];
+    // Annotate "you're registered" so cards can badge it (public+past lists are
+    // independent of the user, so merge the ids the user is actually in).
+    if (user) {
+      const registered = await listRegisteredGameIds(user.id, user.username);
+      for (const g of [...publicGames, ...past, ...mine]) {
+        g.registered = registered.has(g.id);
+      }
+    }
     return ok({ public: publicGames, mine, past });
   } catch (err) {
     console.error("games GET error:", err);

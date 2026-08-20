@@ -248,7 +248,7 @@ function NewGameContent() {
 
         <TurnstileWidget ref={turnstileRef} />
 
-        <Button onClick={handleCreate} disabled={saving || !title.trim()}>
+        <Button onClick={handleCreate} disabled={saving || !title.trim()} aria-label="Create the new game">
           {saving ? "Creating..." : "Create Game"}
         </Button>
       </Card>

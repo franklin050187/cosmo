@@ -58,7 +58,7 @@ export default function GamesPage() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-4xl text-white uppercase">Games</h1>
         {isLoggedIn && (
-          <Link href="/games/new">
+          <Link href="/games/new" aria-label="Create a new game">
             <Button>+ New Game</Button>
           </Link>
         )}
@@ -79,6 +79,7 @@ export default function GamesPage() {
                 <button
                   onClick={() => setShowPast((v) => !v)}
                   aria-expanded={showPast}
+                  aria-label={showPast ? "Hide past games" : `Show past games (${pastCount})`}
                   className="text-sm text-blue-300 hover:text-cyan-300 transition-colors"
                 >
                   {showPast ? "Hide past games" : `Show past games (${pastCount})`}

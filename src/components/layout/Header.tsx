@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: "/roulette", label: "Roulette" },
   { href: "/games", label: "Games" },
   { href: "/upload", label: "Upload" },
+  { href: "/about-game", label: "About the Game" },
 ];
 
 const USER_MENU_LINKS = [
@@ -102,6 +103,22 @@ export default function Header() {
     window.location.href = "/";
   };
 
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+
+  // Escape closes either open menu (mobile nav / user dropdown).
+  useEffect(() => {
+    if (!menuOpen && !userMenuOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [menuOpen, userMenuOpen]);
+
   return (
     <>
     <header className="fixed top-0 inset-x-0 z-20 bg-[#021526]/80 backdrop-blur-md border-b border-[#1C598C]/50">
@@ -117,7 +134,12 @@ export default function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="px-3 py-1.5 text-sm text-blue-200/80 hover:text-white rounded-md hover:bg-white/5 transition-colors"
+              aria-current={isActive(link.href) ? "page" : undefined}
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                isActive(link.href)
+                  ? "text-white bg-cyan-400/10"
+                  : "text-blue-200/80 hover:text-white hover:bg-white/5"
+              }`}
             >
               {link.label}
             </Link>
@@ -135,6 +157,7 @@ export default function Header() {
                   className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/5 transition-colors"
                   aria-expanded={userMenuOpen}
                   aria-haspopup="true"
+                  aria-controls="user-menu"
                   aria-label="User menu"
                 >
                   {user.avatar && (
@@ -146,7 +169,7 @@ export default function Header() {
                   </svg>
                 </button>
                 {userMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-[#021526] border border-[#1C598C] rounded-md shadow-lg z-50 py-1" role="menu">
+                  <div id="user-menu" className="absolute right-0 top-full mt-1 w-48 bg-[#021526] border border-[#1C598C] rounded-md shadow-lg z-50 py-1" role="menu">
                     {USER_MENU_LINKS.map((link) => (
                       <Link
                         key={link.href}
@@ -193,7 +216,9 @@ export default function Header() {
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="md:hidden relative w-8 h-8 flex items-center justify-center"
-            aria-label="Menu"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav-menu"
           >
             <span
               className={`absolute w-5 h-0.5 bg-cyan-400 rounded transition-all duration-200 ${
@@ -217,6 +242,7 @@ export default function Header() {
       {/* Mobile dropdown */}
       <div
         ref={menuRef}
+        id="mobile-nav-menu"
         className={`md:hidden overflow-hidden transition-all duration-200 ${
           menuOpen ? "max-h-[40rem]" : "max-h-0"
         }`}
@@ -227,7 +253,12 @@ export default function Header() {
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className="block px-3 py-2.5 text-sm text-blue-200/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+              aria-current={isActive(link.href) ? "page" : undefined}
+              className={`block px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                isActive(link.href)
+                  ? "text-white bg-cyan-400/10"
+                  : "text-blue-200/80 hover:text-white hover:bg-white/5"
+              }`}
             >
               {link.label}
             </Link>
