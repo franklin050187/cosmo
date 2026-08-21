@@ -155,12 +155,6 @@ async function main() {
 
     // [4] Play WB round 1: top seeds win (p1 over p4, p2 over p3).
     console.log("[4] Play winners round 1...");
-    const cons = await q<{ id: number; discord_username: string }>(
-      "SELECT id, discord_username FROM game_contestants WHERE game_id = $1 ORDER BY seed",
-      [id]
-    );
-    const ids = Object.fromEntries(cons.rows.map((r) => [r.discord_username, r.id]));
-
     const wbR1m0 = wbR1[0];
     const wbR1m1 = wbR1[1];
     const wbR1w0 = wbR1m0.contestant_a!; // p1 wins
@@ -168,9 +162,9 @@ async function main() {
     await setWinner(id, wbR1m0.id, wbR1w0);
     await setWinner(id, wbR1m1.id, wbR1w1);
 
-    let ms2 = await matchesFor(id);
-    let wbR2 = ms2.find((m) => m.bracket === "winners" && m.round === 2 && m.position === 0)!;
-    let lbR1 = ms2.filter((m) => m.bracket === "losers" && m.round === 1).sort((a, b) => a.position - b.position);
+    const ms2 = await matchesFor(id);
+    const wbR2 = ms2.find((m) => m.bracket === "winners" && m.round === 2 && m.position === 0)!;
+    const lbR1 = ms2.filter((m) => m.bracket === "losers" && m.round === 1).sort((a, b) => a.position - b.position);
     assert(
       (wbR2.contestant_a === wbR1w0 || wbR2.contestant_b === wbR1w0) &&
         (wbR2.contestant_a === wbR1w1 || wbR2.contestant_b === wbR1w1),
@@ -186,18 +180,18 @@ async function main() {
     const lbR1a = lbR1[0].contestant_a!;
     await setWinner(id, lbR1[0].id, lbR1a);
 
-    let ms3 = await matchesFor(id);
-    let lbR2 = ms3.find((m) => m.bracket === "losers" && m.round === 2 && m.position === 0)!;
+    const ms3 = await matchesFor(id);
+    const lbR2 = ms3.find((m) => m.bracket === "losers" && m.round === 2 && m.position === 0)!;
     assert(lbR2.contestant_b === lbR1a, "LB R2 slot B should hold LB R1 winner");
     console.log(`       LB R2 slot B fill OK`);
 
     // [6] Play WB round 2 (final): p1 beats p2 → p1 to GF slot A, p2 (1 loss) drops to LB R2 slot A.
     await setWinner(id, wbR2.id, wbR1w0);
 
-    let ms4 = await matchesFor(id);
-    let gf1 = ms4.find((m) => m.bracket === "grand_final" && m.round === 1)!;
+    const ms4 = await matchesFor(id);
+    const gf1 = ms4.find((m) => m.bracket === "grand_final" && m.round === 1)!;
     assert(gf1.contestant_a === wbR1w0, "GF slot A should hold the WB champion");
-    let lbR2b = ms4.find((m) => m.bracket === "losers" && m.round === 2 && m.position === 0)!;
+    const lbR2b = ms4.find((m) => m.bracket === "losers" && m.round === 2 && m.position === 0)!;
     assert(lbR2b.contestant_a != null && lbR2b.contestant_b != null, "LB R2 should now have both slots filled");
     console.log(`       GF slot A (WB champion) + LB R2 injection OK`);
 
@@ -205,15 +199,15 @@ async function main() {
     const lbR2Winner = lbR2b.contestant_b!;
     await setWinner(id, lbR2b.id, lbR2Winner);
 
-    let ms5 = await matchesFor(id);
-    let gf1b = ms5.find((m) => m.bracket === "grand_final" && m.round === 1)!;
+    const ms5 = await matchesFor(id);
+    const gf1b = ms5.find((m) => m.bracket === "grand_final" && m.round === 1)!;
     assert(gf1b.contestant_b === lbR2Winner, "GF slot B should hold the LB champion");
     console.log(`       GF slot B (LB champion) OK`);
 
     // [8] Loss tracking after the WB + LB rounds:
     // p1: 0 losses (WB champion); p2: lost WB R2 (1) → LB R2 loss (2);
     // p3: lost WB R1 (1) + LB R1 (2); p4: lost WB R1 only (1, LB champion).
-    let losses = await lossesFor(id);
+    const losses = await lossesFor(id);
     assert(losses["qa-p1"] === 0, `p1 losses=${losses["qa-p1"]}`);
     assert(losses["qa-p2"] === 2, `p2 losses=${losses["qa-p2"]}`);
     assert(losses["qa-p3"] === 2, `p3 losses=${losses["qa-p3"]}`);
@@ -222,43 +216,43 @@ async function main() {
 
     // [9] Grand final round 1: losers-side (p4) wins → bracket reset must fire.
     await setWinner(id, gf1b.id, lbR2Winner);
-    let ms6 = await matchesFor(id);
-    let gf2 = ms6.find((m) => m.bracket === "grand_final" && m.round === 2)!;
+    const ms6 = await matchesFor(id);
+    const gf2 = ms6.find((m) => m.bracket === "grand_final" && m.round === 2)!;
     assert(gf2.contestant_a === gf1b.contestant_a, "GF reset A = WB champion");
     assert(gf2.contestant_b === lbR2Winner, "GF reset B = GF R1 winner");
     console.log(`       GF reset match filled OK`);
 
     // [10] Play GF reset: WB champion (p1) wins → p1 is champion, p4 gets 2nd loss.
     await setWinner(id, gf2.id, gf1b.contestant_a!);
-    let losses2 = await lossesFor(id);
+    const losses2 = await lossesFor(id);
     assert(losses2["qa-p1"] === 1, `p1 losses after reset=${losses2["qa-p1"]}`);
     assert(losses2["qa-p2"] === 2, `p2 losses after reset=${losses2["qa-p2"]}`);
     assert(losses2["qa-p4"] === 2, `p4 losses after reset=${losses2["qa-p4"]}`);
-    let ms7 = await matchesFor(id);
-    let gf2b = ms7.find((m) => m.bracket === "grand_final" && m.round === 2)!;
+    const ms7 = await matchesFor(id);
+    const gf2b = ms7.find((m) => m.bracket === "grand_final" && m.round === 2)!;
     assert(gf2b.winner === gf1b.contestant_a, "GF reset winner = champion");
     console.log(`       champion (GF reset winner) + final losses OK`);
 
     // [11] Undo the GF R1 pick (losers-side win) → the reset match should be cleared.
     console.log("[11] Undo grand final round 1 (reset regression)...");
     await resetWinner(id, gf1b.id);
-    let ms8 = await matchesFor(id);
-    let gf2c = ms8.find((m) => m.bracket === "grand_final" && m.round === 2)!;
+    const ms8 = await matchesFor(id);
+    const gf2c = ms8.find((m) => m.bracket === "grand_final" && m.round === 2)!;
     assert(
       gf2c.contestant_a == null && gf2c.contestant_b == null && gf2c.winner == null,
       "GF reset round should be cleared after GF R1 undo"
     );
-    let losses3 = await lossesFor(id);
+    const losses3 = await lossesFor(id);
     assert(losses3["qa-p1"] === 0, `p1 losses after GF R1 undo=${losses3["qa-p1"]}`);
     assert(losses3["qa-p4"] === 2, `p4 losses after GF R1 undo=${losses3["qa-p4"]}`);
     console.log(`       GF reset cleared + losses restored OK`);
 
     // [12] Re-pick GF R1 the other way (winners-side wins) → champion without reset.
     await setWinner(id, gf1b.id, gf1b.contestant_a!);
-    let ms9 = await matchesFor(id);
-    let gf2d = ms9.find((m) => m.bracket === "grand_final" && m.round === 2)!;
+    const ms9 = await matchesFor(id);
+    const gf2d = ms9.find((m) => m.bracket === "grand_final" && m.round === 2)!;
     assert(gf2d.contestant_a == null, "no reset when winners-side wins GF R1");
-    let losses4 = await lossesFor(id);
+    const losses4 = await lossesFor(id);
     assert(losses4["qa-p1"] === 0, `p1 losses after GF R1 re-pick=${losses4["qa-p1"]}`);
     assert(losses4["qa-p4"] === 3, `p4 losses after GF R1 re-pick=${losses4["qa-p4"]}`);
     console.log(`       winners-side GF R1 win → no reset, champion decided OK`);
@@ -340,7 +334,7 @@ async function main() {
       await setWinner(byeId, m1.id, m1.contestant_a!);
       const m1Loser = m1.contestant_b!;
       const loserName = nameByIdB.get(m1Loser)!;
-      let msB2 = await matchesFor(byeId);
+      const msB2 = await matchesFor(byeId);
       const lbR1p0 = msB2.find((m) => m.bracket === "losers" && m.round === 1 && m.position === 0)!;
       assert(lbR1p0.contestant_b === m1Loser, "LB R1 p0 slot B should hold the WB loser");
       assert(lbR1p0.contestant_a == null, "LB R1 p0 slot A stays empty (bye feeder)");
@@ -393,7 +387,7 @@ async function main() {
 
       // Undo m1 → slot B cleared, auto-advance reverted, LB R2 fill reverted.
       await resetWinner(byeId, m1.id);
-      let msB3 = await matchesFor(byeId);
+      const msB3 = await matchesFor(byeId);
       const lbR1p0b = msB3.find((m) => m.bracket === "losers" && m.round === 1 && m.position === 0)!;
       assert(lbR1p0b.contestant_b == null, "LB R1 p0 slot B cleared on undo");
       assert(lbR1p0b.winner == null, "auto-advance reverted on undo");

@@ -8,7 +8,6 @@ import { setTimeout as sleep } from "node:timers/promises";
 import {
   openSession,
   cliEval,
-  runCli,
   SESSION_QA,
   FIXTURE_PNG,
   FIXTURE_REPLACE_PNG,
@@ -31,25 +30,12 @@ async function getShipRow(id) {
   return rows[0] || null;
 }
 
-async function hostedStatus(url) {
-  try {
-    const res = await fetch(url, { method: "HEAD", redirect: "manual" });
-    return res.status;
-  } catch {
-    return 0;
-  }
-}
-
 async function waitText(session, text, timeout = 30000) {
   await waitFor(
     session,
     `document.body.innerText.toLowerCase().includes("${text.toLowerCase()}")`,
     timeout
   );
-}
-
-async function setInput(session, selector, value) {
-  runCli(["-s=" + session, "fill", selector, value]);
 }
 
 async function clickBtn(session, text) {
@@ -145,7 +131,7 @@ async function main() {
     try {
       await waitText(S, "replace-ship", 15000);
       console.log("       OK: 'replace-ship' found on page!");
-    } catch (e) {
+    } catch {
       console.log(`       FAIL: 'replace-ship' NOT found on page`);
       console.log(`       DB says ship_name=${row2?.ship_name}`);
 
@@ -160,7 +146,7 @@ async function main() {
       try {
         await waitText(S, "replace-ship", 15000);
         console.log("       OK: 'replace-ship' found after reload!");
-      } catch (e2) {
+      } catch {
         console.log(`       FAIL: still not found after reload`);
       }
     }
@@ -180,7 +166,7 @@ async function main() {
     console.log(`       DB row after delete: ${row3 === null ? "null (good)" : "still exists (bad)"}`);
 
     console.log("\n═══ TEST COMPLETE ═══");
-  } catch (e) {
+  } catch {
     console.error("Test failed:", e);
   } finally {
     // Cleanup

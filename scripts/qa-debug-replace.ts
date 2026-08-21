@@ -8,7 +8,6 @@ import { setTimeout as sleep } from "node:timers/promises";
 import {
   openSession,
   cliEval,
-  runCli,
   SESSION_QA,
   FIXTURE_PNG,
   FIXTURE_REPLACE_PNG,
