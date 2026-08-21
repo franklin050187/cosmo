@@ -11,7 +11,7 @@ export interface GameSummary {
   description: string;
   game_mode: GameMode;
   visibility: GameVisibility;
-  invite_code: string;
+  invite_code: string | null;
   collection_id: number | null;
   status: GameStatus;
   game_date: string;

@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { type GameDetail, type GameMode, type GameStatus, type GameVisibility, type BracketType } from "@/lib/types";
 import { trackEvent } from "@/lib/analytics-client";
 import { sanitizeHtml } from "@/lib/sanitize";
-import { rarityForRank, RARITY_META, type Rarity } from "@/lib/roulette";
+import { rarityForRank, RARITY_META, sortShipsByPopularity, type Rarity } from "@/lib/roulette";
 import { formatDate, formatDateTime, formatDateTimeWithTz, countdownLabel, toDatetimeLocal, fromDatetimeLocal } from "@/lib/format-date";
 
 const MODE_LABELS: Record<string, string> = { pvp: "PvP", tournament: "Tournament", campaign: "Campaign" };
@@ -62,6 +62,7 @@ export default function GameDetailPage() {
   const [pendingDelete, setPendingDelete] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmRedeal, setConfirmRedeal] = useState(false);
+  const [confirmRegen, setConfirmRegen] = useState(false);
 
   const [shuffle, setShuffle] = useState(true);
   const [bracketBusy, setBracketBusy] = useState(false);
@@ -154,7 +155,7 @@ export default function GameDetailPage() {
       const res = await fetch(`/api/games/${game.id}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: opts?.username, invite_code: inviteCode.trim() || undefined, ...(opts ? {} : {}) }),
+        body: JSON.stringify({ username: opts?.username, invite_code: inviteCode.trim() || undefined }),
       });
       const json = await res.json();
       if (!res.ok || json.error) {
@@ -269,21 +270,36 @@ export default function GameDetailPage() {
 
   const onDeleteVerify = async (token: string) => {
     if (!game || !token) return;
-    await fetch(`/api/games/${game.id}`, {
-      method: "DELETE",
-      headers: { "x-turnstile-token": token },
-    });
-    trackEvent("game_delete");
-    router.push("/games");
+    try {
+      const res = await fetch(`/api/games/${game.id}`, {
+        method: "DELETE",
+        headers: { "x-turnstile-token": token },
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || json?.error) {
+        showError(json?.error ?? "Failed to delete game");
+        return;
+      }
+      trackEvent("game_delete");
+      router.push("/games");
+    } catch {
+      showError("Failed to delete game");
+    }
   };
 
   const handleAddContestant = async (p: { discord_id: string | null; discord_username: string }) => {
     if (!game) return;
-    await fetch(`/api/games/${game.id}/contestants`, {
+    const res = await fetch(`/api/games/${game.id}/contestants`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ discord_id: p.discord_id, username: p.discord_username }),
     });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || json?.error) {
+      showMsg(json?.error ?? "Failed to add player", "error");
+      return;
+    }
+    showMsg(json?.data?.warning ?? "Player added to bracket");
     setGame(await load());
   };
 
@@ -311,11 +327,16 @@ export default function GameDetailPage() {
 
   const handleRemoveContestant = async (c: { discord_id: string | null; discord_username: string }) => {
     if (!game) return;
-    await fetch(`/api/games/${game.id}/contestants`, {
+    const res = await fetch(`/api/games/${game.id}/contestants`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ discord_id: c.discord_id, username: c.discord_username }),
     });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || json?.error) {
+      showMsg(json?.error ?? "Failed to remove player", "error");
+      return;
+    }
     setGame(await load());
   };
 
@@ -403,9 +424,7 @@ export default function GameDetailPage() {
   // Rarity per drawn ship, derived from popularity rank within the game's ships
   // (same derivation as the roulette picker).
   const rarityByShipId = (() => {
-    const sorted = [...game.ships].sort(
-      (a, b) => (b.downloads ?? 0) * 3 + (b.fav ?? 0) - ((a.downloads ?? 0) * 3 + (a.fav ?? 0)) || a.id - b.id,
-    );
+    const sorted = sortShipsByPopularity(game.ships);
     const map = new Map<number, Rarity>();
     sorted.forEach((s, rank) => map.set(s.id, rarityForRank(rank, sorted.length)));
     return map;
@@ -567,7 +586,7 @@ export default function GameDetailPage() {
                 />
               </div>
             )}
-            {game.visibility === "public" && (
+            {game.visibility === "public" && game.invite_code && (
               <p className="text-blue-200 text-xs mt-2">{origin}/games/join/{game.invite_code}</p>
             )}
           </div>
@@ -901,7 +920,11 @@ export default function GameDetailPage() {
                 <span id="bracket-format-hint" className="text-xs text-gray-500">
                   Change the format from the Edit button above.
                 </span>
-                <Button onClick={handleGenerateBracket} disabled={bracketBusy || game.contestants.length < 2} aria-label={game.matches.length > 0 ? "Regenerate tournament bracket" : "Generate tournament bracket"}>
+                <Button
+                  onClick={() => (game.matches.length > 0 ? setConfirmRegen(true) : handleGenerateBracket())}
+                  disabled={bracketBusy || game.contestants.length < 2}
+                  aria-label={game.matches.length > 0 ? "Regenerate tournament bracket" : "Generate tournament bracket"}
+                >
                   {bracketBusy ? "Generating..." : game.matches.length > 0 ? "Regenerate Bracket" : "Generate Bracket"}
                 </Button>
               </div>
@@ -923,6 +946,19 @@ export default function GameDetailPage() {
                   straight to the next round. Dashed lines show where a loser drops into the losers bracket.
                   The final winner becomes the champion.
                 </p>
+              )}
+              {confirmRegen && (
+                <ConfirmDialog
+                  title="Regenerate the bracket?"
+                  message={`Regenerating replaces every match in this bracket and clears all recorded winners${game.status === "finished" ? "" : " — this cannot be undone"}.`}
+                  confirmLabel="Regenerate"
+                  variant="amber"
+                  onConfirm={() => {
+                    setConfirmRegen(false);
+                    handleGenerateBracket();
+                  }}
+                  onCancel={() => setConfirmRegen(false)}
+                />
               )}
             </>
           ) : (

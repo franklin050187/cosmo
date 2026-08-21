@@ -66,6 +66,8 @@ export default function FilterSection({ title, icon, badge = 0, defaultOpen = tr
         ref={contentRef}
         className="overflow-hidden transition-[max-height,opacity] duration-200 ease-out"
         style={{ maxHeight: height === "auto" ? "none" : `${height}px`, opacity: open ? 1 : 0 }}
+        hidden={!open}
+        aria-hidden={!open}
       >
         <div className="pt-2.5 pr-1">
           {children}

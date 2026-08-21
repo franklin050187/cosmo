@@ -5,9 +5,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { type ShipRow } from "@/lib/db";
 import { type CollectionDetail } from "@/lib/types";
+import { DISPLAY_TAGS, formatPrice } from "@/lib/display-ship";
 import {
   drawShip,
-  popularityOf,
+  sortShipsByPopularity,
   rarityForRank,
   RARITY_ORDER,
   RARITY_META,
@@ -30,22 +31,6 @@ const MAX_TRAVEL = 26;
 const WINDOW = MAX_TRAVEL + 8;
 
 const BOOSTED = new Set<RarityMeta["key"]>(["legendary", "epic"]);
-
-const DISPLAY_TAGS = [
-  "cannon", "deck_cannon", "emp_missiles", "flak_battery",
-  "he_missiles", "large_cannon", "mines", "nukes", "railgun", "factories",
-  "disruptors", "heavy_laser", "ion_beam", "ion_prism", "laser", "mining_laser",
-  "point_defense", "kiter", "avoider", "rammer", "orbiter", "campaign_ship",
-  "elimination_ship", "domination_ship", "diagonal", "splitter", "chaingun",
-  "scout/racer", "broadsider", "waste_ship", "debugging_tool", "sundiver",
-  "cargo_ship", "spinner",
-];
-
-function formatPrice(price: number): string {
-  if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(1)}M`;
-  if (price >= 1_000) return `${(price / 1_000).toFixed(1)}K`;
-  return price.toString();
-}
 
 type Phase = "idle" | "rolling" | "reveal";
 
@@ -74,9 +59,7 @@ export default function RouletteGame({ collection }: RouletteGameProps) {
 
   // Per-ship rarity (used for each card's glow border on the track).
   const rarityById = useMemo(() => {
-    const sorted = [...ships].sort(
-      (a, b) => popularityOf(b) - popularityOf(a) || a.id - b.id,
-    );
+    const sorted = sortShipsByPopularity(ships);
     const map = new Map<number, RarityMeta>();
     sorted.forEach((s, i) => map.set(s.id, RARITY_META[rarityForRank(i, sorted.length)]));
     return map;

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { GameSummary } from "@/lib/types";
+import { htmlToText } from "@/lib/html-text";
 import { formatDateTimeWithTz, upcomingWhenLabel, countdownLabel } from "@/lib/format-date";
 
 const MODE_LABELS: Record<string, string> = {
@@ -64,7 +65,7 @@ export default function GameCard({ game }: { game: GameSummary }) {
       </div>
 
       <p className="text-blue-200 text-xs mb-3 line-clamp-2 min-h-[2rem]">
-        {game.description || "No description."}
+        {htmlToText(game.description) || "No description."}
       </p>
       <p className="text-cyan-300 text-xs mb-2" title={formatDateTimeWithTz(game.game_date)}>
         Game day: {dateLabel}

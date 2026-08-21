@@ -82,10 +82,8 @@ export default function ShipDetailView({ shipId, initialShip }: ShipDetailViewPr
   const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    const id = setTimeout(() => {
-      setBackUrl(sessionStorage.getItem("shipBackUrl") || "/");
-    }, 0);
-    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setBackUrl(sessionStorage.getItem("shipBackUrl") || "/");
   }, []);
 
   const handleDownload = async () => {

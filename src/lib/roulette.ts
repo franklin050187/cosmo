@@ -94,8 +94,24 @@ export function rarityForRank(rank: number, total: number): Rarity {
   return "common";
 }
 
-export function popularityOf(ship: ShipRow): number {
+/** Just the fields popularity ranking needs (full ShipRow and the slimmer
+ * game-detail ship projections both satisfy this). */
+export interface PopularityLike {
+  id: number;
+  downloads?: number | null;
+  fav?: number | null;
+}
+
+export function popularityOf(ship: PopularityLike): number {
   return (ship.downloads ?? 0) * 3 + (ship.fav ?? 0);
+}
+
+/** Popularity-sorted copy of a ship list (ties broken by id) — shared by the
+ * roulette picker and every rarity display so ranks can never drift apart. */
+export function sortShipsByPopularity<T extends PopularityLike>(ships: T[]): T[] {
+  return [...ships].sort(
+    (a, b) => popularityOf(b) - popularityOf(a) || a.id - b.id,
+  );
 }
 
 export interface DrawResult {
@@ -107,9 +123,7 @@ export interface DrawResult {
 export function drawShip(ships: ShipRow[]): DrawResult | null {
   if (!ships || ships.length === 0) return null;
 
-  const sorted = [...ships].sort(
-    (a, b) => popularityOf(b) - popularityOf(a) || a.id - b.id,
-  );
+  const sorted = sortShipsByPopularity(ships);
 
   const buckets = new Map<Rarity, ShipRow[]>();
   sorted.forEach((ship, rank) => {

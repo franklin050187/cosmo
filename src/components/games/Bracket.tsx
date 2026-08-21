@@ -37,7 +37,7 @@ function PlayerRow({
           disabled={busy}
           aria-label={`Mark ${name} as winner`}
           title="Mark as winner"
-          className="w-5 h-5 inline-flex items-center justify-center rounded text-green-400 hover:bg-green-400/20 hover:text-green-300 disabled:opacity-40 transition-colors"
+          className="min-w-7 min-h-7 w-7 h-7 inline-flex items-center justify-center rounded text-green-400 hover:bg-green-400/20 hover:text-green-300 disabled:opacity-40 transition-colors"
         >
           ✓
         </button>
@@ -49,7 +49,7 @@ function PlayerRow({
           disabled={busy}
           aria-label={`Remove ${name} as winner`}
           title="Remove winner"
-          className="w-5 h-5 inline-flex items-center justify-center rounded text-red-400 hover:bg-red-400/20 hover:text-red-300 disabled:opacity-40 transition-colors"
+          className="min-w-7 min-h-7 w-7 h-7 inline-flex items-center justify-center rounded text-red-400 hover:bg-red-400/20 hover:text-red-300 disabled:opacity-40 transition-colors"
         >
           ✗
         </button>

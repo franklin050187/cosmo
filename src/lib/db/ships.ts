@@ -1,5 +1,5 @@
 import { query, queryOnClient, fetchAll, fetchOne, fetchOneOnClient, transaction, sanitizeText, isShipOwner } from "./core";
-import { cachedQuery, bumpDbVersion } from "@/lib/cache";
+import { bumpDbVersion } from "@/lib/cache";
 
 export interface ShipRow {
   id: number;
@@ -20,9 +20,10 @@ export interface ShipRow {
 }
 
 export async function getImageData(shipId: number): Promise<ShipRow | null> {
-  return cachedQuery("ship", 30_000, String(shipId), async () =>
-    fetchOne("SELECT id, name, data, submitted_by, discord_id, description, ship_name, author, price, brand, crew, tags, downloads, fav, date FROM shipdb WHERE id = $1", [shipId])
-  );
+  // Not cached: detail page must reflect edits/replaces/deletes immediately.
+  // The 30s cachedQuery served stale rows after mutations because
+  // bumpDbVersion's module state is not shared across Next.js server bundles.
+  return fetchOne("SELECT id, name, data, submitted_by, discord_id, description, ship_name, author, price, brand, crew, tags, downloads, fav, date FROM shipdb WHERE id = $1", [shipId]);
 }
 
 export async function getShipForReplacement(
@@ -56,6 +57,8 @@ export async function deleteShip(shipId: number, user: { id: string; username: s
     await queryOnClient(client, "UPDATE favoritedb SET favorite = array_remove(favorite, $1) WHERE $1 = ANY(favorite)", [shipId]);
     await queryOnClient(client, "DELETE FROM favoritedb WHERE array_length(favorite, 1) IS NULL", []);
     await queryOnClient(client, "DELETE FROM ship_signatures WHERE ship_id = $1", [shipId]);
+    await queryOnClient(client, "DELETE FROM game_ships WHERE ship_id = $1", [shipId]);
+    await queryOnClient(client, "DELETE FROM game_ship_draws WHERE ship_id = $1", [shipId]);
     await queryOnClient(client, "DELETE FROM shipdb WHERE id = $1 AND (discord_id = $2 OR submitted_by = $3)", [shipId, user.id, user.username]);
     bumpDbVersion();
     return { success: `ship ${shipId} deleted`, data: row.data };

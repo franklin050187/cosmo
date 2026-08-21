@@ -29,6 +29,11 @@ export async function GET(req: NextRequest) {
         g.registered = registered.has(g.id);
       }
     }
+    // Invite codes travel only with ownership; list rows carry no participants,
+    // so membership cannot be checked here.
+    for (const g of [...publicGames, ...past]) {
+      if (g.owner_discord_id !== user?.id) g.invite_code = null;
+    }
     return ok({ public: publicGames, mine, past });
   } catch (err) {
     console.error("games GET error:", err);

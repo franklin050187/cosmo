@@ -3,6 +3,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "./useAuth";
 
+async function readErrorMessage(res: Response): Promise<string> {
+  try {
+    const body = await res.json();
+    if (body && typeof body.error === "string") return body.error;
+  } catch {}
+  return `HTTP ${res.status}`;
+}
+
 export function useAuthFetch<T>(url: string) {
   const { isLoggedIn } = useAuth();
   const [data, setData] = useState<T | null>(null);
@@ -16,14 +24,7 @@ export function useAuthFetch<T>(url: string) {
     controllerRef.current = controller;
     try {
       const res = await fetch(url, { signal: controller.signal });
-      if (!res.ok) {
-        let errMsg = `HTTP ${res.status}`;
-        try {
-          const errBody = await res.json();
-          if (errBody && typeof errBody.error === "string") errMsg = errBody.error;
-        } catch {}
-        throw new Error(errMsg);
-      }
+      if (!res.ok) throw new Error(await readErrorMessage(res));
       const json = await res.json();
       setData(json.data ?? ({} as T));
     } catch (err) {
@@ -40,17 +41,8 @@ export function useAuthFetch<T>(url: string) {
     const controller = new AbortController();
     controllerRef.current = controller;
     fetch(url, { signal: controller.signal })
-      .then((res) => {
-        if (!res.ok) {
-          let errMsg = `HTTP ${res.status}`;
-          return res
-            .json()
-            .catch(() => ({}))
-            .then((errBody) => {
-              if (errBody && typeof errBody.error === "string") errMsg = errBody.error;
-              throw new Error(errMsg);
-            });
-        }
+      .then(async (res) => {
+        if (!res.ok) throw new Error(await readErrorMessage(res));
         return res.json();
       })
       .then((json: { data: T }) => {

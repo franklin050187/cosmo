@@ -125,10 +125,9 @@ export async function removeShipFromCollection(
 }
 
 export async function getCollectionsForShip(shipId: number) {
-  return cachedQuery("collectionsByShip", 30_000, String(shipId), async () =>
-    fetchAll(
-      "SELECT id, owner, title, description FROM collections WHERE $1 = ANY(ships)",
-      [shipId],
-    )
+  // Not cached: shown on ship detail; must reflect add/remove immediately.
+  return fetchAll(
+    "SELECT id, owner, title, description FROM collections WHERE $1 = ANY(ships)",
+    [shipId],
   );
 }

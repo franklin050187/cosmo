@@ -65,6 +65,7 @@ export {
   registerForGame,
   leaveGame,
   resolveUsernameToDiscordId,
+  stripGameForViewer,
   addContestant,
   removeContestant,
   generateBracket,
@@ -89,10 +90,3 @@ export {
   getTagsWithCounts,
   findDuplicateBySignature,
 } from "./search";
-
-// Analytics queries and types
-export type { DashboardData } from "./analytics";
-export {
-  logEvent,
-  getDashboardData,
-} from "./analytics";

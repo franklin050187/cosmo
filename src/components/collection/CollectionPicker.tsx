@@ -22,6 +22,9 @@ const PANEL_WIDTH = 256;
 export default function CollectionPicker({ shipId, children, className }: Props) {
   const { isLoggedIn } = useAuth();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), []);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(false);
   const [toggling, setToggling] = useState<number | null>(null);
@@ -192,7 +195,7 @@ export default function CollectionPicker({ shipId, children, className }: Props)
         {trigger}
       </span>
 
-      {typeof document !== "undefined" && createPortal(
+      {mounted && createPortal(
         <>
           {msg && (
             <div

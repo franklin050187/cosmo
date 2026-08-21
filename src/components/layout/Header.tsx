@@ -246,6 +246,8 @@ export default function Header() {
         className={`md:hidden overflow-hidden transition-all duration-200 ${
           menuOpen ? "max-h-[40rem]" : "max-h-0"
         }`}
+        hidden={!menuOpen}
+        aria-hidden={!menuOpen}
       >
         <nav className="bg-[#021526] border-t border-[#1C598C]/30 px-4 py-3 space-y-1" aria-label="Mobile navigation">
           {NAV_LINKS.map((link) => (

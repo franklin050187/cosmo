@@ -3,6 +3,15 @@ import { requireAuth } from "@/lib/auth";
 import { addContestant, removeContestant } from "@/lib/db";
 import { ok, badRequest, notFound, forbidden, error } from "@/lib/api";
 
+const MAX_USERNAME = 40;
+
+function parseUsername(body: Record<string, unknown>): string | null {
+  const username = typeof body.username === "string" ? body.username.trim() : "";
+  if (!username) return null;
+  if (username.length > MAX_USERNAME) return "";
+  return username;
+}
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = requireAuth(req);
   if (!auth.ok) return auth.response;
@@ -19,8 +28,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return badRequest("Invalid JSON body");
   }
 
-  const username = typeof body.username === "string" ? body.username.trim() : "";
-  if (!username) return badRequest("discord_username is required");
+  const username = parseUsername(body);
+  if (username === null) return badRequest("discord_username is required");
+  if (username === "") return badRequest("Username too long (40 characters max)");
 
   try {
     const result = await addContestant(gameId, user.username, user.id, {
@@ -56,8 +66,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     } catch {}
   }
 
-  const username = typeof body.username === "string" ? body.username.trim() : "";
-  if (!username) return badRequest("discord_username is required");
+  const username = parseUsername(body);
+  if (username === null) return badRequest("discord_username is required");
+  if (username === "") return badRequest("Username too long (40 characters max)");
 
   try {
     const result = await removeContestant(gameId, user.username, user.id, {

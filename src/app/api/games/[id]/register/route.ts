@@ -5,6 +5,8 @@ import { ok, badRequest, notFound, forbidden, error } from "@/lib/api";
 
 type Identity = { discordId: string | null; username: string };
 
+const MAX_USERNAME = 40;
+
 async function resolveIdentity(req: NextRequest, body: Record<string, unknown>): Promise<Identity> {
   const user = getUserFromRequest(req);
   if (user) return { discordId: user.id, username: user.username };
@@ -12,6 +14,9 @@ async function resolveIdentity(req: NextRequest, body: Record<string, unknown>):
   const username = typeof body.username === "string" ? body.username.trim() : "";
   if (!username) {
     throw { kind: "badRequest", message: "Username is required (or log in to auto-register)" };
+  }
+  if (username.length > MAX_USERNAME) {
+    throw { kind: "badRequest", message: "Username too long (40 characters max)" };
   }
   // Prefer a known Discord identity from the favorites lookup.
   const discordId = await resolveUsernameToDiscordId(username);
@@ -66,11 +71,23 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         Object.assign(body, await req.json());
       } catch {}
     }
-    const identity = await resolveIdentity(req, body);
-    const result = await leaveGame(gameId, {
-      discordId: identity.discordId,
-      username: identity.username,
-    });
+    // Destructive identity comes from the session or from an unclaimed guest
+    // name only. Never resolve a typed name against favorites here; that would
+    // let anyone delete a Discord participant by knowing their username.
+    const user = getUserFromRequest(req);
+    const identity = user
+      ? ({ kind: "session", discordId: user.id } as const)
+      : (() => {
+          const username = typeof body.username === "string" ? body.username.trim() : "";
+          if (!username) {
+            throw { kind: "badRequest", message: "Username is required (or log in to auto-register)" };
+          }
+          if (username.length > MAX_USERNAME) {
+            throw { kind: "badRequest", message: "Username too long (40 characters max)" };
+          }
+          return { kind: "guest", username } as const;
+        })();
+    const result = await leaveGame(gameId, identity);
     if ("error" in result && result.error === "not found") return notFound("Not found");
     return ok(result);
   } catch (err) {

@@ -45,16 +45,23 @@ export async function PUT(
   if (cl && parseInt(cl, 10) > 1_048_576) {
     return badRequest("Payload too large", 413);
   }
-  const body = await req.json();
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return badRequest("Invalid JSON body");
+  }
 
-  if (!(await verifyTurnstileFromRequest(req, (body["cf-turnstile-response"] as string) ?? ""))) {
+  const turnstile =
+    typeof body["cf-turnstile-response"] === "string" ? body["cf-turnstile-response"] : "";
+  if (!(await verifyTurnstileFromRequest(req, turnstile))) {
     return forbidden("Turnstile verification failed");
   }
 
   try {
     const result = await updateCollection(collectionId, user.username, user.id, {
-      title: body.title,
-      description: body.description,
+      title: typeof body.title === "string" ? body.title.trim() : undefined,
+      description: typeof body.description === "string" ? body.description.trim() : undefined,
     });
 
     if ("error" in result) {

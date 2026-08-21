@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { PoolClient } from "pg";
 import { query, fetchAll, fetchOne, transaction, queryOnClient, fetchOneOnClient, fetchAllOnClient } from "./core";
 import { bumpDbVersion } from "@/lib/cache";
+import { computeChampionFromSlots } from "@/lib/bracket-util";
 import type { GameMode, GameStatus, GameVisibility, BracketType, BracketName } from "@/lib/games-types";
 
 export type { GameMode, GameStatus, GameVisibility, BracketType, BracketName } from "@/lib/games-types";
@@ -48,6 +49,34 @@ export function isGameOwner(
   return game.owner_name === username;
 }
 
+type InviteViewer = { id: string; username: string } | null;
+
+function canViewInviteCode(
+  game: {
+    owner_discord_id: string | null;
+    owner_name: string;
+    participants?: Array<{ discord_id: string | null; discord_username: string }>;
+  },
+  viewer: InviteViewer,
+): boolean {
+  if (!viewer) return false;
+  if (isGameOwner(game, viewer)) return true;
+  return !!game.participants?.some(
+    (p) =>
+      (p.discord_id != null && p.discord_id === viewer.id) ||
+      p.discord_username.toLowerCase() === viewer.username.toLowerCase(),
+  );
+}
+
+/** Nulls invite_code unless the viewer owns the game or is registered in it. */
+export function stripGameForViewer<T extends { invite_code: string; owner_discord_id: string | null; owner_name: string }>(
+  game: T,
+  viewer: InviteViewer,
+): Omit<T, "invite_code"> & { invite_code: string | null } {
+  if (canViewInviteCode(game, viewer)) return game;
+  return { ...game, invite_code: null };
+}
+
 interface ChampionMatchRow {
   id: number;
   bracket: BracketName;
@@ -58,22 +87,10 @@ interface ChampionMatchRow {
   winner: number | null;
 }
 
-/** Champion from raw match rows (no usernames) — mirrors computeChampion. */
+/** Champion from raw match rows (no usernames) — delegates to the shared
+ * bracket-util logic so client and server can never disagree. */
 export function computeChampionFromRows(rows: ChampionMatchRow[], bracketType: BracketType): number | null {
-  const winners = rows.filter((m) => m.bracket === "winners");
-  const grandFinal = rows.filter((m) => m.bracket === "grand_final");
-
-  if (bracketType !== "double_elim") {
-    const maxRound = winners.reduce((mx, m) => Math.max(mx, m.round), 0);
-    const final = winners.find((m) => m.round === maxRound && m.position === 0) ?? null;
-    return final?.winner ?? null;
-  }
-
-  const gf1 = grandFinal.find((m) => m.round === 1) ?? null;
-  const gf2 = grandFinal.find((m) => m.round === 2) ?? null;
-  if (gf2?.winner != null) return gf2.winner;
-  if (gf1?.winner != null && gf1.winner === gf1.contestant_a) return gf1.winner;
-  return null;
+  return computeChampionFromSlots(rows, bracketType);
 }
 
 async function makeInviteCode(): Promise<string> {
@@ -193,25 +210,29 @@ export async function getGameByInviteCode(code: string) {
 }
 
 async function getGameDetail(game: GameRow) {
-  const collection = game.collection_id
-    ? await fetchOne("SELECT id, title FROM collections WHERE id = $1", [game.collection_id])
-    : null;
-  const ships = await fetchAll(
-    "SELECT s.id, s.ship_name, s.data, s.downloads, s.fav FROM game_ships gs JOIN shipdb s ON s.id = gs.ship_id WHERE gs.game_id = $1 ORDER BY gs.id",
-    [game.id],
-  );
-  const participants = await fetchAll(
-    "SELECT discord_id, discord_username, registered_at FROM game_registrations WHERE game_id = $1 ORDER BY registered_at",
-    [game.id],
-  );
-  const contestants = await fetchAll(
-    "SELECT id, discord_id, discord_username, seed, losses FROM game_contestants WHERE game_id = $1 ORDER BY seed, id",
-    [game.id],
-  );
-  const matchRows = await fetchAll(
-    "SELECT id, bracket, round, position, contestant_a, contestant_b, winner FROM game_matches WHERE game_id = $1 ORDER BY bracket, round, position",
-    [game.id],
-  );
+  const [collection, ships, participants, contestants, matchRows, draws] = await Promise.all([
+    game.collection_id ? fetchOne("SELECT id, title FROM collections WHERE id = $1", [game.collection_id]) : Promise.resolve(null),
+    fetchAll(
+      "SELECT s.id, s.ship_name, s.data, s.downloads, s.fav FROM game_ships gs JOIN shipdb s ON s.id = gs.ship_id WHERE gs.game_id = $1 ORDER BY gs.id",
+      [game.id],
+    ),
+    fetchAll(
+      "SELECT discord_id, discord_username, registered_at FROM game_registrations WHERE game_id = $1 ORDER BY registered_at",
+      [game.id],
+    ),
+    fetchAll(
+      "SELECT id, discord_id, discord_username, seed, losses FROM game_contestants WHERE game_id = $1 ORDER BY seed, id",
+      [game.id],
+    ),
+    fetchAll(
+      "SELECT id, bracket, round, position, contestant_a, contestant_b, winner FROM game_matches WHERE game_id = $1 ORDER BY bracket, round, position",
+      [game.id],
+    ),
+    fetchAll(
+      "SELECT d.participant_username, d.participant_discord_id, d.ship_id, s.ship_name, s.data, s.downloads, s.fav FROM game_ship_draws d JOIN shipdb s ON s.id = d.ship_id WHERE d.game_id = $1 ORDER BY d.id",
+      [game.id],
+    ),
+  ]);
   const names = new Map<number, string>();
   for (const c of contestants) names.set(c.id, c.discord_username);
   const matches = matchRows.map((m) => ({
@@ -220,10 +241,6 @@ async function getGameDetail(game: GameRow) {
     b_username: m.contestant_b != null ? names.get(m.contestant_b) ?? null : null,
     winner_username: m.winner != null ? names.get(m.winner) ?? null : null,
   }));
-  const draws = await fetchAll(
-    "SELECT d.participant_username, d.participant_discord_id, d.ship_id, s.ship_name, s.data, s.downloads, s.fav FROM game_ship_draws d JOIN shipdb s ON s.id = d.ship_id WHERE d.game_id = $1 ORDER BY d.id",
-    [game.id],
-  );
   return { ...game, collection, ships, participants, contestants, matches, draws };
 }
 
@@ -409,26 +426,34 @@ export async function registerForGame(
   if (game.register_close_at && now > new Date(game.register_close_at).getTime()) {
     return { error: "registration window closed" };
   }
-  const existing = await fetchOne(
-    "SELECT 1 FROM game_registrations WHERE game_id = $1 AND (discord_id = $2 OR LOWER(discord_username) = LOWER($3))",
-    [gameId, opts.discordId, opts.username],
-  );
-  if (existing) return { warning: "already registered" };
-  await query(
-    "INSERT INTO game_registrations (game_id, discord_id, discord_username) VALUES ($1, $2, $3)",
+  // Atomic dedupe: the (game_id, discord_id) and (game_id, LOWER(discord_username))
+  // unique indexes + ON CONFLICT DO NOTHING make concurrent double-registrations
+  // impossible (guests have NULL discord_id, so the username index is what guards them).
+  const inserted = await query(
+    "INSERT INTO game_registrations (game_id, discord_id, discord_username) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
     [gameId, opts.discordId, opts.username],
   );
   bumpDbVersion();
+  if ((inserted.rowCount ?? 0) === 0) return { warning: "already registered" };
   return { success: "registered" };
 }
 
-export async function leaveGame(gameId: number, opts: { discordId: string | null; username: string }) {
+export type LeaveIdentity =
+  | { kind: "session"; discordId: string }
+  | { kind: "guest"; username: string };
+
+export async function leaveGame(gameId: number, identity: LeaveIdentity) {
   const game = await fetchOne("SELECT id FROM games WHERE id = $1", [gameId]);
   if (!game) return { error: "not found" };
-  const result = await query(
-    "DELETE FROM game_registrations WHERE game_id = $1 AND (discord_id = $2 OR LOWER(discord_username) = LOWER($3))",
-    [gameId, opts.discordId, opts.username],
-  );
+  // A session holder removes their own row; a guest can only remove an
+  // unclaimed guest row. Never both, and never a Discord-claimed row by name.
+  const result =
+    identity.kind === "session"
+      ? await query("DELETE FROM game_registrations WHERE game_id = $1 AND discord_id = $2", [gameId, identity.discordId])
+      : await query(
+          "DELETE FROM game_registrations WHERE game_id = $1 AND discord_id IS NULL AND LOWER(discord_username) = LOWER($2)",
+          [gameId, identity.username],
+        );
   bumpDbVersion();
   if ((result.rowCount ?? 0) === 0) return { warning: "not registered" };
   return { success: "left game" };
@@ -460,42 +485,32 @@ export async function addContestant(
   if (already) return { warning: "already a contestant" };
 
   // Owners may add anyone by username — no registration required. Any player
-  // manually added is also registered so they show up in the roster.
+  // manually added is also registered so they show up in the roster. Both
+  // inserts rely on the unique indexes + ON CONFLICT DO NOTHING, so concurrent
+  // adds can't create duplicates.
+  let added = false;
   await transaction(async (client) => {
-    const registered = await fetchOneOnClient(
+    await queryOnClient(
       client,
-      "SELECT 1 FROM game_registrations WHERE game_id = $1 AND (discord_id = $2 OR LOWER(discord_username) = LOWER($3))",
+      "INSERT INTO game_registrations (game_id, discord_id, discord_username) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
       [gameId, opts.discordId, opts.username],
     );
-    if (!registered) {
-      await queryOnClient(
-        client,
-        "INSERT INTO game_registrations (game_id, discord_id, discord_username) VALUES ($1, $2, $3)",
-        [gameId, opts.discordId, opts.username],
-      );
-    }
-
-    const existing = await fetchOneOnClient(
-      client,
-      "SELECT 1 FROM game_contestants WHERE game_id = $1 AND (discord_id = $2 OR LOWER(discord_username) = LOWER($3))",
-      [gameId, opts.discordId, opts.username],
-    );
-    if (existing) return;
 
     const seedRow = await fetchOneOnClient(
       client,
       "SELECT COALESCE(MAX(seed), -1) + 1 AS next_seed FROM game_contestants WHERE game_id = $1",
       [gameId],
     );
-    await queryOnClient(
+    const res = await queryOnClient(
       client,
-      "INSERT INTO game_contestants (game_id, discord_id, discord_username, seed) VALUES ($1, $2, $3, $4)",
+      "INSERT INTO game_contestants (game_id, discord_id, discord_username, seed) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
       [gameId, opts.discordId, opts.username, seedRow?.next_seed ?? 0],
     );
+    added = (res.rowCount ?? 0) > 0;
   });
 
   bumpDbVersion();
-  return { success: "contestant added" };
+  return added ? { success: "contestant added" } : { warning: "already a contestant" };
 }
 
 export async function removeContestant(
@@ -751,7 +766,7 @@ async function applyWinner(
     // Winner advances into the next winners round; the final round is the champion.
     const next = await fetchOneOnClient(
       client,
-      "SELECT id FROM game_matches WHERE game_id = $1 AND bracket = 'winners' AND round = $2 AND position = $3",
+      "SELECT id FROM game_matches WHERE game_id = $1 AND bracket = 'winners' AND round = $2 AND position = $3 FOR UPDATE",
       [match.game_id, match.round + 1, Math.floor(match.position / 2)],
     );
     if (next) {
@@ -765,7 +780,7 @@ async function applyWinner(
     // Winner advances in the winners bracket; the final winner takes GF slot A.
     const next = await fetchOneOnClient(
       client,
-      "SELECT id FROM game_matches WHERE game_id = $1 AND bracket = 'winners' AND round = $2 AND position = $3",
+      "SELECT id FROM game_matches WHERE game_id = $1 AND bracket = 'winners' AND round = $2 AND position = $3 FOR UPDATE",
       [match.game_id, match.round + 1, Math.floor(match.position / 2)],
     );
     if (next) {
@@ -857,7 +872,7 @@ async function undoWinner(
   if (match.bracket_type === "single_elim") {
     const next = await fetchOneOnClient(
       client,
-      "SELECT id FROM game_matches WHERE game_id = $1 AND bracket = 'winners' AND round = $2 AND position = $3",
+      "SELECT id FROM game_matches WHERE game_id = $1 AND bracket = 'winners' AND round = $2 AND position = $3 FOR UPDATE",
       [match.game_id, match.round + 1, Math.floor(match.position / 2)],
     );
     if (next) {
@@ -877,7 +892,7 @@ async function undoWinner(
     } else {
       const next = await fetchOneOnClient(
         client,
-        "SELECT id FROM game_matches WHERE game_id = $1 AND bracket = 'winners' AND round = $2 AND position = $3",
+        "SELECT id FROM game_matches WHERE game_id = $1 AND bracket = 'winners' AND round = $2 AND position = $3 FOR UPDATE",
         [match.game_id, match.round + 1, Math.floor(match.position / 2)],
       );
       if (next) {

@@ -7,7 +7,7 @@ export async function GET() {
 }
 
 export async function POST() {
-  const response = NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true, data: null });
   response.cookies.delete("__session");
   return response;
 }

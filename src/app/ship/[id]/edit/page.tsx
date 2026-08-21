@@ -184,6 +184,7 @@ export default function EditShipPage() {
     try {
       const file = replaceFile;
 
+      const previousDataUrl = ship.data;
       await uploadFiles({
         files: [file],
         endpoint: "shipReplacer",
@@ -193,9 +194,20 @@ export default function EditShipPage() {
         tags: userTags,
       });
 
+      // UploadThing acks before onUploadComplete commits; wait until swap visible.
+      const deadline = Date.now() + 20000;
+      while (Date.now() < deadline) {
+        try {
+          const res = await fetch(`/api/ship/${ship.id}`, { cache: "no-store" });
+          if (res.ok) {
+            const j = await res.json();
+            if (j?.data?.data && j.data.data !== previousDataUrl) break;
+          }
+        } catch {}
+        await new Promise((r) => setTimeout(r, 400));
+      }
       leaving.current = true;
-      // Allow server time to revalidate cache after replace
-      setTimeout(() => { window.location.href = `/ship/${ship.id}?_r=${Date.now()}`; }, 1000);
+      window.location.href = `/ship/${ship.id}?_r=${Date.now()}`;
     } catch (err) {
       console.error("Replace failed:", err);
     } finally {

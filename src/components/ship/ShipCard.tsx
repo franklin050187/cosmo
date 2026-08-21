@@ -7,23 +7,8 @@ import Image from "next/image";
 import { type ShipRow } from "@/lib/db";
 import CollectionPicker from "@/components/collection/CollectionPicker";
 import { downloadShip } from "@/lib/download-ship";
+import { DISPLAY_TAGS, formatPrice } from "@/lib/display-ship";
 import { useAuth } from "@/hooks/useAuth";
-
-const DISPLAY_TAGS = [
-  "cannon", "deck_cannon", "emp_missiles", "flak_battery",
-  "he_missiles", "large_cannon", "mines", "nukes", "railgun", "factories",
-  "disruptors", "heavy_laser", "ion_beam", "ion_prism", "laser", "mining_laser",
-  "point_defense", "kiter", "avoider", "rammer", "orbiter", "campaign_ship",
-  "elimination_ship", "domination_ship", "diagonal", "splitter", "chaingun",
-  "scout/racer", "broadsider", "waste_ship", "debugging_tool", "sundiver",
-  "cargo_ship", "spinner",
-];
-
-function formatPrice(price: number): string {
-  if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(1)}M`;
-  if (price >= 1_000) return `${(price / 1_000).toFixed(1)}K`;
-  return price.toString();
-}
 
 export default function ShipCard({ ship, priority = false }: { ship: ShipRow; priority?: boolean }) {
   const tags = (ship.tags ?? []).filter((t) => DISPLAY_TAGS.includes(t)).slice(0, 4);

@@ -33,8 +33,10 @@ broken-links.log
 # vercel
 .vercel
 
-# opencode
-.opencode/
+# opencode (keep skills committed, ignore local cache/state)
+.opencode/*
+!.opencode/skills/
+!.opencode/skills/**
 
 # playwright-cli QA
 .playwright/
@@ -44,7 +46,8 @@ broken-links.log
 # docs
 CODE_REVIEW_FINDINGS.md
 CODE_REVIEW_FINDINGS_NEXT.md
-AGENTS.md
+# AGENTS.md is the opencode rule file — keep it committed (source of truth for harness)
+!AGENTS.md
 
 # dev/QA scripts (keep in repo, not in deploy package)
 # large regenerable Steam extraction data stays local

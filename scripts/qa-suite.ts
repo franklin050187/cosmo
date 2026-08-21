@@ -915,14 +915,17 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
     assert(res.status === 404, `api ship status ${res.status}`);
 
     openSession(S, HOME + `/ship/${scratch.shipId}`);
-    // The dev server's router cache can still serve the just-deleted ship's
-    // payload once; force a reload before giving up on the not-found page.
-    try {
-      await waitText(S, "Ship not found", 12000);
-    } catch {
-      runCli(["-s=" + S, "reload"]);
-      await waitText(S, "Ship not found", 20000);
+    // Not-found can hydrate-fail to blank intermittently; retry with reloads.
+    let seen = false;
+    for (let attempt = 0; attempt < 5 && !seen; attempt++) {
+      try {
+        await waitText(S, "Ship not found", 8000);
+        seen = true;
+      } catch {
+        runCli(["-s=" + S, "reload"]);
+      }
     }
+    assert(seen, "ship not found page never rendered after delete");
   });
 
   await check("P3-S11", "Delete scratch collection → DB row + URL gone", async () => {

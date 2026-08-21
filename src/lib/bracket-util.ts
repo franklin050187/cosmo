@@ -1,8 +1,18 @@
 import type { GameMatch, BracketType } from "@/lib/types";
 
+/** The match fields the champion/runner-up math needs (client and server rows both satisfy this). */
+export interface ChampionSlots {
+  bracket: string;
+  round: number;
+  position: number;
+  contestant_a: number | null;
+  contestant_b: number | null;
+  winner: number | null;
+}
+
 /** Compute the tournament champion from the recorded match winners, or null. */
-export function computeChampion(
-  matches: GameMatch[],
+export function computeChampionFromSlots(
+  matches: ChampionSlots[],
   bracketType: BracketType,
 ): number | null {
   const winners = matches.filter((m) => m.bracket === "winners");
@@ -21,6 +31,14 @@ export function computeChampion(
   if (gf2?.winner != null) return gf2.winner;
   if (gf1?.winner != null && gf1.winner === gf1.contestant_a) return gf1.winner;
   return null;
+}
+
+/** Compute the tournament champion from full client-side matches, or null. */
+export function computeChampion(
+  matches: GameMatch[],
+  bracketType: BracketType,
+): number | null {
+  return computeChampionFromSlots(matches, bracketType);
 }
 
 /** Contestant ids eliminated with a single loss (non-winners in single elim). */

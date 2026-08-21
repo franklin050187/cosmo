@@ -21,7 +21,12 @@ export async function POST(
   if (cl && parseInt(cl, 10) > 1_048_576) {
     return badRequest("Payload too large", 413);
   }
-  const body = await req.json();
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return badRequest("Invalid JSON body");
+  }
   const shipId = body.shipId;
   if (typeof shipId !== "number") {
     return badRequest("shipId required");
