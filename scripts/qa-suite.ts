@@ -35,6 +35,10 @@ import {
   PONEY_USER,
   QA_ANON_ID,
   parallelChecks,
+  initResume,
+  getResumeExtras,
+  registerExtras,
+  clearState,
 } from "./qa-lib.ts";
 import { deepEqual, ensureFixtures, fixtureDecoded } from "./generate-fixtures.ts";
 
@@ -270,9 +274,8 @@ async function phase1(scratch: { shipId: number; ufsUrl: string }) {
 
   await check("P1-U3", "Admin dashboard loads for admin (analytics)", async () => {
     openSession(S, HOME + "/admin");
-    await waitText(S, "Complete the captcha");
-    prepTurnstile(S);
-    await sleep(1200);
+    // Dev builds bypass the Turnstile gate client-side (see TurnstileWidget),
+    // so the dashboard renders immediately — no captcha step to wait for.
     await waitFor(S, "document.body.innerText.includes('Analytics Dashboard')", 45000);
     assert(pageText(S).includes("Total Events"), "no summary cards");
     const res = await httpFetch(S, "/api/analytics/dashboard");
@@ -281,8 +284,6 @@ async function phase1(scratch: { shipId: number; ufsUrl: string }) {
 
   await check("P1-U3b", "Analytics: clicking a date bar zooms the dashboard (no home redirect)", async () => {
     openSession(S, HOME + "/admin");
-    await waitText(S, "Complete the captcha");
-    prepTurnstile(S);
     await waitFor(S, "document.body.innerText.includes('Analytics Dashboard')", 30000);
     const label = String(
       cliEval(
@@ -307,8 +308,6 @@ async function phase1(scratch: { shipId: number; ufsUrl: string }) {
 
   await check("P1-U3c", "Analytics: exclude filter drops the owner's events", async () => {
     openSession(S, HOME + "/admin");
-    await waitText(S, "Complete the captcha");
-    prepTurnstile(S);
     await waitFor(S, "document.body.innerText.includes('Analytics Dashboard')", 30000);
     const toggleText = pageText(S);
     assert(
@@ -554,8 +553,8 @@ async function phase2(scratch: { shipId: number }) {
     const res = await httpFetch(A, "/api/analytics/dashboard");
     assert(res.status === 401, `dashboard api status ${res.status}`);
     openSession(A, HOME + "/admin");
-    await waitText(A, "Complete the captcha");
-    prepTurnstile(A);
+    // Dev builds bypass the Turnstile gate client-side, so the anon user lands
+    // directly on the "Not logged in" state — no captcha step to wait for.
     await waitFor(
       A,
       `document.body.innerText.toLowerCase().includes("not logged in") || window.location.pathname === "/"`,
@@ -883,11 +882,21 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
   });
 
   await check("P3-S10", "Delete scratch ship → DB rows + hosted file + URL gone", async () => {
-    openSession(S, HOME + `/ship/${scratch.shipId}`);
-    await waitText(S, "replace-ship");
-    await stubConfirm(S);
-    await clickBtn(S, "Delete");
-    await waitFor(S, `window.location.pathname === "/"`, 20000);
+    // On a resumed run the scratch ship may already be gone (a previous run
+    // deleted it before crashing). Skip the UI flow and verify cleanup state.
+    const pre = await httpFetch(S, `/api/ship/${scratch.shipId}`);
+    if (pre.status === 404) {
+      console.log("       [resume] scratch ship already deleted — verifying cleanup state only");
+    } else {
+      openSession(S, HOME + `/ship/${scratch.shipId}`);
+      // Wait for the detail page structurally (Delete button) rather than by
+      // ship name — on resumed runs the scratch ship may have kept its
+      // original name when the rename check was skipped.
+      await waitFor(S, `document.body.innerText.includes('Delete')`, 30000);
+      await stubConfirm(S);
+      await clickBtn(S, "Delete");
+      await waitFor(S, `window.location.pathname === "/"`, 20000);
+    }
 
     assert((await getShipRow(scratch.shipId)) === null, "shipdb row still present");
     const sigs = (await q<{ n: string }>("SELECT count(*)::text n FROM ship_signatures WHERE ship_id = $1", [scratch.shipId])).rows[0].n;
@@ -906,15 +915,27 @@ async function phase3(scratch: { shipId: number; ufsUrl: string }, coll: { id: n
     assert(res.status === 404, `api ship status ${res.status}`);
 
     openSession(S, HOME + `/ship/${scratch.shipId}`);
-    await waitText(S, "Ship not found");
+    // The dev server's router cache can still serve the just-deleted ship's
+    // payload once; force a reload before giving up on the not-found page.
+    try {
+      await waitText(S, "Ship not found", 12000);
+    } catch {
+      runCli(["-s=" + S, "reload"]);
+      await waitText(S, "Ship not found", 20000);
+    }
   });
 
   await check("P3-S11", "Delete scratch collection → DB row + URL gone", async () => {
-    openSession(S, HOME + `/collections/${coll.id}`);
-    await waitText(S, coll.title);
-    await stubConfirm(S);
-    await clickBtn(S, "Delete");
-    await waitFor(S, `window.location.pathname === "/my-collections"`, 20000);
+    const pre = await httpFetch(S, `/api/collections/${coll.id}`);
+    if (pre.status === 404) {
+      console.log("       [resume] scratch collection already deleted — verifying cleanup state only");
+    } else {
+      openSession(S, HOME + `/collections/${coll.id}`);
+      await waitText(S, coll.title);
+      await stubConfirm(S);
+      await clickBtn(S, "Delete");
+      await waitFor(S, `window.location.pathname === "/my-collections"`, 20000);
+    }
     const row = (await q<{ n: string }>("SELECT count(*)::text n FROM collections WHERE id = $1", [coll.id])).rows[0];
     assert(row.n === "0", "collection row still present");
     const res = await httpFetch(S, `/api/collections/${coll.id}`);
@@ -1389,6 +1410,10 @@ assert(
 }
 
 async function main() {
+  const resume = initResume();
+  if (resume.resumed) {
+    console.log(`[resume] continuing previous run — ${resume.skipped} already-passed cases will be skipped`);
+  }
   await ensureFixtures();
   await dbInit();
 
@@ -1398,12 +1423,16 @@ async function main() {
   const favoritesBaseline = await poneyFavoriteIds();
   if (process.env.QA_EXCLUDE_PONEY_DATA === "true") {
 console.log(
-       "       [QA_EXCLUDE_PONEY_DATA] excluding poney's personal data from assertions (baseline favorites: " + favoritesBaseline.length + ")"
+       "[QA_EXCLUDE_PONEY_DATA] excluding poney's personal data from assertions (baseline favorites: " + favoritesBaseline.length + ")"
      );
   }
 
   const scratch = { shipId: 0, ufsUrl: "" };
   const coll = { id: 0, title: "" };
+  const prior = getResumeExtras<{ scratch?: { shipId: number; ufsUrl: string }; coll?: { id: number; title: string } }>();
+  if (prior?.scratch) Object.assign(scratch, prior.scratch);
+  if (prior?.coll) Object.assign(coll, prior.coll);
+  registerExtras({ scratch, coll });
 
   try {
     await phase1(scratch);
@@ -1414,6 +1443,7 @@ console.log(
     console.error("Suite aborted:", e);
   } finally {
     const { failed } = summary();
+    if (failed === 0) clearState();
     stopAllPlaywright();
     await dbClose();
     process.exit(failed > 0 ? 1 : 0);

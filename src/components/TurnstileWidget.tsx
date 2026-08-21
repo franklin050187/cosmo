@@ -100,6 +100,19 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
 
       let cancelled = false;
 
+      // Dev/QA bypass mirroring verifyTurnstileFromRequest's development skip:
+      // the challenge script can't complete in headless browsers, so fire the
+      // callback immediately instead of rendering the widget.
+      if (process.env.NODE_ENV === "development") {
+        const timer = setTimeout(() => {
+          if (!cancelled) onVerifyRef.current?.("dev-skip");
+        }, 0);
+        return () => {
+          cancelled = true;
+          clearTimeout(timer);
+        };
+      }
+
       ensureTurnstileScript()
         .then(() => {
           if (cancelled || !getTurnstile()) return;

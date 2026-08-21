@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync } from "node:fs";
 import { resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
@@ -65,7 +65,7 @@ export function closeSession(session: string) {
  * fixed UA — Cloudflare Turnstile stops auto-solving on the emulated context
  * and P2-G2 (anon admin gate) times out.
  */
-export const QA_ANON_ID = "701be3030a345fca";
+export const QA_ANON_ID = "493e0bf2e8b1468f";
 
 export const PONEY_USER = "poney5850#0";
 export const PONEY_ID = "439514586778042369";
@@ -84,6 +84,61 @@ export interface CaseResult {
   ms: number;
 }
 export const results: CaseResult[] = [];
+
+// ── Resumable runs ─────────────────────────────────────────────────────
+// Every finished check is appended to .qa/output/qa-state.json together with
+// mutable suite fixtures (scratch ship/collection ids). Starting the suite
+// with --resume (or QA_RESUME=1) skips cases that already passed in a prior
+// interrupted run and restores those fixtures, so a crashed run can continue
+// where it stopped instead of re-running (and re-creating scratch data).
+const STATE_FILE = resolve(ROOT, ".qa/output/qa-state.json");
+const SKIPPED_DETAIL = "skipped (passed in a previous run)";
+const resumeSkip = new Set<string>();
+let resumeExtras: Record<string, unknown> = {};
+let resumeActive = false;
+
+export function initResume(): { resumed: boolean; skipped: number } {
+  const wanted = process.argv.includes("--resume") || process.env.QA_RESUME === "1";
+  if (!wanted || !existsSync(STATE_FILE)) return { resumed: false, skipped: 0 };
+  try {
+    const st = JSON.parse(readFileSync(STATE_FILE, "utf8")) as {
+      results?: CaseResult[];
+      extras?: Record<string, unknown>;
+    };
+    for (const r of st.results ?? []) if (r.pass) resumeSkip.add(r.id);
+    // Carry prior results forward so the state file stays cumulative across
+    // multiple interrupted resumes.
+    for (const r of st.results ?? []) if (!results.some((x) => x.id === r.id)) results.push(r);
+    resumeExtras = st.extras ?? {};
+    resumeActive = true;
+    return { resumed: true, skipped: resumeSkip.size };
+  } catch {
+    console.warn("[resume] state file unreadable — starting fresh");
+    return { resumed: false, skipped: 0 };
+  }
+}
+
+export function getResumeExtras<T>(): T | null {
+  return resumeActive ? (resumeExtras as T) : null;
+}
+
+export function registerExtras(extras: Record<string, unknown>) {
+  resumeExtras = extras;
+}
+
+function persistState() {
+  if (!resumeActive) return;
+  mkdirSync(resolve(STATE_FILE, ".."), { recursive: true });
+  writeFileSync(STATE_FILE, JSON.stringify({ results, extras: resumeExtras }, null, 2));
+}
+
+export function clearState() {
+  try {
+    if (existsSync(STATE_FILE)) unlinkSync(STATE_FILE);
+  } catch {
+    /* best-effort */
+  }
+}
 
 // The playwright-cli daemon can die/exit cleanly (empty stderr) mid-suite, which
 // makes `open`/`eval` fail with connection errors even though nothing app-side
@@ -432,16 +487,28 @@ export async function check(
   name: string,
   fn: () => Promise<void> | void
 ): Promise<boolean> {
+  if (resumeSkip.has(id)) {
+    // Upsert: a fresh skip entry supersedes any stale failure from an earlier
+    // interrupted run so the summary reflects reality.
+    const idx = results.findIndex((r) => r.id === id);
+    const entry = { id, name, pass: true, detail: SKIPPED_DETAIL, ms: 0 };
+    if (idx >= 0) results[idx] = entry;
+    else results.push(entry);
+    console.log(`\x1b[36m[SKIP]\x1b[0m ${id} — ${name} (already passed earlier — resuming)`);
+    return true;
+  }
   const t0 = Date.now();
   try {
     await fn();
     results.push({ id, name, pass: true, detail: "ok", ms: Date.now() - t0 });
     console.log(`\x1b[32m[PASS]\x1b[0m ${id} — ${name} (${Date.now() - t0}ms)`);
+    persistState();
     return true;
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e);
     results.push({ id, name, pass: false, detail, ms: Date.now() - t0 });
     console.log(`\x1b[31m[FAIL]\x1b[0m ${id} — ${name}\n       ${detail.slice(0, 400)}`);
+    persistState();
     return false;
   }
 }
@@ -501,9 +568,12 @@ export function fileExists(filePath: string): boolean {
 
 export function summary(): { passed: number; failed: number } {
   const passed = results.filter((r) => r.pass).length;
+  const skipped = results.filter((r) => r.detail === SKIPPED_DETAIL).length;
   const failed = results.length - passed;
   console.log("\n═══════════════════════════════════════════════");
-  console.log(`Results: ${results.length} cases — ${passed} passed, ${failed} failed`);
+  console.log(
+    `Results: ${results.length} cases — ${passed} passed (${skipped} skipped from previous run), ${failed} failed`
+  );
   if (failed > 0) {
     console.log("\nFailed cases:");
     for (const r of results.filter((r) => !r.pass)) {

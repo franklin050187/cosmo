@@ -38,6 +38,7 @@ broken-links.log
 
 # playwright-cli QA
 .playwright/
+.playwright-cli/
 .qa/
 
 # docs
