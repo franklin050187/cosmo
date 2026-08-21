@@ -95,12 +95,17 @@ export async function deleteCollection(id: number, owner: string, ownerId: strin
 }
 
 export async function addShipToCollection(collectionId: number, shipId: number, owner: string, ownerId: string) {
-  const col = await fetchOne("SELECT owner, discord_id, ships FROM collections WHERE id = $1", [collectionId]);
+  const col = await fetchOne("SELECT owner, discord_id FROM collections WHERE id = $1", [collectionId]);
   if (!col) return { error: "not found" };
   if (!isCollectionOwner(col, { id: ownerId, username: owner })) return { error: "not the owner" };
-  if (col.ships?.includes(shipId)) return { warning: "ship already in collection" };
-  await query("UPDATE collections SET ships = COALESCE(ships, '{}') || $1::int[] WHERE id = $2 AND (discord_id = $3 OR owner = $4)", [[shipId], collectionId, ownerId, owner]);
+  // The NOT ANY guard makes the append idempotent under concurrent adds;
+  // rowCount tells us whether the ship was already present.
+  const r = await query(
+    "UPDATE collections SET ships = COALESCE(ships, '{}') || $1::int[] WHERE id = $2 AND (discord_id = $3 OR owner = $4) AND NOT ($5::int = ANY(ships))",
+    [[shipId], collectionId, ownerId, owner, shipId],
+  );
   bumpDbVersion();
+  if (r.rowCount === 0) return { warning: "ship already in collection" };
   return { success: "ship added" };
 }
 

@@ -138,6 +138,24 @@ export default function GameDetailPage() {
     window.setTimeout(() => setMsg(null), kind === "error" ? 5000 : 3000);
   };
 
+  // Background refresh for registrations, bracket results and deals. Updates
+  // only live game state; never touches the owner edit form fields.
+  useEffect(() => {
+    if (!game || notFound) return;
+    const id = window.setInterval(async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const data = await load();
+        setGame(data);
+        setRegStatus(computeRegStatus(data));
+      } catch {
+        /* keep showing the last good state */
+      }
+    }, 15000);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game?.id, notFound]);
+
   const showError = (text: string) => showMsg(text, "error");
 
   const membership = game ? game.participants.some((p) => sameIdentity(p, user)) : false;

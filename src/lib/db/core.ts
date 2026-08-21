@@ -156,12 +156,14 @@ export async function fetchOne(text: string, params?: unknown[]) {
 
 function isShipOwner(row: { discord_id: string | null; submitted_by: string }, { id, username }: { id: string; username: string }): boolean {
   if (row.discord_id) return row.discord_id === id;
-  return row.submitted_by === username;
+  // Usernames arrive from Discord and legacy rows; compare case-insensitively
+  // so a display-name case change cannot break ownership.
+  return row.submitted_by.toLowerCase() === username.toLowerCase();
 }
 
 function isCollectionOwner(row: { discord_id: string | null; owner: string }, { id, username }: { id: string; username: string }): boolean {
   if (row.discord_id) return row.discord_id === id;
-  return row.owner === username;
+  return row.owner.toLowerCase() === username.toLowerCase();
 }
 
 export { sanitizeText, PAGE_SIZE, isShipOwner, isCollectionOwner };
