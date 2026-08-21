@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { requireAuth, getUserFromRequest } from "@/lib/auth";
 import { verifyTurnstileFromRequest } from "@/lib/turnstile";
-import { getCollection, listGames, listPastGames, listMyGames, createGame } from "@/lib/db";
+import { getCollection, listGames, listPastGames, listMyGames, createGame, listRegisteredGameIds } from "@/lib/db";
 import { ok, badRequest, forbidden, error } from "@/lib/api";
 
 const VALID_MODES = new Set(["pvp", "tournament", "campaign"]);
@@ -21,6 +21,19 @@ export async function GET(req: NextRequest) {
     const publicGames = await listGames();
     const past = await listPastGames();
     const mine = user ? await listMyGames(user.id, user.username) : [];
+    // Annotate "you're registered" so cards can badge it (public+past lists are
+    // independent of the user, so merge the ids the user is actually in).
+    if (user) {
+      const registered = await listRegisteredGameIds(user.id, user.username);
+      for (const g of [...publicGames, ...past, ...mine]) {
+        g.registered = registered.has(g.id);
+      }
+    }
+    // Invite codes travel only with ownership; list rows carry no participants,
+    // so membership cannot be checked here.
+    for (const g of [...publicGames, ...past]) {
+      if (g.owner_discord_id !== user?.id) g.invite_code = null;
+    }
     return ok({ public: publicGames, mine, past });
   } catch (err) {
     console.error("games GET error:", err);
@@ -49,6 +62,8 @@ export async function POST(req: NextRequest) {
 
   const gameMode = typeof body.game_mode === "string" ? body.game_mode : "pvp";
   if (!VALID_MODES.has(gameMode)) return badRequest("Invalid game mode");
+
+  const bracketType = body.bracket_type === "double_elim" ? "double_elim" : "single_elim";
 
   const visibility = typeof body.visibility === "string" ? body.visibility : "public";
   if (!VALID_VISIBILITY.has(visibility)) return badRequest("Invalid visibility");
@@ -96,6 +111,7 @@ export async function POST(req: NextRequest) {
       registerOpenAt,
       registerCloseAt,
       rouletteEnabled: body.roulette_enabled === true,
+      bracketType,
     });
     return ok(result, 201);
   } catch (err) {

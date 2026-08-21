@@ -78,7 +78,12 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
 
     useImperativeHandle(ref, () => ({
       getToken: () => {
-        if (typeof window !== "undefined" && getTurnstile()) {
+        if (typeof window === "undefined") return;
+        // Mirror the server's NODE_ENV=development skip: the local site-key is
+        // never authorized, so the widget can't complete and getToken() would
+        // stay empty, blocking form submission in dev. Production stays intact.
+        if (process.env.NODE_ENV === "development") return "dev-skip";
+        if (getTurnstile()) {
           return getTurnstile()!.getResponse(widgetIdRef.current);
         }
       },
@@ -94,6 +99,19 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
       if (!container) return;
 
       let cancelled = false;
+
+      // Dev/QA bypass mirroring verifyTurnstileFromRequest's development skip:
+      // the challenge script can't complete in headless browsers, so fire the
+      // callback immediately instead of rendering the widget.
+      if (process.env.NODE_ENV === "development") {
+        const timer = setTimeout(() => {
+          if (!cancelled) onVerifyRef.current?.("dev-skip");
+        }, 0);
+        return () => {
+          cancelled = true;
+          clearTimeout(timer);
+        };
+      }
 
       ensureTurnstileScript()
         .then(() => {

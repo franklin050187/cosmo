@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, getUserFromRequest } from "@/lib/auth";
 import { verifyTurnstileFromRequest } from "@/lib/turnstile";
-import { getGame, getCollection, updateGame, deleteGame } from "@/lib/db";
+import { getGame, getCollection, updateGame, deleteGame, isGameOwner, stripGameForViewer } from "@/lib/db";
 import { ok, badRequest, notFound, forbidden, error } from "@/lib/api";
 
 const VALID_MODES = new Set(["pvp", "tournament", "campaign"]);
@@ -16,7 +16,7 @@ function parseOptionalDate(value: unknown, label: string): string | null {
   return d.toISOString();
 }
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const gameId = parseInt(id, 10);
@@ -24,7 +24,21 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
     const game = await getGame(gameId);
     if (!game) return notFound();
-    return ok(game);
+    // Private games are only readable by the owner and registered participants
+    // (the join flow goes through /api/games/by-invite, which is code-gated).
+    // 404 — not 403 — so id enumeration can't even confirm the game exists.
+    if (game.visibility === "private") {
+      const user = getUserFromRequest(req);
+      const isParticipant =
+        !!user &&
+        game.participants.some(
+          (p) =>
+            (p.discord_id != null && p.discord_id === user.id) ||
+            p.discord_username.toLowerCase() === user.username.toLowerCase(),
+        );
+      if (!user || (!isGameOwner(game, user) && !isParticipant)) return notFound();
+    }
+    return ok(stripGameForViewer(game, getUserFromRequest(req)));
   } catch (err) {
     console.error("games/[id] GET error:", err);
     return error("internal");
@@ -58,6 +72,7 @@ async function update(req: NextRequest, gameId: number) {
     register_open_at?: string | null;
     register_close_at?: string | null;
     roulette_enabled?: boolean;
+    bracket_type?: "single_elim" | "double_elim";
   } = {};
 
   if (body.title !== undefined) {
@@ -109,6 +124,12 @@ async function update(req: NextRequest, gameId: number) {
   if (body.roulette_enabled !== undefined) {
     if (typeof body.roulette_enabled !== "boolean") return badRequest("roulette_enabled must be a boolean");
     fields.roulette_enabled = body.roulette_enabled;
+  }
+  if (body.bracket_type !== undefined) {
+    if (body.bracket_type !== "single_elim" && body.bracket_type !== "double_elim") {
+      return badRequest("Invalid bracket_type");
+    }
+    fields.bracket_type = body.bracket_type;
   }
 
   if (!(await verifyTurnstileFromRequest(req, (body["cf-turnstile-response"] as string) ?? ""))) {

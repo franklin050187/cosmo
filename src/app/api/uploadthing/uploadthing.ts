@@ -1,4 +1,5 @@
 import { createUploadthing } from "uploadthing/next";
+import { revalidatePath } from "next/cache";
 import { UTApi } from "uploadthing/server";
 import { decodeShipFromUrl, decodeShipFromPixels } from "@/lib/server-decode";
 import { calculateShipPrice } from "@/lib/price";
@@ -40,7 +41,7 @@ export const uploadRouter = {
   pngUploader: f({
     "image/png": {
       maxFileSize: "8MB",
-      maxFileCount: 1,
+      maxFileCount: 10,
     },
   })
     .middleware(async ({ req }) => {
@@ -98,7 +99,12 @@ export const uploadRouter = {
           signature,
         });
 
-        return { shipId: result.success ? parseInt(result.success, 10) : null };
+        const newShipId = result.success ? parseInt(result.success, 10) : null;
+        if (newShipId) {
+          revalidatePath(`/ship/${newShipId}`);
+        }
+
+        return { shipId: newShipId };
       } catch (err) {
         console.error("Failed to process uploaded ship:", err);
         return { shipId: null };
@@ -163,6 +169,8 @@ export const uploadRouter = {
           tags: allTags,
           signature,
         });
+
+        revalidatePath(`/ship/${metadata.shipId}`);
 
         if (metadata.oldData) {
           try {

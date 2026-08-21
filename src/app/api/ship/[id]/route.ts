@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getImageData, deleteShip, isShipOwner, updateShip } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { verifyTurnstileFromRequest } from "@/lib/turnstile";
@@ -42,18 +43,7 @@ export async function PUT(
     return badRequest("Invalid ship ID");
   }
 
-  let body: {
-    name?: string;
-    data?: string;
-    description?: string;
-    ship_name?: string;
-    author?: string;
-    price?: number;
-    brand?: string;
-    crew?: number;
-    tags?: string[];
-    "cf-turnstile-response"?: string;
-  } = {};
+  let body: Record<string, unknown>;
   try {
     const cl = req.headers.get("content-length");
     if (cl && parseInt(cl, 10) > 1_048_576) {
@@ -63,8 +53,77 @@ export async function PUT(
   } catch {
     return badRequest("Invalid JSON body");
   }
-  if (!(await verifyTurnstileFromRequest(req, body["cf-turnstile-response"] ?? ""))) {
+
+  let turnstileToken = "";
+  if (body["cf-turnstile-response"] !== undefined) {
+    if (typeof body["cf-turnstile-response"] !== "string") {
+      return badRequest("cf-turnstile-response must be a string");
+    }
+    turnstileToken = body["cf-turnstile-response"];
+  }
+  if (!(await verifyTurnstileFromRequest(req, turnstileToken))) {
     return forbidden("Turnstile verification failed");
+  }
+
+  const fields: {
+    name?: string;
+    data?: string;
+    description?: string;
+    ship_name?: string;
+    author?: string;
+    price?: number;
+    brand?: string;
+    crew?: number;
+    tags?: string[];
+  } = {};
+
+  if (body.name !== undefined) {
+    if (typeof body.name !== "string") return badRequest("name must be a string");
+    const name = body.name.trim();
+    if (!name) return badRequest("name cannot be empty");
+    fields.name = name;
+  }
+  if (body.description !== undefined) {
+    if (typeof body.description !== "string") return badRequest("description must be a string");
+    fields.description = body.description.trim();
+  }
+  if (body.ship_name !== undefined) {
+    if (typeof body.ship_name !== "string") return badRequest("ship_name must be a string");
+    fields.ship_name = body.ship_name.trim();
+  }
+  if (body.author !== undefined) {
+    if (typeof body.author !== "string") return badRequest("author must be a string");
+    fields.author = body.author.trim();
+  }
+  if (body.brand !== undefined) {
+    if (typeof body.brand !== "string") return badRequest("brand must be a string");
+    fields.brand = body.brand.trim();
+  }
+  if (body.data !== undefined) {
+    if (typeof body.data !== "string" || !body.data.trim()) {
+      return badRequest("data must be a non-empty string");
+    }
+    fields.data = body.data;
+  }
+  if (body.price !== undefined) {
+    if (typeof body.price !== "number" || !Number.isFinite(body.price)) {
+      return badRequest("price must be a number");
+    }
+    if (body.price < 0) return badRequest("price must be >= 0");
+    fields.price = body.price;
+  }
+  if (body.crew !== undefined) {
+    if (typeof body.crew !== "number" || !Number.isInteger(body.crew)) {
+      return badRequest("crew must be an integer");
+    }
+    if (body.crew < 0) return badRequest("crew must be >= 0");
+    fields.crew = body.crew;
+  }
+  if (body.tags !== undefined) {
+    if (!Array.isArray(body.tags) || body.tags.some((t) => typeof t !== "string")) {
+      return badRequest("tags must be an array of strings");
+    }
+    fields.tags = body.tags;
   }
 
   try {
@@ -78,18 +137,20 @@ export async function PUT(
 
     await updateShip({
       id: shipId,
-      name: body.name ?? ship.name,
-      data: body.data ?? ship.data,
+      name: fields.name ?? ship.name,
+      data: fields.data ?? ship.data,
       submittedBy: user.username,
       submittedById: user.id,
-      description: body.description ?? ship.description,
-      shipName: body.ship_name ?? ship.ship_name,
-      author: body.author ?? ship.author,
-      price: body.price ?? ship.price,
-      brand: body.brand ?? ship.brand,
-      crew: body.crew ?? ship.crew,
-      tags: body.tags ?? ship.tags,
+      description: fields.description ?? ship.description,
+      shipName: fields.ship_name ?? ship.ship_name,
+      author: fields.author ?? ship.author,
+      price: fields.price ?? ship.price,
+      brand: fields.brand ?? ship.brand,
+      crew: fields.crew ?? ship.crew,
+      tags: fields.tags ?? ship.tags,
     });
+
+    revalidatePath(`/ship/${shipId}`);
 
     return ok({ success: "Ship updated" });
   } catch {
@@ -120,6 +181,8 @@ export async function DELETE(
     if ("error" in result) {
       return forbidden(result.error);
     }
+
+    revalidatePath(`/ship/${shipId}`);
 
     if (result.data) {
       try {

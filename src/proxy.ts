@@ -87,7 +87,7 @@ export async function proxy(req: NextRequest) {
     const headers = { ...rateLimitHeaders(result), ...cors };
 
     if (!result.success) {
-      return new NextResponse(JSON.stringify({ error: "Too many requests" }), {
+      return new NextResponse(JSON.stringify({ ok: false, error: "Too many requests" }), {
         status: 429,
         headers: { ...headers, "Content-Type": "application/json" },
       });

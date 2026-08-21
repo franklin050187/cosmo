@@ -127,7 +127,7 @@ export default function GameJoinPage() {
           membership ? (
             <p className="text-cyan-400 text-sm">You are already registered.</p>
           ) : registerable ? (
-            <Button onClick={register} disabled={busy}>
+            <Button onClick={register} disabled={busy} aria-label="Register for this game">
               {busy ? "Registering..." : "Register"}
             </Button>
           ) : (
@@ -148,7 +148,7 @@ export default function GameJoinPage() {
             {memberGuestMatch ? (
               <p className="text-cyan-400 text-sm">That username is already registered.</p>
             ) : (
-              <Button onClick={register} disabled={busy || !guestName.trim()}>
+              <Button onClick={register} disabled={busy || !guestName.trim()} aria-label={`Register as ${guestName}`}>
                 {busy ? "Registering..." : "Register"}
               </Button>
             )}
@@ -159,7 +159,7 @@ export default function GameJoinPage() {
 
         {msg && <p className="text-cyan-400 text-sm" role="status">{msg}</p>}
 
-        <Link href={`/games/${game.id}`} className="inline-block text-sm text-blue-300 hover:text-cyan-300 transition-colors">
+        <Link href={`/games/${game.id}`} aria-label={`View details for ${game.title}`} className="inline-block text-sm text-blue-300 hover:text-cyan-300 transition-colors">
           View game details
         </Link>
       </Card>

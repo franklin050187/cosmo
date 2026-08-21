@@ -8,7 +8,9 @@ export interface SearchFilters {
   minprice?: string;
   maxprice?: string;
   "max-crew"?: string;
+  "min-crew"?: string;
   order?: string;
+  dir?: string;
   fulltext?: string;
   brand?: string;
   tagsOn?: string[];
@@ -34,6 +36,7 @@ export async function getSearchPlus(filters: SearchFilters) {
     if (filters.maxprice) conditions.push(`price <= ${addCond(filters.maxprice)}`);
     if (filters.author) conditions.push(`author ILIKE ${addCond(`%${filters.author}%`)}`);
     if (filters["max-crew"]) conditions.push(`crew <= ${addCond(filters["max-crew"])}`);
+    if (filters["min-crew"]) conditions.push(`crew >= ${addCond(filters["min-crew"])}`);
     if (filters.brand === "exl") conditions.push(`brand = ${addCond("exl")}`);
     if (filters.brand === "gen") conditions.push(`brand = ${addCond("gen")}`);
 
@@ -50,11 +53,46 @@ export async function getSearchPlus(filters: SearchFilters) {
     const countRow = await fetchOne(`SELECT COUNT(*) FROM shipdb${where}`, args);
     const maxPage = Math.ceil(parseInt(countRow?.count ?? "0", 10) / PAGE_SIZE);
 
-    const ORDER_BY_ALLOW: Record<string, string> = { fav: "fav DESC", pop: "downloads DESC" };
-    const order = ORDER_BY_ALLOW[filters.order ?? ""] ?? "date DESC";
+    // Faceted counts over the full filtered set (not the limited page), so
+    // badge/option counts reflect the active filters. Uses a snapshot of the
+    // WHERE args (before LIMIT/OFFSET are appended below).
+    const facetArgs = [...args];
+    const whereWith = (extra: string) =>
+      ` WHERE ${[...conditions, extra].join(" AND ")}`;
+    const [authorCounts, tagCounts, hasPrice, hasCrew] = await Promise.all([
+      fetchAll(
+        `SELECT author, COUNT(*)::int AS count FROM shipdb${where} GROUP BY author ORDER BY count DESC, author`,
+        facetArgs,
+      ),
+      fetchAll(
+        `SELECT tag, COUNT(*)::int AS count FROM (SELECT unnest(tags) AS tag FROM shipdb${where}) sub GROUP BY tag ORDER BY count DESC, tag`,
+        facetArgs,
+      ),
+      fetchOne(
+        `SELECT EXISTS(SELECT 1 FROM shipdb${whereWith("price > 0")}) AS has_price`,
+        facetArgs,
+      ),
+      fetchOne(
+        `SELECT EXISTS(SELECT 1 FROM shipdb${whereWith("crew > 1")}) AS has_crew`,
+        facetArgs,
+      ),
+    ]);
 
-    const limit = page === -1 ? 999999 : PAGE_SIZE;
-    const offset = page === -1 ? null : (page - 1) * PAGE_SIZE;
+    const ORDER_COLUMNS: Record<string, [string, "asc" | "desc"]> = {
+      new: ["date", "desc"],
+      pop: ["downloads", "desc"],
+      fav: ["fav", "desc"],
+      name: ["ship_name", "asc"],
+      price: ["price", "desc"],
+      crew: ["crew", "asc"],
+    };
+    const [col, defaultDir] = ORDER_COLUMNS[filters.order ?? ""] ?? ORDER_COLUMNS.new;
+    const dir = filters.dir === "asc" ? "asc" : filters.dir === "desc" ? "desc" : defaultDir;
+    const order = `${col} ${dir.toUpperCase()}`;
+
+    const effectivePage = page === -1 ? -1 : Math.min(Math.max(page, 1), Math.max(maxPage, 1));
+    const limit = effectivePage === -1 ? 2000 : PAGE_SIZE;
+    const offset = effectivePage === -1 ? null : (effectivePage - 1) * PAGE_SIZE;
 
     args.push(limit);
     let sql = `SELECT id, name, data, submitted_by, description, ship_name, author, price, brand, crew, tags, downloads, fav, date FROM shipdb${where} ORDER BY ${order} LIMIT $${args.length}`;
@@ -65,7 +103,16 @@ export async function getSearchPlus(filters: SearchFilters) {
 
     const data = await fetchAll(sql, args);
     const total_count = parseInt(countRow?.count ?? "0", 10);
-    return { data, page, max_page: page === -1 ? 1 : maxPage, total_count };
+    return {
+      data,
+      page: effectivePage,
+      max_page: effectivePage === -1 ? 1 : maxPage,
+      total_count,
+      author_counts: (authorCounts as Array<{ author: string; count: number | string }>).map((a) => ({ author: a.author, count: Number(a.count) })),
+      tag_counts: (tagCounts as Array<{ tag: string; count: number | string }>).map((t) => ({ tag: t.tag, count: Number(t.count) })),
+      has_price: !!hasPrice?.has_price,
+      has_crew: !!hasCrew?.has_crew,
+    };
   });
 }
 
@@ -77,19 +124,27 @@ export async function searchFromQueryString(queryString: string) {
   const tagsOn: string[] = [];
   const tagsOff: string[] = [];
 
-  const SCALAR_KEYS = ["author", "desc", "minprice", "maxprice", "max-crew", "fulltext", "brand"];
+  const SCALAR_KEYS = ["author", "desc", "minprice", "maxprice", "max-crew", "min-crew", "fulltext", "brand"];
 
   const pageStr = params.get("page");
   if (pageStr) page = parseInt(pageStr, 10) || 1;
 
   if (params.has("order")) filters.order = params.get("order")!;
+  if (params.has("dir")) filters.dir = params.get("dir")!;
   if (params.has("q")) filters.desc = params.get("q")!;
 
   tagsOn.push(...params.getAll("tag"));
   tagsOff.push(...params.getAll("notag"));
 
+  const NUMERIC_KEYS = new Set(["minprice", "maxprice", "min-crew", "max-crew"]);
+
   for (const key of SCALAR_KEYS) {
-    if (params.has(key)) (filters as Record<string, string>)[key] = params.get(key)!;
+    if (!params.has(key)) continue;
+    const value = params.get(key)!;
+    // Numeric filters that fail coercion are ignored rather than passed to
+    // Postgres, where they would error the comparison and 500 the request.
+    if (NUMERIC_KEYS.has(key) && !Number.isFinite(Number(value))) continue;
+    (filters as Record<string, string>)[key] = value;
   }
 
   for (const key of params.keys()) {

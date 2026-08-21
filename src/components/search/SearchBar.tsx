@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 interface SearchBarProps {
   query: string;
@@ -8,6 +8,8 @@ interface SearchBarProps {
   onFilterOpen: () => void;
   activeFilterCount: number;
 }
+
+const DEBOUNCE_MS = 300;
 
 export default function SearchBar({
   query,
@@ -17,21 +19,37 @@ export default function SearchBar({
 }: SearchBarProps) {
   const [input, setInput] = useState(query);
   const [prevQuery, setPrevQuery] = useState(query);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   if (query !== prevQuery) {
     setPrevQuery(query);
     setInput(query);
   }
 
+  useEffect(() => {
+    return () => clearTimeout(debounceRef.current);
+  }, []);
+
+  const commit = useCallback((value: string) => {
+    clearTimeout(debounceRef.current);
+    onQueryChange(value);
+  }, [onQueryChange]);
+
+  const handleChange = (value: string) => {
+    setInput(value);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => commit(value), DEBOUNCE_MS);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onQueryChange(input);
+    commit(input);
   };
 
   const handleClear = useCallback(() => {
     setInput("");
-    onQueryChange("");
-  }, [onQueryChange]);
+    commit("");
+  }, [commit]);
 
   return (
     <form onSubmit={handleSubmit} className="flex items-center gap-2">
@@ -48,7 +66,7 @@ export default function SearchBar({
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => handleChange(e.target.value)}
           placeholder="Search ships..."
           aria-label="Search ships"
           className="w-full pl-9 pr-8 py-2.5 bg-[#0a1e33] border border-[#1C598C] rounded-lg text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-cyan-400 transition-colors"
@@ -70,7 +88,7 @@ export default function SearchBar({
       <button
         type="submit"
         aria-label="Submit search"
-        className="p-2.5 bg-[#0a1e33] border border-[#1C598C] rounded-lg text-cyan-400 hover:bg-cyan-400/10 transition-colors md:hidden"
+        className="p-2.5 bg-[#0a1e33] border border-[#1C598C] rounded-lg text-cyan-400 hover:bg-cyan-400/10 transition-colors"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

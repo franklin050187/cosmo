@@ -29,6 +29,35 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
         <p className="text-blue-200 text-sm mb-6 max-w-sm">
           You need to be logged in to access this feature. Sign in with your Discord account to continue.
         </p>
+        <div className="w-full max-w-sm text-left bg-[#021526]/60 border border-[#1C598C]/40 rounded-md p-4 mb-6">
+          <p className="text-xs uppercase tracking-wide text-cyan-300 mb-3">What you&apos;ll get</p>
+          <ul className="space-y-2 text-sm text-blue-100">
+            <li className="flex items-start gap-2">
+              <svg className="w-4 h-4 mt-0.5 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Upload and share your own ships
+            </li>
+            <li className="flex items-start gap-2">
+              <svg className="w-4 h-4 mt-0.5 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Favorite ships and build collections
+            </li>
+            <li className="flex items-start gap-2">
+              <svg className="w-4 h-4 mt-0.5 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Create and join community games
+            </li>
+            <li className="flex items-start gap-2">
+              <svg className="w-4 h-4 mt-0.5 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Compete in tournament brackets and ship roulette
+            </li>
+          </ul>
+        </div>
         <div className="flex gap-3">
           <Link
             href={`/auth/discord?returnTo=${encodeURIComponent(returnTo)}`}

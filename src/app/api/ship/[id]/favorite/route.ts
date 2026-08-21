@@ -1,7 +1,27 @@
 import { NextRequest } from "next/server";
-import { addToFavorites } from "@/lib/db";
-import { requireAuth } from "@/lib/auth";
+import { addToFavorites, isShipFavorited } from "@/lib/db";
+import { requireAuth, getUserFromRequest } from "@/lib/auth";
 import { ok, badRequest, error } from "@/lib/api";
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const shipId = parseInt(id, 10);
+  if (isNaN(shipId)) {
+    return badRequest("Invalid ship ID");
+  }
+  try {
+    const user = getUserFromRequest(req);
+    if (!user) return ok({ favorited: false });
+    const favorited = await isShipFavorited(user.username, user.id, shipId);
+    return ok({ favorited });
+  } catch (err) {
+    console.error("ship/[id]/favorite GET error:", err);
+    return error("internal");
+  }
+}
 
 export async function POST(
   req: NextRequest,

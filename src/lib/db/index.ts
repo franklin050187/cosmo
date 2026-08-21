@@ -41,6 +41,7 @@ export {
 // Favorites queries
 export {
   getMyFavorites,
+  isShipFavorited,
   addToFavorites,
   deleteFromFavorites,
 } from "./favorites";
@@ -55,13 +56,16 @@ export {
   listUpcomingGames,
   listPastGames,
   listMyGames,
+  listRegisteredGameIds,
   getGame,
   getGameByInviteCode,
   updateGame,
+  markGameFinished,
   deleteGame,
   registerForGame,
   leaveGame,
   resolveUsernameToDiscordId,
+  stripGameForViewer,
   addContestant,
   removeContestant,
   generateBracket,
@@ -86,10 +90,3 @@ export {
   getTagsWithCounts,
   findDuplicateBySignature,
 } from "./search";
-
-// Analytics queries and types
-export type { DashboardData } from "./analytics";
-export {
-  logEvent,
-  getDashboardData,
-} from "./analytics";

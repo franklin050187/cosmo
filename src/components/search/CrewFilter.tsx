@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
+
 interface CrewFilterProps {
   maxCrew: string;
   onChange: (val: string) => void;
@@ -14,7 +16,35 @@ const PRESETS = [
   { label: "≤500", value: "500" },
 ];
 
+const COMMIT_MS = 400;
+
 export default function CrewFilter({ maxCrew, onChange }: CrewFilterProps) {
+  const [local, setLocal] = useState(maxCrew);
+  const [prev, setPrev] = useState(maxCrew);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    return () => clearTimeout(timer.current);
+  }, []);
+
+  if (prev !== maxCrew) {
+    setPrev(maxCrew);
+    setLocal(maxCrew);
+  }
+
+  const commit = (val: string) => {
+    clearTimeout(timer.current);
+    onChange(val);
+  };
+
+  const schedule = (val: string) => {
+    setLocal(val);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => commit(val), COMMIT_MS);
+  };
+
+  const outOfRange = local !== "" && Number(local) > 1000;
+
   return (
     <div>
       <div className="flex flex-wrap gap-1.5 mb-3">
@@ -22,7 +52,7 @@ export default function CrewFilter({ maxCrew, onChange }: CrewFilterProps) {
           <button
             key={p.label}
             type="button"
-            onClick={() => onChange(p.value)}
+            onClick={() => commit(p.value)}
             aria-pressed={maxCrew === p.value}
             aria-label={`Max crew ${p.label}`}
             className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
@@ -37,14 +67,19 @@ export default function CrewFilter({ maxCrew, onChange }: CrewFilterProps) {
       </div>
       <input
         type="number"
-        value={maxCrew}
-        onChange={e => onChange(e.target.value)}
+        value={local}
+        onChange={e => schedule(e.target.value)}
+        onBlur={() => commit(local)}
         placeholder="Custom max crew..."
         aria-label="Custom maximum crew size"
+        aria-invalid={outOfRange || undefined}
         min={0}
         max={1000}
         className="w-full px-3 py-1.5 bg-[#061220] border border-[#1C598C]/50 rounded-md text-white text-[12px] placeholder:text-gray-700 focus:outline-none focus:border-cyan-400/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
+      {outOfRange && (
+        <p className="text-red-400 text-[11px] mt-1.5" role="alert">Max crew can&apos;t exceed 1000.</p>
+      )}
     </div>
   );
 }

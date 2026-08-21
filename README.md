@@ -16,7 +16,7 @@ Discord OAuth (httpOnly-cookie JWT) · UploadThing · Cloudflare Turnstile · Ve
 |-----|----------|
 | [`docs/PROJECT.md`](docs/PROJECT.md) | **Start here.** What the site is, the ship-file format, features & workflows, auth/security model, data model, structure, conventions, UI/UX decisions, dev workflow |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Consolidated remaining work (findings/code-review/docs) as phased TODO roadmap |
-| [`docs/QA_TEST_PLAN.md`](docs/QA_TEST_PLAN.md) | Scripted QA suite (43 cases, 4 phases) |
+| [`docs/QA_TEST_PLAN.md`](docs/QA_TEST_PLAN.md) | Scripted QA suite (51 cases, 4 phases) |
 | [`docs/QA_FINDINGS.md`](docs/QA_FINDINGS.md) | Latest suite-run report |
 | [`docs/CODE_REVIEW_FINDINGS.md`](docs/CODE_REVIEW_FINDINGS.md) | Audit history (5 rounds), resolved/open items, deferred work |
 | [`docs/plans/`](docs/plans/) | Implementation plans (e.g. bad-IP blocklist) |
@@ -39,6 +39,14 @@ cd /home/johnn/cosmo-next
 
 > **Next 16 note:** this is not the Next.js you may know — APIs and conventions differ.
 > Read the relevant guide in `node_modules/next/dist/docs/` before writing code.
+
+## Trust boundary (reverse proxies)
+
+Anonymous analytics identity (`anonIdFor`), the API rate-limiter IP (`getClientIp`) and
+Turnstile `remoteip` all trust the `x-forwarded-for` / `x-real-ip` headers. This is safe on
+**Vercel** (platform sets these headers) but is a constraint if the app is ever moved behind a
+plain reverse proxy — the proxy must set/overwrite those headers, or client IPs become spoofable
+and rate-limits/Turnstile remote IP checks can be bypassed.
 
 ## License
 

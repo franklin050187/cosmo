@@ -35,7 +35,7 @@ export async function getCollection(id: number) {
 
 export async function getUserCollections(owner: string, ownerId: string, shipId?: number) {
   const rows = await fetchAll(
-    `SELECT id, owner, discord_id, title, description, array_length(ships, 1) AS ship_count, created_at${
+    `SELECT id, owner, discord_id, title, description, array_length(ships, 1) AS ship_count, (SELECT data FROM shipdb WHERE id = ships[1]) AS thumb_url, created_at${
       shipId ? ", $3 = ANY(ships) AS has_ship" : ""
     } FROM collections WHERE discord_id = $1 OR owner = $2 ORDER BY created_at DESC`,
     shipId ? [ownerId, owner, shipId] : [ownerId, owner],
@@ -51,7 +51,7 @@ export async function getAllCollections(page = 1) {
     const total = parseInt(countRow?.count ?? "0", 10);
     const maxPage = Math.ceil(total / PAGE);
     const data = await fetchAll(
-      "SELECT id, owner, title, description, array_length(ships, 1) AS ship_count, created_at FROM collections ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+      "SELECT id, owner, title, description, array_length(ships, 1) AS ship_count, (SELECT data FROM shipdb WHERE id = ships[1]) AS thumb_url, created_at FROM collections ORDER BY created_at DESC LIMIT $1 OFFSET $2",
       [PAGE, (page - 1) * PAGE],
     );
     return { data, page, max_page: maxPage, total_count: total };
@@ -125,10 +125,9 @@ export async function removeShipFromCollection(
 }
 
 export async function getCollectionsForShip(shipId: number) {
-  return cachedQuery("collectionsByShip", 30_000, String(shipId), async () =>
-    fetchAll(
-      "SELECT id, owner, title, description FROM collections WHERE $1 = ANY(ships)",
-      [shipId],
-    )
+  // Not cached: shown on ship detail; must reflect add/remove immediately.
+  return fetchAll(
+    "SELECT id, owner, title, description FROM collections WHERE $1 = ANY(ships)",
+    [shipId],
   );
 }

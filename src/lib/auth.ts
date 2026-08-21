@@ -49,7 +49,15 @@ export function getUserFromRequest(req: Request): UserPayload | null {
   try {
     const payload = verifyToken(token);
     return payload.user ?? null;
-  } catch {
+  } catch (err) {
+    // Token present but invalid — the signal for a JWT brute-force probe.
+    // Keep the 401 response indistinguishable; only log when DEBUG_JWT=1.
+    if (process.env.DEBUG_JWT === "1") {
+      console.warn("[auth] Invalid JWT (possible probe)", {
+        reason: err instanceof Error ? err.message : String(err),
+        url: req.url,
+      });
+    }
     return null;
   }
 }

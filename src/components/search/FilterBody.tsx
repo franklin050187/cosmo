@@ -15,7 +15,26 @@ interface FilterBodyProps {
   setFilters: (entries: [string, string | string[]][]) => void;
   clearFilters: () => void;
   showSort?: boolean;
+  defaultSectionOpen?: boolean;
+  facets?: FacetCounts;
 }
+
+export interface FacetCounts {
+  authors: Array<{ author: string; count: number }>;
+  tags: Array<{ tag: string; count: number }>;
+  hasPrice: boolean;
+  hasCrew: boolean;
+}
+
+const toCountMap = (items: Array<{ author: string; count: number }> | Array<{ tag: string; count: number }> | undefined) => {
+  const m = new Map<string, number>();
+  if (!items) return m;
+  for (const item of items) {
+    const key = "author" in item ? item.author : item.tag;
+    m.set(key, Number(item.count));
+  }
+  return m;
+};
 
 function TagIcon() {
   return (
@@ -61,7 +80,7 @@ function LibraryIcon() {
   );
 }
 
-export default function FilterBody({ filters, setFilter, setFilters, clearFilters, showSort = false }: FilterBodyProps) {
+export default function FilterBody({ filters, setFilter, setFilters, clearFilters, showSort = false, defaultSectionOpen = true, facets }: FilterBodyProps) {
   const handleTagChange = useCallback(
     (tagsOn: string[], tagsOff: string[]) => {
       setFilters([["tag", tagsOn], ["notag", tagsOff]]);
@@ -72,16 +91,32 @@ export default function FilterBody({ filters, setFilter, setFilters, clearFilter
   return (
     <div className="divide-y divide-[#1C598C]/15">
       {showSort && (
-        <FilterSection title="Sort by" icon={<SortIcon />}>
-          <SortFilter value={filters.order} onChange={v => setFilter("order", v)} />
+        <FilterSection title="Sort by" icon={<SortIcon />} defaultOpen={defaultSectionOpen}>
+          <SortFilter
+            value={filters.order}
+            dir={filters.dir}
+            onChange={v => {
+              if (v === filters.order) {
+                setFilter("order", v);
+                return;
+              }
+              setFilters([["order", v], ["dir", ""]]);
+            }}
+            onDirChange={v => setFilter("dir", v)}
+          />
         </FilterSection>
       )}
 
-      <FilterSection title="Tags" icon={<TagIcon />} badge={filters.tags.length + filters.notags.length}>
-        <TagFilter tagsOn={filters.tags} tagsOff={filters.notags} onChange={handleTagChange} />
+      <FilterSection title="Tags" icon={<TagIcon />} badge={filters.tags.length + filters.notags.length} defaultOpen={defaultSectionOpen}>
+        <TagFilter
+          tagsOn={filters.tags}
+          tagsOff={filters.notags}
+          onChange={handleTagChange}
+          counts={facets ? toCountMap(facets.tags) : undefined}
+        />
       </FilterSection>
 
-      <FilterSection title="Price" icon={<PriceIcon />} badge={(filters.minprice ? 1 : 0) + (filters.maxprice ? 1 : 0)}>
+      <FilterSection title="Price" icon={<PriceIcon />} badge={(filters.minprice ? 1 : 0) + (filters.maxprice ? 1 : 0)} defaultOpen={defaultSectionOpen}>
         <PriceFilter
           min={filters.minprice}
           max={filters.maxprice}
@@ -89,15 +124,15 @@ export default function FilterBody({ filters, setFilter, setFilters, clearFilter
         />
       </FilterSection>
 
-      <FilterSection title="Crew" icon={<CrewIcon />} badge={filters.maxCrew ? 1 : 0}>
+      <FilterSection title="Crew" icon={<CrewIcon />} badge={filters.maxCrew ? 1 : 0} defaultOpen={defaultSectionOpen}>
         <CrewFilter maxCrew={filters.maxCrew} onChange={v => setFilter("max-crew", v)} />
       </FilterSection>
 
-      <FilterSection title="Author" icon={<AuthorIcon />} badge={filters.author ? 1 : 0}>
-        <AuthorFilter value={filters.author} onChange={v => setFilter("author", v)} />
+      <FilterSection title="Author" icon={<AuthorIcon />} badge={filters.author ? 1 : 0} defaultOpen={defaultSectionOpen}>
+        <AuthorFilter value={filters.author} onChange={v => setFilter("author", v)} counts={facets ? toCountMap(facets.authors) : undefined} />
       </FilterSection>
 
-      <FilterSection title="Library" icon={<LibraryIcon />} badge={filters.brand ? 1 : 0}>
+      <FilterSection title="Library" icon={<LibraryIcon />} badge={filters.brand ? 1 : 0} defaultOpen={defaultSectionOpen}>
         <div className="flex gap-1.5 flex-wrap">
           {(["", "gen", "exl"] as const).map((val) => {
             const label = val === "" ? "All" : val === "gen" ? "Casual" : "Excelsior";
