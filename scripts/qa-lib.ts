@@ -1,7 +1,16 @@
 import { spawn, spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, appendFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+
+function intEnv(name: string, fallback: number): number {
+  const v = Number(process.env[name]);
+  return Number.isFinite(v) && v > 0 ? v : fallback;
+}
+
+// Hard cap for one playwright-cli invocation. Without it a wedged CLI blocks
+// the event loop forever (spawnSync), so even a JS-level watchdog can't fire.
+export const CLI_TIMEOUT_MS = intEnv("QA_CLI_TIMEOUT_MS", 90_000);
 
 export const ROOT = resolve(import.meta.dirname, "..");
 export const QA_PROFILE = resolve(ROOT, ".qa/brave-profile");
@@ -85,6 +94,88 @@ export interface CaseResult {
 }
 export const results: CaseResult[] = [];
 
+// ── Run log + phase tracking ──────────────────────────────────────────
+// Every CLI/HTTP/SQL action is appended to LOG_FILE with a timestamp so a
+// hung or crashed run can be triaged from disk. Console stays quiet except
+// for phase banners, per-case PASS/FAIL and the final report.
+export const LOG_FILE = resolve(ROOT, ".qa/output/qa-last-run.log");
+const LOG_ENABLED = process.env.QA_LOG !== "0";
+let logReady = false;
+
+function stamp(): string {
+  return new Date().toTimeString().slice(0, 8);
+}
+
+function fileLog(line: string) {
+  if (!LOG_ENABLED) return;
+  try {
+    if (!logReady) {
+      mkdirSync(resolve(LOG_FILE, ".."), { recursive: true });
+      writeFileSync(LOG_FILE, "");
+      logReady = true;
+    }
+    appendFileSync(LOG_FILE, line + "\n");
+  } catch {
+    /* best-effort */
+  }
+}
+
+let currentPhase = "setup";
+const phases: { name: string; startMs: number; endMs: number | null }[] = [];
+let lastAction = "(none)";
+let lastActionAt = Date.now();
+
+export function setPhase(name: string) {
+  const prev = phases[phases.length - 1];
+  if (prev && prev.endMs === null) prev.endMs = Date.now();
+  phases.push({ name, startMs: Date.now(), endMs: null });
+  currentPhase = name;
+  lastAction = "(phase start)";
+  lastActionAt = Date.now();
+  const banner = `━━━ PHASE ${name} — ${stamp()} ━━━`;
+  console.log(`\n${banner}`);
+  fileLog(`\n${banner}`);
+}
+
+export function note(action: string): void {
+  lastAction = action;
+  lastActionAt = Date.now();
+  fileLog(`[${stamp()}] [${currentPhase}] > ${action}`);
+}
+
+export function runInfo(): { phase: string; lastAction: string; idleMs: number } {
+  return { phase: currentPhase, lastAction, idleMs: Date.now() - lastActionAt };
+}
+
+export interface WatchdogInfo {
+  phase: string;
+  lastAction: string;
+  idleMs: number;
+}
+
+/**
+ * Kill the suite if it exceeds maxMinutes. Prints the blocking point (current
+ * phase + last action + how long since anything completed), the partial
+ * tally, then exits 3.
+ */
+export function armWatchdog(maxMinutes = intEnv("QA_MAX_MINUTES", 18)) {
+  const t = setTimeout(() => {
+    const info: WatchdogInfo = runInfo();
+    console.error(`\nWATCHDOG: suite exceeded ${maxMinutes} min — forcing exit.`);
+    console.error(
+      `Blocking point: phase=${info.phase} lastAction="${info.lastAction}" idleFor=${Math.round(info.idleMs / 1000)}s`
+    );
+    summary();
+    try {
+      stopAllPlaywright();
+    } catch {
+      /* best-effort */
+    }
+    process.exit(3);
+  }, maxMinutes * 60_000);
+  t.unref();
+}
+
 // ── Resumable runs ─────────────────────────────────────────────────────
 // Every finished check is appended to .qa/output/qa-state.json together with
 // mutable suite fixtures (scratch ship/collection ids). Starting the suite
@@ -166,6 +257,8 @@ function daemonAlive(session: string): boolean {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
       maxBuffer: 64 * 1024 * 1024,
+      timeout: Math.min(CLI_TIMEOUT_MS, 30_000),
+      killSignal: "SIGKILL",
     });
     return r.status === 0;
   } catch {
@@ -181,10 +274,12 @@ function ensureOpenLive(session: string): boolean {
       encoding: "utf8",
       stdio: "ignore",
       maxBuffer: 256 * 1024 * 1024,
+      timeout: CLI_TIMEOUT_MS,
+      killSignal: "SIGKILL",
     });
     for (let j = 0; j < 5; j++) {
       if (daemonAlive(session)) return true;
-      spawnSync("sleep", ["1"], { stdio: "ignore" });
+      spawnSync("sleep", ["1"], { stdio: "ignore", timeout: 5_000 });
     }
   }
   return false;
@@ -193,14 +288,27 @@ function ensureOpenLive(session: string): boolean {
 function runCliInner(args: string[], attempts: number): string {
   let lastErr: unknown;
   for (let attempt = 1; attempt <= attempts; attempt++) {
+    note(`cli ${args.slice(0, 2).join(" ")} ${String(args[2] ?? "").slice(0, 100)}`);
+    const t0 = Date.now();
     const res = spawnSync("playwright-cli", args, {
       encoding: "utf8",
       maxBuffer: 512 * 1024 * 1024,
+      timeout: CLI_TIMEOUT_MS,
+      killSignal: "SIGKILL",
     });
+    fileLog(`[${stamp()}] [${currentPhase}] < cli exit=${res.status} ${Date.now() - t0}ms ${args[1] ?? ""}`);
     if (res.error) {
+      const timedOut = (res.error as NodeJS.ErrnoException).code === "ETIMEDOUT";
+      // A timed-out command means the browser/daemon is wedged; retrying the
+      // same command just burns 3x the cap, so fail fast and name the action.
+      if (timedOut) {
+        throw new Error(
+          `playwright-cli TIMED OUT after ${CLI_TIMEOUT_MS}ms: ${args[1]} ${String(args[2] ?? "").slice(0, 80)}`
+        );
+      }
       lastErr = res.error;
       if (attempt < attempts) {
-        spawnSync("sleep", ["1"], { stdio: "ignore" });
+        spawnSync("sleep", ["1"], { stdio: "ignore", timeout: 5_000 });
         continue;
       }
       throw res.error;
@@ -214,7 +322,7 @@ function runCliInner(args: string[], attempts: number): string {
         if (session && args[1] !== "open") ensureOpenLive(session);
       }
       lastErr = msg;
-      spawnSync("sleep", ["1"], { stdio: "ignore" });
+      spawnSync("sleep", ["1"], { stdio: "ignore", timeout: 5_000 });
       continue;
     }
     throw new Error(`playwright-cli ${args.join(" ")} failed (${res.status}): ${msg}`);
@@ -230,15 +338,22 @@ export function runCli(args: string[], attempts = 3): string {
 export function runCliAsync(args: string[], attempts = 3): Promise<string> {
   return new Promise((resolve, reject) => {
     const tryAttempt = (attempt: number) => {
+      note(`cli-async ${args.slice(0, 2).join(" ")} ${String(args[2] ?? "").slice(0, 100)}`);
+      const t0 = Date.now();
       const child = spawn("playwright-cli", args, {
         encoding: "utf8",
         maxBuffer: 512 * 1024 * 1024,
       });
+      // Same hard cap as the sync path: without a killer, one wedged CLI
+      // hangs the awaited promise (and the suite) forever.
+      const killer = setTimeout(() => child.kill("SIGKILL"), CLI_TIMEOUT_MS);
       let stdout = "";
       let stderr = "";
       child.stdout?.on("data", (d) => (stdout += d));
       child.stderr?.on("data", (d) => (stderr += d));
+      const settle = () => clearTimeout(killer);
       child.on("error", (err) => {
+        settle();
         if (attempt < attempts) {
           sleep(800).then(() => tryAttempt(attempt + 1));
         } else {
@@ -246,8 +361,18 @@ export function runCliAsync(args: string[], attempts = 3): Promise<string> {
         }
       });
       child.on("close", (code) => {
+        settle();
+        fileLog(`[${stamp()}] [${currentPhase}] < cli exit=${code} ${Date.now() - t0}ms ${args[1] ?? ""}`);
         if (code === 0) {
           resolve(stdout.replace(/\0/g, ""));
+          return;
+        }
+        if (child.killed) {
+          reject(
+            new Error(
+              `playwright-cli TIMED OUT after ${CLI_TIMEOUT_MS}ms: ${args[1]} ${String(args[2] ?? "").slice(0, 80)}`
+            )
+          );
           return;
         }
         const msg = (stderr || stdout).slice(0, 800);
@@ -324,6 +449,7 @@ export async function httpFetch(
   opts?: { method?: string; body?: string; headers?: Record<string, string> }
 ): Promise<{ status: number; body: unknown }> {
   const { method = "GET", body, headers = {} } = opts ?? {};
+  note(`http ${method} ${url}`);
   const expr = `fetch(${JSON.stringify(url)}, ${JSON.stringify({
     method,
     body,
@@ -340,6 +466,7 @@ export async function httpFetchAsync(
   opts?: { method?: string; body?: string; headers?: Record<string, string> }
 ): Promise<{ status: number; body: unknown }> {
   const { method = "GET", body, headers = {} } = opts ?? {};
+  note(`http ${method} ${url}`);
   const expr = `fetch(${JSON.stringify(url)}, ${JSON.stringify({
     method,
     body,
@@ -502,12 +629,14 @@ export async function check(
     await fn();
     results.push({ id, name, pass: true, detail: "ok", ms: Date.now() - t0 });
     console.log(`\x1b[32m[PASS]\x1b[0m ${id} — ${name} (${Date.now() - t0}ms)`);
+    fileLog(`[${stamp()}] [${currentPhase}] PASS ${id} ${Date.now() - t0}ms`);
     persistState();
     return true;
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e);
     results.push({ id, name, pass: false, detail, ms: Date.now() - t0 });
     console.log(`\x1b[31m[FAIL]\x1b[0m ${id} — ${name}\n       ${detail.slice(0, 400)}`);
+    fileLog(`[${stamp()}] [${currentPhase}] FAIL ${id} ${Date.now() - t0}ms :: ${detail.slice(0, 300)}`);
     persistState();
     return false;
   }
@@ -530,6 +659,9 @@ export async function dbInit() {
     user: process.env.POSTGRES_USER,
     password: process.env.POSTGRES_PASSWORD,
     ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 10_000,
+    statement_timeout: 30_000,
+    query_timeout: 30_000,
   });
   await dbClient.connect();
 }
@@ -545,6 +677,7 @@ export async function dbClose() {
 }
 
 export async function q<T = pg.QueryResultRow>(text: string, params?: unknown[]): Promise<pg.QueryResult<T>> {
+  note(`sql ${text.replace(/\s+/g, " ").slice(0, 90)}`);
   return db().query<T>(text, params);
 }
 
@@ -567,6 +700,8 @@ export function fileExists(filePath: string): boolean {
 }
 
 export function summary(): { passed: number; failed: number } {
+  const open = phases[phases.length - 1];
+  if (open && open.endMs === null) open.endMs = Date.now();
   const passed = results.filter((r) => r.pass).length;
   const skipped = results.filter((r) => r.detail === SKIPPED_DETAIL).length;
   const failed = results.length - passed;
@@ -580,6 +715,19 @@ export function summary(): { passed: number; failed: number } {
       console.log(`  [FAIL] ${r.id} — ${r.name}: ${r.detail.slice(0, 300)}`);
     }
   }
+  if (phases.length > 0) {
+    console.log("\nPhases:");
+    for (const p of phases) {
+      const secs = (((p.endMs ?? Date.now()) - p.startMs) / 1000).toFixed(1);
+      console.log(`  ${p.name.padEnd(26)} ${secs.padStart(7)}s`);
+    }
+  }
+  const slowest = [...results].sort((a, b) => b.ms - a.ms).slice(0, 5);
+  if (slowest.length > 0 && slowest[0].ms > 0) {
+    console.log("\nSlowest cases:");
+    for (const r of slowest) console.log(`  ${(r.ms / 1000).toFixed(1).padStart(6)}s  ${r.id} — ${r.name.slice(0, 60)}`);
+  }
+  console.log(`\nStep log: ${LOG_FILE}`);
   console.log("═══════════════════════════════════════════════");
   return { passed, failed };
 }

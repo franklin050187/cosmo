@@ -100,6 +100,22 @@ plus bracket editable matchups/re-seed/score tracking (4.4 remainder). Statuses 
 | 4.10 | **Roulette picker**: paginate collections, handle deep-link blank option, add copy-share button, error states. | `roulette/page.tsx` | M | ⬜ |
 | 4.11 | **IA collision**: `/game` (About Cosmoteer) vs `/games` (community games) — rename `/game` URL and add header link. | `about-game/page.tsx`, `Header.tsx`, `Footer.tsx` | S | ✅ |
 | 4.12 | **Timezone labels / countdowns** on all game dates. | `format-date.ts` consumers | M | ✅ |
+| 4.13 | **Hardening sweep (2026-08-21 audit)**: private-game gate on `GET /api/games/{id}`; delete/regen/contestant flows check API results and confirm destructive actions; guest username clamped to 40 chars server-side; registration dedupe via `ON CONFLICT DO NOTHING` + case-insensitive unique indexes (migration 006); GameCard strips rich-text HTML; shared `sortShipsByPopularity` / `computeChampionFromSlots` helpers replace duplicated logic. | games API + pages, `db/games.ts`, migration 006 | M | ✅ |
+| 4.14 | 🔸 **Guest-registration hardening decision**: optional Turnstile / per-route rate limit on guest POST (length clamp already shipped in 4.13). Needs a product call. | `register/route.ts` | S | 🔸 |
+
+---
+
+## Phase 4b — Ship detail & data integrity (2026-08-21 audit follow-up)
+
+| # | Item | File(s) | Size | Status |
+|---|------|---------|------|--------|
+| 4b.1 | **Ship detail reads live data**: removed the 30s `cachedQuery` wrapper from `getImageData` / `getCollectionsForShip`; the version counter is not shared across Next.js bundles, so mutations left pages stale for up to 30s (QA S6/S10 root cause). | `db/ships.ts`, `db/collections.ts` | S | ✅ |
+| 4b.2 | **Replace flow waits for the swap**: UploadThing acks before its callback commits, so the edit page now polls the ship API until the image URL changes before navigating (replaces the blind 1s sleep). | `ship/[id]/edit/page.tsx` | S | ✅ |
+| 4b.3 | **Favorites integrity**: `splice(idx, 1)` instead of tail-deleting the array; per-user lookup branches on discord id instead of `OR name` (legacy-name collisions corrupted other users); `fav` counter floored at 0. | `db/favorites.ts` | S | ✅ |
+| 4b.4 | **Ship delete cleans game tables**: removes orphaned `game_ships` / `game_ship_draws` rows in the same transaction. | `db/ships.ts` | S | ✅ |
+| 4b.5 | **Bracket race safety**: advancement/undo target rows locked with `SELECT … FOR UPDATE` so concurrent winner sets cannot both pass the empty-slot guard. | `db/games.ts` | S | ✅ |
+| 4b.6 | **Search/listing performance**: facet counts and game-detail queries batched with `Promise.all`; runaway `LIMIT 999999` clamped; page params sanitized; migration 007 adds GIN/BTREE indexes for tags, author, price, crew, date, collection membership, analytics time windows. | `db/search.ts`, `db/games.ts`, migration 007 | M | ✅ |
+| 4b.7 | **Hydration fixes**: CollectionPicker portal gated on mount; ship back-link derived without render-time flash; mobile nav and filter sections hidden (`hidden`/`aria-hidden`) when collapsed; bracket win/clear buttons enlarged to reachable hit targets. | `CollectionPicker.tsx`, `ShipDetailView.tsx`, `Header.tsx`, `FilterSection.tsx`, `Bracket.tsx` | M | ✅ |
 
 ---
 
@@ -125,3 +141,5 @@ plus bracket editable matchups/re-seed/score tracking (4.4 remainder). Statuses 
 collections, games, and roulette. Bugs P0-1–P0-4 were reproduced/verified in the code.
 Phase 0–2 statuses verified against the code 2026-08-18; Phase 3 verified the same day — all
 items done except 3.5 (author override at upload time, still reads from the PNG).
+Phase 4.13/4b items come from the 2026-08-21 full audit (see `docs/TASKS.md`); each shipped with
+the QA suite green at 60/60 (`scripts/qa-suite.ts`).
