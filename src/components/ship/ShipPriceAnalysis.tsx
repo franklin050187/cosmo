@@ -18,9 +18,13 @@ function drawRadarChart(
   total: number
 ) {
   const SIZE = 420;
-  canvas.width = SIZE;
-  canvas.height = SIZE;
+  // Render at device resolution so the chart is sharp on HiDPI screens; all
+  // drawing stays in logical 420-unit space.
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  canvas.width = SIZE * dpr;
+  canvas.height = SIZE * dpr;
   const ctx = canvas.getContext("2d")!;
+  ctx.scale(dpr, dpr);
   const cx = SIZE / 2;
   const cy = SIZE / 2;
   const radius = SIZE / 2 - 70;

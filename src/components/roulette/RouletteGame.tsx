@@ -56,6 +56,10 @@ export default function RouletteGame({ collection }: RouletteGameProps) {
   // Final resting offset of the center line within the drawn card (px): the bar
   // should not stop dead-center, but randomly somewhere on the ship.
   const [offsetX, setOffsetX] = useState(0);
+  const [history, setHistory] = useState<{ ship: ShipRow; rarity: RarityMeta }[]>([]);
+  const [shared, setShared] = useState(false);
+  // Set when the user skips a roll: the rAF loop jumps straight to landing.
+  const skipRef = useRef(false);
 
   // Per-ship rarity (used for each card's glow border on the track).
   const rarityById = useMemo(() => {
@@ -102,6 +106,8 @@ export default function RouletteGame({ collection }: RouletteGameProps) {
 
   const doRoll = useCallback(() => {
     if (rolling || N === 0) return;
+    skipRef.current = false;
+    setShared(false);
     const draw = drawShip(ships);
     if (!draw) return;
 
@@ -155,7 +161,7 @@ export default function RouletteGame({ collection }: RouletteGameProps) {
 
     const step = (now: number) => {
       if (!stripRef.current) return;
-      const tt = now - t0;
+      const tt = skipRef.current ? T4 : now - t0;
       let x: number;
       if (tt <= T1) {
         // launch: sharp ease-in up to cruise speed
@@ -177,11 +183,13 @@ export default function RouletteGame({ collection }: RouletteGameProps) {
       }
       stripRef.current.style.transform = `translateX(${x}px)`;
       if (tt >= T4) {
+        skipRef.current = false;
         stripRef.current.style.transform = `translateX(${targetX}px)`;
         setOffsetX(rand);
         setCenterIndex(target);
         setBase(target - WINDOW);
         setPhase("reveal");
+        setHistory((h) => [draw, ...h].slice(0, 12));
         return;
       }
       rafRef.current = requestAnimationFrame(step);
@@ -207,7 +215,8 @@ export default function RouletteGame({ collection }: RouletteGameProps) {
           cursor: rolling ? "wait" : N > 0 ? "pointer" : "default",
         }}
         role="button"
-        tabIndex={0}
+        tabIndex={N === 0 ? -1 : 0}
+        aria-disabled={N === 0}
         aria-label={rolling ? "Roulette is rolling" : "Roll the ship roulette"}
         onClick={doRoll}
         onKeyDown={(e) => {
@@ -333,12 +342,28 @@ export default function RouletteGame({ collection }: RouletteGameProps) {
             >
               {rolling ? "ROLLING…" : "🎰 ROLL"}
             </div>
-            {!rolling && (
+            {rolling ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  skipRef.current = true;
+                }}
+                className="mt-2 pointer-events-auto px-3 py-1 rounded-full border border-[#1C598C] bg-[#021526]/90 text-blue-200 text-xs hover:text-cyan-300 hover:border-cyan-400 transition-colors"
+              >
+                Skip
+              </button>
+            ) : (
               <div className="mt-2 text-[11px] text-amber-200/60">or click anywhere on the table</div>
             )}
           </div>
         )}
       </div>
+
+      {/* Result announcement for screen readers */}
+      <p role="status" aria-live="polite" className="sr-only">
+        {revealed && result ? `Rolled ${result.ship.ship_name}, ${result.rarity.label} rarity.` : ""}
+      </p>
 
       {/* Drop odds legend */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center text-[10px] text-slate-400">
@@ -364,9 +389,50 @@ export default function RouletteGame({ collection }: RouletteGameProps) {
             <Link href={`/ship/${result.ship.id}`}>
               <Button variant="secondary">View ship</Button>
             </Link>
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                const url = `${window.location.origin}/ship/${result.ship.id}`;
+                const text = `I rolled ${result.ship.ship_name} (${result.rarity.label}) on CosmoShip`;
+                try {
+                  if (navigator.share) {
+                    await navigator.share({ title: text, text, url });
+                  } else {
+                    await navigator.clipboard.writeText(`${text} ${url}`);
+                  }
+                  setShared(true);
+                  setTimeout(() => setShared(false), 2000);
+                } catch {}
+              }}
+            >
+              {shared ? "Copied!" : "Share"}
+            </Button>
           </div>
 
           <ResultShipCard ship={result.ship} rarity={result.rarity} />
+        </div>
+      )}
+
+      {/* Draw history */}
+      {history.length > 0 && (
+        <div className="w-full max-w-5xl">
+          <p className="text-[11px] uppercase tracking-wider text-slate-500 mb-1.5">Recent rolls</p>
+          <div className="flex flex-wrap gap-1.5">
+            {history.map((h, i) => {
+              const m = h.rarity;
+              return (
+                <Link
+                  key={`${h.ship.id}-${i}`}
+                  href={`/ship/${h.ship.id}`}
+                  title={h.ship.ship_name}
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border bg-[#021526]/70 text-[11px] ${m.text} ${m.ring} hover:bg-[#0a1e33] transition-colors`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: m.aura }} />
+                  <span className="text-blue-100 max-w-[140px] truncate">{h.ship.ship_name}</span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

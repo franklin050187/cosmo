@@ -11,6 +11,7 @@ interface ShipLightboxProps {
 export default function ShipLightbox({ src, alt }: ShipLightboxProps) {
   const [open, setOpen] = useState(false);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const openLightbox = useCallback(() => {
     setOpen(true);
@@ -18,21 +19,29 @@ export default function ShipLightbox({ src, alt }: ShipLightboxProps) {
 
   const closeLightbox = useCallback(() => {
     setOpen(false);
+    // Return focus to the thumbnail so keyboard users are not dropped at body.
+    requestAnimationFrame(() => triggerRef.current?.focus());
   }, []);
 
   useEffect(() => {
     if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeLightbox();
     };
     document.addEventListener("keydown", onKey);
     closeBtnRef.current?.focus();
-    return () => document.removeEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
   }, [open, closeLightbox]);
 
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={openLightbox}
         aria-label={`View ${alt} full size`}
