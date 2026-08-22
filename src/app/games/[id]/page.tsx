@@ -59,6 +59,7 @@ export default function GameDetailPage() {
   const [editRoulette, setEditRoulette] = useState(false);
   const [editBracketType, setEditBracketType] = useState<BracketType>("single_elim");
   const editTurnstileRef = useRef<TurnstileWidgetHandle>(null);
+  const guestTurnstileRef = useRef<TurnstileWidgetHandle>(null);
   const [pendingDelete, setPendingDelete] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmRedeal, setConfirmRedeal] = useState(false);
@@ -170,10 +171,15 @@ export default function GameDetailPage() {
     setBusy(true);
     setMsg(null);
     try {
+      const body: Record<string, unknown> = { username: opts?.username, invite_code: inviteCode.trim() || undefined };
+      if (opts?.username) {
+        // Guest path: the server verifies a Turnstile token in production.
+        body["cf-turnstile-response"] = guestTurnstileRef.current?.getToken() ?? "";
+      }
       const res = await fetch(`/api/games/${game.id}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: opts?.username, invite_code: inviteCode.trim() || undefined }),
+        body: JSON.stringify(body),
       });
       const json = await res.json();
       if (!res.ok || json.error) {
@@ -572,12 +578,16 @@ export default function GameDetailPage() {
                   Not logged in? Register with your Discord username{" "}
                   <span className="text-gray-400">(name#disc or username)</span>.
                 </p>
+                <p id="guest-discord-hint-detail" className="text-gray-400 text-xs">
+                  Use your Discord name so the host can contact you about the game.
+                </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <input
                     type="text"
                     value={guestName}
                     onChange={(e) => setGuestName(e.target.value)}
                     placeholder="Discord username"
+                    aria-describedby="guest-discord-hint-detail"
                     className="w-48 p-2 bg-[#021526] border border-gray-400 rounded text-white text-sm"
                   />
                   {memberGuestMatch ? (
@@ -590,6 +600,7 @@ export default function GameDetailPage() {
                     </Button>
                   )}
                 </div>
+                {!memberGuestMatch && <TurnstileWidget ref={guestTurnstileRef} />}
               </div>
             ))}
             {game.visibility === "private" && !isOwner && !membership && (

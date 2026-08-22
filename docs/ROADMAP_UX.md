@@ -101,7 +101,7 @@ plus bracket editable matchups/re-seed/score tracking (4.4 remainder). Statuses 
 | 4.11 | **IA collision**: `/game` (About Cosmoteer) vs `/games` (community games) — rename `/game` URL and add header link. | `about-game/page.tsx`, `Header.tsx`, `Footer.tsx` | S | ✅ |
 | 4.12 | **Timezone labels / countdowns** on all game dates. | `format-date.ts` consumers | M | ✅ |
 | 4.13 | **Hardening sweep (2026-08-21 audit)**: private-game gate on `GET /api/games/{id}`; delete/regen/contestant flows check API results and confirm destructive actions; guest username clamped to 40 chars server-side; registration dedupe via `ON CONFLICT DO NOTHING` + case-insensitive unique indexes (migration 006); GameCard strips rich-text HTML; shared `sortShipsByPopularity` / `computeChampionFromSlots` helpers replace duplicated logic. | games API + pages, `db/games.ts`, migration 006 | M | ✅ |
-| 4.14 | 🔸 **Guest-registration hardening decision**: optional Turnstile / per-route rate limit on guest POST (length clamp already shipped in 4.13). Needs a product call. | `register/route.ts` | S | 🔸 |
+| 4.14 | **Guest-registration hardening**: production guest POSTs now require a Turnstile token and are rate-limited to 10 per 10 min per network (development skips both, mirroring the documented Turnstile dev bypass, so scripted suites stay deterministic). Guest forms on the game page and join page render the widget, send the token, and hint "Use your Discord name so the host can contact you about the game." (length clamp shipped in 4.13). | `register/route.ts`, `games/[id]/page.tsx`, `games/join/[inviteCode]/page.tsx` | S | ✅ |
 
 ---
 
@@ -127,6 +127,7 @@ plus bracket editable matchups/re-seed/score tracking (4.4 remainder). Statuses 
 | 5.2 | **My Ships**: in-page name/author filter, sort (newest/name/price/downloads/favorites), show-more pagination at 24, Upload CTA on the empty state, error display with retry. | `my-ships/page.tsx` | M | ✅ |
 | 5.3 | **RequireAuth**: reduce hydration spinner latency; add context copy ("what you'll get"). | `RequireAuth.tsx` | S | ✅ |
 | 5.4 | **A11y/perf polish (2026-08-21)**: lightbox body scroll-lock and focus return to trigger; price radar rendered at devicePixelRatio for HiDPI; ShipStats spinner is a live region; roulette empty collection not focusable (`aria-disabled`). | `ShipLightbox.tsx`, `ShipPriceAnalysis.tsx`, `ShipStats.tsx`, `RouletteGame.tsx` | S | ✅ |
+| 5.5 | **Mobile overflow fix**: upcoming-games chips on the home page pushed the document to 405px at a 375px viewport; titles now truncate freely, labels are nowrap/shrink-0, chips cap at `max-w-full`. Verified overflow-free at 375px and 320px across nine routes. | `UpcomingGamesBanner.tsx` | S | ✅ |
 
 ---
 
