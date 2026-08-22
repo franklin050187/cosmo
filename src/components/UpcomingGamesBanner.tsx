@@ -64,12 +64,12 @@ export default function UpcomingGamesBanner({ games }: { games: UpcomingGameItem
           <Link
             key={g.id}
             href={`/games/${g.id}`}
-            className="group flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#1C598C]/40 text-sm text-blue-100 hover:border-cyan-400/50 hover:text-cyan-300 transition-colors"
+            className="group flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#1C598C]/40 text-sm text-blue-100 hover:border-cyan-400/50 hover:text-cyan-300 transition-colors max-w-full"
           >
-            <span className="truncate max-w-[16rem]">{g.title}</span>
-            <span className="text-xs text-cyan-400">{g.when_label}</span>
+            <span className="truncate min-w-0">{g.title}</span>
+            <span className="text-xs text-cyan-400 whitespace-nowrap shrink-0">{g.when_label}</span>
             {g.participant_count > 0 && (
-              <span className="text-xs text-gray-500">{g.participant_count} player{g.participant_count === 1 ? "" : "s"}</span>
+              <span className="text-xs text-gray-500 whitespace-nowrap shrink-0">{g.participant_count} player{g.participant_count === 1 ? "" : "s"}</span>
             )}
           </Link>
         ))}
