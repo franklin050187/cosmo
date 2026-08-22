@@ -94,10 +94,10 @@ plus bracket editable matchups/re-seed/score tracking (4.4 remainder). Statuses 
 | 4.4 | **Bracket** — done: aligned grid + SVG connector lines between rounds, winner-path highlight, **winner-drop lines** (WB loser → LB target, lit when decided), **"BYE" labels** on decided bye slots, double elim (winners top / losers under / GF rightmost), ✓ gated until both feeding matches are decided, losers-R1 singleton auto-advance, explain-byes legend + `aria-live` announcements. Remaining: editable matchups / re-seed / manual slot; score/set tracking. | `Bracket.tsx`, games API | L | 🚧 |
 | 4.5 | **Results / outcome view** + auto-mark-finished with a champion summary. | `games/[id]/page.tsx`, `Bracket.tsx` | M | ✅ |
 | 4.6 | **Deal-ships results**: ship image + rarity, highlight "your ship", warn before re-deal (destructive). | `games/[id]/page.tsx` | M | ✅ |
-| 4.7 | 🆕 **Notifications/reminders** (game starting, reg opens/closes, ships dealt) — no mechanism exists today. | new lib + games routes | L | ⬜ |
-| 4.8 | 🆕 **Real-time / polling refresh** for registrations, bracket, and deals. | `games/[id]/page.tsx`, `Bracket.tsx` | L | ⬜ |
-| 4.9 | **Roulette**: skip/cancel roll, per-result share, draw history, accurate displayed odds, `aria-live` result announcement. | `RouletteGame.tsx` | M | ⬜ |
-| 4.10 | **Roulette picker**: paginate collections, handle deep-link blank option, add copy-share button, error states. | `roulette/page.tsx` | M | ⬜ |
+| 4.7 | 🆕 **Notifications/reminders** (game starting, reg opens/closes, ships dealt) — no mechanism exists today; needs a design pass (delivery channel, schema, prefs) before building. | new lib + games routes | L | ⬜ |
+| 4.8 | 🆕 **Real-time / polling refresh** for registrations, bracket, and deals: game detail refetches every 15s while the tab is visible; owner edit form fields untouched. | `games/[id]/page.tsx` | M | ✅ |
+| 4.9 | **Roulette**: skip (fast-forward roll), per-result share (native share sheet with clipboard fallback), recent-rolls history chips, `aria-live` result announcement; odds legend already accurate from the weights. | `RouletteGame.tsx` | M | ✅ |
+| 4.10 | **Roulette picker**: full collection list (`?page=-1`, no more page-1 truncation), deep-linked collections stay selectable, copy-share button, load-error state with retry, stale detail fetches aborted so fast selections win. | `roulette/page.tsx` | M | ✅ |
 | 4.11 | **IA collision**: `/game` (About Cosmoteer) vs `/games` (community games) — rename `/game` URL and add header link. | `about-game/page.tsx`, `Header.tsx`, `Footer.tsx` | S | ✅ |
 | 4.12 | **Timezone labels / countdowns** on all game dates. | `format-date.ts` consumers | M | ✅ |
 | 4.13 | **Hardening sweep (2026-08-21 audit)**: private-game gate on `GET /api/games/{id}`; delete/regen/contestant flows check API results and confirm destructive actions; guest username clamped to 40 chars server-side; registration dedupe via `ON CONFLICT DO NOTHING` + case-insensitive unique indexes (migration 006); GameCard strips rich-text HTML; shared `sortShipsByPopularity` / `computeChampionFromSlots` helpers replace duplicated logic. | games API + pages, `db/games.ts`, migration 006 | M | ✅ |
@@ -124,14 +124,16 @@ plus bracket editable matchups/re-seed/score tracking (4.4 remainder). Statuses 
 | # | Item | File(s) | Size |
 |---|------|---------|------|
 | 5.1 | **Active-route highlight** in nav; `aria-expanded`/`aria-controls` on the burger; Escape-to-close for menus/dropdowns. | `Header.tsx` | M | ✅ |
-| 5.2 | **My Ships**: empty-state with Upload CTA, loading spinner, error display, pagination/lazy-load, in-page filter/sort. | `my-ships/page.tsx` | L |
+| 5.2 | **My Ships**: in-page name/author filter, sort (newest/name/price/downloads/favorites), show-more pagination at 24, Upload CTA on the empty state, error display with retry. | `my-ships/page.tsx` | M | ✅ |
 | 5.3 | **RequireAuth**: reduce hydration spinner latency; add context copy ("what you'll get"). | `RequireAuth.tsx` | S | ✅ |
+| 5.4 | **A11y/perf polish (2026-08-21)**: lightbox body scroll-lock and focus return to trigger; price radar rendered at devicePixelRatio for HiDPI; ShipStats spinner is a live region; roulette empty collection not focusable (`aria-disabled`). | `ShipLightbox.tsx`, `ShipPriceAnalysis.tsx`, `ShipStats.tsx`, `RouletteGame.tsx` | S | ✅ |
 
 ---
 
 ## By design / out of scope (documented)
 
 - Guest registration in games is username-keyed and unverified (accepted for now; see Phase 4 hardening if a decision is made).
+- Login username migration runs twelve UPDATEs per login only when legacy rows or stale names exist; a single EXISTS probe skips it otherwise.
 - Turnstile stays on critical mutations only (favorites / add-remove-collection-ship intentionally un-gated).
 
 ---
@@ -142,4 +144,9 @@ collections, games, and roulette. Bugs P0-1–P0-4 were reproduced/verified in t
 Phase 0–2 statuses verified against the code 2026-08-18; Phase 3 verified the same day — all
 items done except 3.5 (author override at upload time, still reads from the PNG).
 Phase 4.13/4b items come from the 2026-08-21 full audit (see `docs/TASKS.md`); each shipped with
-the QA suite green at 60/60 (`scripts/qa-suite.ts`).
+the QA suite green at 60/60 (`scripts/qa-suite.ts`). 4.8/4.9/4.10/5.2/5.4 and the race-guard
+sweep (idempotent collection appends, advisory-locked seed assignment, insert-retry invite
+codes, case-insensitive ownership) shipped the same day, verified against the suite plus the
+double-elimination bracket regression (`scripts/qa-double-elim.ts`).
+Still open: 4.7 notifications (design pass needed), bracket editing (4.4 remainder), author
+override at upload (3.5), guest-hardening decision (4.14).
