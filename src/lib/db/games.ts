@@ -46,7 +46,7 @@ export function isGameOwner(
   { id, username }: { id: string; username: string },
 ) {
   if (game.owner_discord_id) return game.owner_discord_id === id;
-  return game.owner_name === username;
+  return game.owner_name.toLowerCase() === username.toLowerCase();
 }
 
 type InviteViewer = { id: string; username: string } | null;
@@ -93,15 +93,6 @@ export function computeChampionFromRows(rows: ChampionMatchRow[], bracketType: B
   return computeChampionFromSlots(rows, bracketType);
 }
 
-async function makeInviteCode(): Promise<string> {
-  for (let i = 0; i < 3; i++) {
-    const code = randomBytes(6).toString("base64url"); // 8 chars, URL-safe
-    const existing = await fetchOne("SELECT 1 FROM games WHERE invite_code = $1", [code]);
-    if (!existing) return code;
-  }
-  return randomBytes(12).toString("base64url");
-}
-
 /** Copy the ship ids from a collection into the game's immutable snapshot. */
 export async function snapshotCollectionShips(gameId: number, collectionId: number) {
   const col = await fetchOne("SELECT ships FROM collections WHERE id = $1", [collectionId]);
@@ -131,33 +122,46 @@ export async function createGame(opts: {
   rouletteEnabled?: boolean;
   bracketType?: BracketType;
 }) {
-  const inviteCode = await makeInviteCode();
   const bracketType = opts.bracketType ?? "single_elim";
-  const { rows } = await query(
-    `INSERT INTO games (owner_discord_id, owner_name, title, description, game_mode, visibility, invite_code, collection_id, status, game_date, register_open_at, register_close_at, roulette_enabled, bracket_type)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12, $13) RETURNING id`,
-    [
-      opts.ownerId,
-      opts.ownerName,
-      opts.title,
-      opts.description,
-      opts.gameMode,
-      opts.visibility,
-      inviteCode,
-      opts.collectionId,
-      opts.gameDate,
-      opts.registerOpenAt ?? null,
-      opts.registerCloseAt ?? null,
-      opts.rouletteEnabled ?? false,
-      bracketType,
-    ],
-  );
-  const id = rows[0]?.id;
-  if (id != null && opts.collectionId != null) {
-    await snapshotCollectionShips(id, opts.collectionId);
+  // Retry on the unique invite_code index instead of check-then-insert;
+  // two concurrent creators can otherwise race past the same SELECT.
+  let lastError: unknown = null;
+  for (let i = 0; i < 5; i++) {
+    const inviteCode = randomBytes(6).toString("base64url");
+    try {
+      const { rows } = await query(
+        `INSERT INTO games (owner_discord_id, owner_name, title, description, game_mode, visibility, invite_code, collection_id, status, game_date, register_open_at, register_close_at, roulette_enabled, bracket_type)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12, $13) RETURNING id`,
+        [
+          opts.ownerId,
+          opts.ownerName,
+          opts.title,
+          opts.description,
+          opts.gameMode,
+          opts.visibility,
+          inviteCode,
+          opts.collectionId,
+          opts.gameDate,
+          opts.registerOpenAt ?? null,
+          opts.registerCloseAt ?? null,
+          opts.rouletteEnabled ?? false,
+          bracketType,
+        ],
+      );
+      const id = rows[0]?.id;
+      if (id != null && opts.collectionId != null) {
+        await snapshotCollectionShips(id, opts.collectionId);
+      }
+      bumpDbVersion();
+      return { id, invite_code: inviteCode };
+    } catch (e) {
+      // Only a duplicate invite_code is worth retrying; anything else is real.
+      const code = (e as { code?: string }).code;
+      if (code !== "23505") throw e;
+      lastError = e;
+    }
   }
-  bumpDbVersion();
-  return { id, invite_code: inviteCode };
+  throw lastError ?? new Error("could not allocate invite code");
 }
 
 export async function listGames() {
@@ -490,6 +494,9 @@ export async function addContestant(
   // adds can't create duplicates.
   let added = false;
   await transaction(async (client) => {
+    // Serialize seed assignment per game; MAX(seed)+1 under concurrency
+    // would hand the same seed to two different contestants.
+    await queryOnClient(client, "SELECT pg_advisory_xact_lock(1901, $1)", [gameId]);
     await queryOnClient(
       client,
       "INSERT INTO game_registrations (game_id, discord_id, discord_username) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",

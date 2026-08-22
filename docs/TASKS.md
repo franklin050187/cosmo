@@ -115,14 +115,16 @@ Legend: **FIX** must fix · **UPDATE** improve · **REMOVE** delete · **CHANGE*
 | # | Item | File(s) | Size | Status |
 |---|---|---|---|---|
 | 3.5 | Author override at upload (reads from PNG) | `UploadPanel.tsx` | S | TODO |
-| 4.7 | Notifications/reminders (starting, reg open/close, ships dealt) | new lib + games routes | L | TODO |
-| 4.8 | Real-time / polling refresh (registrations, bracket, deals) | `games/[id]/page.tsx`, `Bracket.tsx` | L | TODO |
-| 4.9 | Roulette polish: skip/cancel, share, history, accurate odds, `aria-live` | `RouletteGame.tsx` | M | TODO |
-| 4.10 | Roulette picker: paginate collections, deep-link blank, copy-share, error states | `roulette/page.tsx` | M | TODO |
-| 5.2 | My Ships: empty-state CTA, spinner, error, pagination, filter/sort | `my-ships/page.tsx` | L | TODO |
-| 4.4- | Bracket editable matchups / re-seed / score tracking (remainder) | `Bracket.tsx`, games API | L | TODO |
+| 4.7 | Notifications/reminders (starting, reg open/close, ships dealt) — needs a design pass: delivery channel, schema, user prefs | new lib + games routes | L | TODO |
+| 4.8 | Real-time / polling refresh (registrations, bracket, deals) | `games/[id]/page.tsx` | M | DONE 2026-08-21 |
+| 4.9 | Roulette polish: skip, share, history chips, aria-live announcement | `RouletteGame.tsx` | M | DONE 2026-08-21 |
+| 4.10 | Roulette picker: full list, deep-link selectable, copy-share, error states, fetch race fix | `roulette/page.tsx` | M | DONE 2026-08-21 |
+| 5.2 | My Ships: filter by name/author, sort, show-more pagination, Upload CTA empty state, error retry | `my-ships/page.tsx` | M | DONE 2026-08-21 |
+| 5.4 | A11y/perf polish: lightbox scroll-lock + focus return, HiDPI radar canvas, live-region spinner, roulette aria-disabled | several components | S | DONE 2026-08-21 |
+| 4.4- | Bracket editable matchups / re-seed / score tracking (remainder) — touches the verified bracket core; needs its own QA cases | `Bracket.tsx`, games API | L | TODO |
 
-Out-of-scope by design: guest registration username-keyed/unverified; Turnstile only on critical mutations; `Math.random` for roulette; `makeInviteCode` fallback unchecked (negligible).
+Out-of-scope by design: guest registration username-keyed/unverified; Turnstile only on critical mutations; `Math.random` for roulette; login migration guarded by an EXISTS probe so it runs only when needed.
+Shipped alongside (2026-08-21 sweep, commit `ed03b37`): idempotent collection ship append (`NOT ANY` guard), advisory-locked contestant seed assignment, insert-retry invite codes on the unique index, case-insensitive ownership checks, migration 008 signature lookup index, error/retry states for games list and collection loaders. Verified with QA suite 60/60 plus `scripts/qa-double-elim.ts` all-pass (commit `68ac29b`).
 
 ---
 

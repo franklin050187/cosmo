@@ -1,4 +1,4 @@
-import { queryOnClient, transaction } from "./core";
+import { queryOnClient, fetchOne, transaction } from "./core";
 import { bumpDbVersion } from "@/lib/cache";
 
 export interface ShipRow {
@@ -57,6 +57,39 @@ export async function migrateUsernameOnLogin(
   bareUsername: string,
 ) {
   const candidates = [...new Set([newUsername, bareUsername, prevUsername].filter(Boolean))] as string[];
+
+  // Skip the twelve-statement migration entirely when there is nothing to
+  // migrate: no unclaimed legacy rows match, and the anchored rows already
+  // carry the current name.
+  const pending = await fetchOne(
+    `SELECT EXISTS(
+       SELECT 1 FROM shipdb WHERE discord_id IS NULL AND submitted_by = ANY($1::text[])
+     ) OR EXISTS(
+       SELECT 1 FROM collections WHERE discord_id IS NULL AND owner = ANY($1::text[])
+     ) OR EXISTS(
+       SELECT 1 FROM favoritedb WHERE discord_id IS NULL AND name = ANY($1::text[])
+     ) OR EXISTS(
+       SELECT 1 FROM games WHERE owner_discord_id IS NULL AND owner_name = ANY($1::text[])
+     ) OR EXISTS(
+       SELECT 1 FROM game_registrations WHERE discord_id IS NULL AND discord_username = ANY($1::text[])
+     ) OR EXISTS(
+       SELECT 1 FROM game_contestants WHERE discord_id IS NULL AND discord_username = ANY($1::text[])
+     ) OR EXISTS(
+       SELECT 1 FROM shipdb WHERE discord_id = $2 AND submitted_by <> $3
+     ) OR EXISTS(
+       SELECT 1 FROM collections WHERE discord_id = $2 AND owner <> $3
+     ) OR EXISTS(
+       SELECT 1 FROM favoritedb WHERE discord_id = $2 AND name <> $3
+     ) OR EXISTS(
+       SELECT 1 FROM games WHERE owner_discord_id = $2 AND owner_name <> $3
+     ) OR EXISTS(
+       SELECT 1 FROM game_registrations WHERE discord_id = $2 AND discord_username <> $3
+     ) OR EXISTS(
+       SELECT 1 FROM game_contestants WHERE discord_id = $2 AND discord_username <> $3
+     ) AS needs_migration`,
+    [candidates, userId, newUsername],
+  );
+  if (!pending?.needs_migration) return;
 
   await transaction(async (client) => {
     await queryOnClient(

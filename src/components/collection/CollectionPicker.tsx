@@ -25,6 +25,7 @@ export default function CollectionPicker({ shipId, children, className }: Props)
   const [mounted, setMounted] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
+  const [loadError, setLoadError] = useState(false);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(false);
   const [toggling, setToggling] = useState<number | null>(null);
@@ -49,6 +50,7 @@ export default function CollectionPicker({ shipId, children, className }: Props)
       .catch((err: unknown) => {
         if ((err as Error)?.name === "AbortError") return;
         setCollections([]);
+        setLoadError(true);
       })
       .finally(() => {
         setLoading(false);
@@ -230,6 +232,25 @@ export default function CollectionPicker({ shipId, children, className }: Props)
             >
               {loading ? (
                 <p className="p-3 text-blue-200 text-sm">Loading...</p>
+              ) : loadError ? (
+                <p className="p-3 text-red-300 text-sm" role="alert">
+                  Could not load collections.{" "}
+                  <button
+                    type="button"
+                    className="underline hover:text-red-200"
+                    onClick={() => {
+                      setLoadError(false);
+                      setLoading(true);
+                      void fetch(`/api/collections/mine?shipId=${shipId}`)
+                        .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+                        .then((json) => setCollections(Array.isArray(json.data) ? json.data : []))
+                        .catch(() => setLoadError(true))
+                        .finally(() => setLoading(false));
+                    }}
+                  >
+                    Retry
+                  </button>
+                </p>
               ) : collections.length === 0 ? (
                 <p className="p-3 text-blue-200 text-sm">
                   No collections yet.{" "}

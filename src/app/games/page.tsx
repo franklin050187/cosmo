@@ -32,14 +32,23 @@ export default function GamesPage() {
   const { isLoggedIn, hydrated } = useAuth();
   const [data, setData] = useState<GamesData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [showPast, setShowPast] = useState(false);
 
   const load = useCallback(() => {
     const controller = new AbortController();
+    setError(false);
     fetch("/api/games", { signal: controller.signal })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        return res.json();
+      })
       .then((json) => setData(json.data ?? null))
-      .catch(() => setData(null))
+      .catch(() => {
+        if (controller.signal.aborted) return;
+        setData(null);
+        setError(true);
+      })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
@@ -47,6 +56,7 @@ export default function GamesPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- load() resets error state before fetching
     const controller = load();
     return () => controller.abort();
   }, [load]);
@@ -66,6 +76,11 @@ export default function GamesPage() {
 
       {loading ? (
         <p className="text-center text-blue-200" role="status">Loading...</p>
+      ) : error ? (
+        <div className="text-center py-10" role="alert">
+          <p className="text-red-300 mb-4">Could not load games. Check your connection and try again.</p>
+          <Button onClick={() => { setLoading(true); load(); }}>Try again</Button>
+        </div>
       ) : (
         <>
           {hydrated && isLoggedIn && data?.mine && data.mine.length > 0 && (

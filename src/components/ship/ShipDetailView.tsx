@@ -76,6 +76,7 @@ export default function ShipDetailView({ shipId, initialShip }: ShipDetailViewPr
   const [showJson, setShowJson] = useState(false);
   const [showPriceAnalysis, setShowPriceAnalysis] = useState(false);
   const [collections, setCollections] = useState<{ id: number; title: string; owner: string }[]>([]);
+  const [collectionsError, setCollectionsError] = useState(false);
   const [backUrl, setBackUrl] = useState("/");
   const [pendingDelete, setPendingDelete] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -133,9 +134,12 @@ export default function ShipDetailView({ shipId, initialShip }: ShipDetailViewPr
         const res = await fetch(`/api/collections?shipId=${shipId}`, { signal: controller.signal });
         if (!res.ok) throw new Error("Failed to fetch collections");
         const json = await res.json();
-        if (active) setCollections(json.data ?? []);
+        if (active) {
+          setCollections(json.data ?? []);
+          setCollectionsError(false);
+        }
       } catch {
-        /* silent */
+        if (active && !controller.signal.aborted) setCollectionsError(true);
       }
     };
 
@@ -283,6 +287,16 @@ export default function ShipDetailView({ shipId, initialShip }: ShipDetailViewPr
                   ))}
                 </div>
               </div>
+            )}
+
+            {collectionsError && (
+              <p className="text-red-300 text-sm mb-3" role="alert">
+                Could not load collections.{" "}
+                <button type="button" className="underline hover:text-red-200" onClick={() => {
+                  setCollectionsError(false);
+                  fetch(`/api/collections?shipId=${shipId}`).then((r) => r.json()).then((j) => setCollections(j.data ?? [])).catch(() => setCollectionsError(true));
+                }}>Retry</button>
+              </p>
             )}
 
             {collections.length > 0 && (

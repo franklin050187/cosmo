@@ -67,7 +67,7 @@ export default function ShipStats({ imageUrl }: Props) {
   if (loading || !cached) {
     return (
       <Card className="mt-6">
-        <div className="flex items-center gap-3" role="status" aria-label="Analyzing ship">
+        <div className="flex items-center gap-3" role="status" aria-live="polite" aria-label="Analyzing ship">
           <div className="h-5 w-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
           <p className="text-blue-200">Analyzing ship...</p>
         </div>

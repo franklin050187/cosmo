@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
+import TurnstileWidget from "@/components/TurnstileWidget";
+import type { TurnstileWidgetHandle } from "@/components/TurnstileWidget";
 import { useAuth } from "@/hooks/useAuth";
 import type { GameDetail } from "@/lib/types";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -21,6 +23,7 @@ export default function GameJoinPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [busy, setBusy] = useState(false);
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [guestName, setGuestName] = useState("");
   const [regWindowOpen, setRegWindowOpen] = useState(true);
@@ -79,7 +82,10 @@ export default function GameJoinPage() {
     setMsg(null);
     try {
       const body: Record<string, unknown> = { invite_code: inviteCode };
-      if (!isLoggedIn) body.username = guestName.trim();
+      if (!isLoggedIn) {
+        body.username = guestName.trim();
+        body["cf-turnstile-response"] = turnstileRef.current?.getToken() ?? "";
+      }
       const res = await fetch(`/api/games/${game.id}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -138,19 +144,26 @@ export default function GameJoinPage() {
             <p className="text-blue-200 text-sm">
               Register with your Discord username (name#disc or username).
             </p>
+            <p id="guest-discord-hint" className="text-gray-400 text-xs">
+              Use your Discord name so the host can contact you about the game.
+            </p>
             <input
               type="text"
               value={guestName}
               onChange={(e) => setGuestName(e.target.value)}
               placeholder="Discord username"
+              aria-describedby="guest-discord-hint"
               className="w-full p-2 bg-[#021526] border border-gray-400 rounded text-white text-sm"
             />
             {memberGuestMatch ? (
               <p className="text-cyan-400 text-sm">That username is already registered.</p>
             ) : (
-              <Button onClick={register} disabled={busy || !guestName.trim()} aria-label={`Register as ${guestName}`}>
-                {busy ? "Registering..." : "Register"}
-              </Button>
+              <>
+                <TurnstileWidget ref={turnstileRef} />
+                <Button onClick={register} disabled={busy || !guestName.trim()} aria-label={`Register as ${guestName}`}>
+                  {busy ? "Registering..." : "Register"}
+                </Button>
+              </>
             )}
           </div>
         ) : (

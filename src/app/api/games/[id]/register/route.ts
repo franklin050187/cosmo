@@ -2,13 +2,22 @@ import { NextRequest } from "next/server";
 import { getUserFromRequest } from "@/lib/auth";
 import { registerForGame, leaveGame, resolveUsernameToDiscordId } from "@/lib/db";
 import { ok, badRequest, notFound, forbidden, error } from "@/lib/api";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 type Identity = { discordId: string | null; username: string };
 
 const MAX_USERNAME = 40;
 
-async function resolveIdentity(req: NextRequest, body: Record<string, unknown>): Promise<Identity> {
-  const user = getUserFromRequest(req);
+// Guests have no session to throttle against, so cap registration volume
+// per network. 10 sign-ups / 10 min is far above any real group's pace.
+const guestRegisterLimiter = createRateLimiter({
+  tokens: 10,
+  windowMs: 10 * 60_000,
+  keyPrefix: "guest-register",
+});
+
+async function resolveIdentity(req: NextRequest, body: Record<string, unknown>, user: ReturnType<typeof getUserFromRequest>): Promise<Identity> {
   if (user) return { discordId: user.id, username: user.username };
 
   const username = typeof body.username === "string" ? body.username.trim() : "";
@@ -36,7 +45,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   try {
-    const identity = await resolveIdentity(req, body);
+    const user = getUserFromRequest(req);
+    if (!user) {
+      // Guest path: captcha + volume limit, since there is no session to trust.
+      // Development skips both, mirroring the documented Turnstile dev bypass,
+      // so scripted suites are not throttled by design.
+      if (process.env.NODE_ENV !== "development") {
+        const ip = getClientIp(req);
+        const limit = await guestRegisterLimiter.limit(ip);
+        if (!limit.success) {
+          return error("Too many registrations from this network. Try again later.", 429);
+        }
+        const turnstileToken = typeof body["cf-turnstile-response"] === "string" ? body["cf-turnstile-response"] : "";
+        const turnstileOk = await verifyTurnstileToken(turnstileToken, ip);
+        if (!turnstileOk) {
+          return forbidden("Turnstile verification failed");
+        }
+      }
+    }
+    const identity = await resolveIdentity(req, body, user);
     const inviteCode = typeof body.invite_code === "string" ? body.invite_code.trim() : "";
     const result = await registerForGame(gameId, {
       discordId: identity.discordId,
