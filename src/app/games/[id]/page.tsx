@@ -11,6 +11,7 @@ import RichTextEditor from "@/components/ui/RichTextEditor";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import type { TurnstileWidgetHandle } from "@/components/TurnstileWidget";
 import Bracket from "@/components/games/Bracket";
+import RoundRobinView from "@/components/games/RoundRobinView";
 import CollectionSelect from "@/components/games/CollectionSelect";
 import { computeChampion, computeRunnerUp } from "@/lib/bracket-util";
 import { useAuth } from "@/hooks/useAuth";
@@ -944,6 +945,7 @@ export default function GameDetailPage() {
                   >
                     <option value="single_elim">Single elimination</option>
                     <option value="double_elim">Double elimination</option>
+                    <option value="round_robin">Round robin</option>
                   </select>
                 </label>
                 <span id="bracket-format-hint" className="text-xs text-gray-500">
@@ -958,15 +960,25 @@ export default function GameDetailPage() {
                 </Button>
               </div>
               <div className="border-t border-[#1C598C]/40 pt-3">
-                <Bracket
-                  key={game.matches.length}
-                  gameId={game.id}
-                  matches={game.matches}
-                  contestants={game.contestants}
-                  isOwner={isOwner}
-                  bracketType={game.bracket_type}
-                  onChanged={async () => setGame(await load())}
-                />
+                {game.bracket_type === "round_robin" ? (
+                  <RoundRobinView
+                    gameId={game.id}
+                    matches={game.matches}
+                    contestants={game.contestants}
+                    isOwner={isOwner}
+                    onChanged={async () => setGame(await load())}
+                  />
+                ) : (
+                  <Bracket
+                    key={game.matches.length}
+                    gameId={game.id}
+                    matches={game.matches}
+                    contestants={game.contestants}
+                    isOwner={isOwner}
+                    bracketType={game.bracket_type}
+                    onChanged={async () => setGame(await load())}
+                  />
+                )}
               </div>
               {game.matches.length > 0 && (
                 <p className="text-gray-500 text-xs mt-2">
@@ -991,14 +1003,24 @@ export default function GameDetailPage() {
               )}
             </>
           ) : (
-            <Bracket
-              key={game.matches.length}
-              gameId={game.id}
-              matches={game.matches}
-              contestants={game.contestants}
-              isOwner={false}
-              bracketType={game.bracket_type}
-            />
+            game.bracket_type === "round_robin" ? (
+              <RoundRobinView
+                gameId={game.id}
+                matches={game.matches}
+                contestants={game.contestants}
+                isOwner={false}
+                onChanged={async () => setGame(await load())}
+              />
+            ) : (
+              <Bracket
+                key={game.matches.length}
+                gameId={game.id}
+                matches={game.matches}
+                contestants={game.contestants}
+                isOwner={false}
+                bracketType={game.bracket_type}
+              />
+            )
           )}
         </Card>
       )}

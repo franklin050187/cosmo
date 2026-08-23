@@ -116,6 +116,7 @@ Legend: **FIX** must fix · **UPDATE** improve · **REMOVE** delete · **CHANGE*
 |---|---|---|---|---|
 | 3.5 | Author override at upload (reads from PNG) | `UploadPanel.tsx` | S | TODO |
 | 4.7 | Notifications/reminders (starting, reg open/close, ships dealt) — needs a design pass: delivery channel, schema, user prefs | new lib + games routes | L | TODO |
+| 4.4-RR | **Round-robin format** (DONE 2026-08-21): circle-method schedule, every pair meets once, odd counts get byes, standings with head-to-head tiebreak, migration 009, `qa-round-robin.ts` green | `bracket-util.ts`, `db/games.ts`, `RoundRobinView.tsx` | M | DONE |
 | 4.8 | Real-time / polling refresh (registrations, bracket, deals) | `games/[id]/page.tsx` | M | DONE 2026-08-21 |
 | 4.9 | Roulette polish: skip, share, history chips, aria-live announcement | `RouletteGame.tsx` | M | DONE 2026-08-21 |
 | 4.10 | Roulette picker: full list, deep-link selectable, copy-share, error states, fetch race fix | `roulette/page.tsx` | M | DONE 2026-08-21 |

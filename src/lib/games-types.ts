@@ -1,8 +1,8 @@
 export type GameMode = "pvp" | "tournament" | "campaign";
 export type GameVisibility = "public" | "private";
 export type GameStatus = "open" | "closed" | "finished";
-export type BracketType = "single_elim" | "double_elim";
-export type BracketName = "winners" | "losers" | "grand_final";
+export type BracketType = "single_elim" | "double_elim" | "round_robin";
+export type BracketName = "winners" | "losers" | "grand_final" | "rr";
 
 export interface GameSummary {
   id: number;

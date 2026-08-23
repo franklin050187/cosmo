@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { PoolClient } from "pg";
 import { query, fetchAll, fetchOne, transaction, queryOnClient, fetchOneOnClient, fetchAllOnClient } from "./core";
 import { bumpDbVersion } from "@/lib/cache";
-import { computeChampionFromSlots } from "@/lib/bracket-util";
+import { computeChampionFromSlots, buildRoundRobin } from "@/lib/bracket-util";
 import type { GameMode, GameStatus, GameVisibility, BracketType, BracketName } from "@/lib/games-types";
 
 export type { GameMode, GameStatus, GameVisibility, BracketType, BracketName } from "@/lib/games-types";
@@ -703,7 +703,12 @@ export async function generateBracket(
     }
   }
 
-  const built = bracketType === "double_elim" ? buildDoubleElim(order) : buildSingleElim(order);
+  const built =
+    bracketType === "round_robin"
+      ? buildRoundRobin(order)
+      : bracketType === "double_elim"
+        ? buildDoubleElim(order)
+        : buildSingleElim(order);
 
   await transaction(async (client) => {
     await queryOnClient(client, "DELETE FROM game_matches WHERE game_id = $1", [gameId]);
@@ -769,6 +774,9 @@ async function applyWinner(
   loserId: number | null,
   k: number,
 ) {
+  // Round robin has no advancement: every match is independent, standings
+  // come from the recorded winners themselves.
+  if (match.bracket_type === "round_robin") return;
   if (match.bracket_type === "single_elim") {
     // Winner advances into the next winners round; the final round is the champion.
     const next = await fetchOneOnClient(
@@ -876,6 +884,7 @@ async function undoWinner(
   loserId: number | null,
   k: number,
 ) {
+  if (match.bracket_type === "round_robin") return;
   if (match.bracket_type === "single_elim") {
     const next = await fetchOneOnClient(
       client,

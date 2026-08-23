@@ -29,7 +29,7 @@ function NewGameContent() {
   const [regOpen, setRegOpen] = useState("");
   const [regClose, setRegClose] = useState("");
   const [roulette, setRoulette] = useState(false);
-  const [bracketType, setBracketType] = useState<"single_elim" | "double_elim">("single_elim");
+  const [bracketType, setBracketType] = useState<"single_elim" | "double_elim" | "round_robin">("single_elim");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileWidgetHandle>(null);
@@ -164,11 +164,12 @@ function NewGameContent() {
               id="game-bracket"
               name="bracket_type"
               value={bracketType}
-              onChange={(e) => setBracketType(e.target.value as "single_elim" | "double_elim")}
+              onChange={(e) => setBracketType(e.target.value as "single_elim" | "double_elim" | "round_robin")}
               className={inputClass}
             >
               <option value="single_elim">Single elimination</option>
               <option value="double_elim">Double elimination</option>
+              <option value="round_robin">Round robin</option>
             </select>
           </div>
         )}

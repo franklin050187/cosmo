@@ -72,7 +72,7 @@ async function update(req: NextRequest, gameId: number) {
     register_open_at?: string | null;
     register_close_at?: string | null;
     roulette_enabled?: boolean;
-    bracket_type?: "single_elim" | "double_elim";
+    bracket_type?: "single_elim" | "double_elim" | "round_robin";
   } = {};
 
   if (body.title !== undefined) {
@@ -126,7 +126,7 @@ async function update(req: NextRequest, gameId: number) {
     fields.roulette_enabled = body.roulette_enabled;
   }
   if (body.bracket_type !== undefined) {
-    if (body.bracket_type !== "single_elim" && body.bracket_type !== "double_elim") {
+    if (body.bracket_type !== "single_elim" && body.bracket_type !== "double_elim" && body.bracket_type !== "round_robin") {
       return badRequest("Invalid bracket_type");
     }
     fields.bracket_type = body.bracket_type;
