@@ -21,7 +21,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   try {
-    const bracketType = body.bracketType === "double_elim" ? "double_elim" : "single_elim";
+    // Default to the game's stored format; the body can override it with any
+    // known type (the UI sends the currently selected one).
+    const bracketType =
+      body.bracketType === "single_elim" || body.bracketType === "double_elim" || body.bracketType === "round_robin"
+        ? body.bracketType
+        : undefined;
     const result = await generateBracket(gameId, user.username, user.id, {
       shuffle: body.shuffle !== false,
       bracketType,
