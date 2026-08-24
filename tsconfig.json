@@ -35,6 +35,7 @@
     "scripts",
     ".opencode",
     ".qa",
-    ".playwright"
+    ".playwright",
+    "rawdata"
   ]
 }
