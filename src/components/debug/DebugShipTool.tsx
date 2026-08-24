@@ -1,19 +1,80 @@
 "use client";
 
-import { useState, useCallback, useRef, useMemo, useEffect } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import ShipReconstruction from "@/components/ship/ShipReconstruction";
 import ShipStatsPanel from "@/components/ship/ShipStatsPanel";
-import { Ship } from "@/lib/cosmoShip";
+import { ColorValue, FloatValue, Ship, type ImageDataLike } from "@/lib/cosmoShip";
 import type { DecodedShip } from "@/hooks/useShipDecode";
 import { calculateShipStatsAsync } from "@/lib/physics";
 import type { ShipStats } from "@/lib/physics";
 
 interface ParsedShip {
-  ship: Ship | null;
   data: DecodedShip | null;
   originalFile: File | null;
+}
+
+const MAX_IMAGE_DIMENSION = 4096;
+
+/**
+ * JSON.parse() output loses the codec's FloatValue/ColorValue wrappers
+ * (they serialize as {"value": n} and {"parts": [...]}); restore them so
+ * encode() writes floats and colors back correctly instead of corrupt maps.
+ */
+function reviveCodecValues(node: unknown): unknown {
+  if (Array.isArray(node)) {
+    return node.map(reviveCodecValues);
+  }
+  if (node !== null && typeof node === "object") {
+    const obj = node as Record<string, unknown>;
+    const keys = Object.keys(obj);
+    if (
+      keys.length === 1 &&
+      "value" in obj &&
+      typeof obj.value === "number" &&
+      !Number.isInteger(obj.value)
+    ) {
+      return new FloatValue(obj.value);
+    }
+    if (
+      keys.length === 1 &&
+      "parts" in obj &&
+      Array.isArray(obj.parts) &&
+      obj.parts.length === 4 &&
+      obj.parts.every((p) => typeof p === "string")
+    ) {
+      return new ColorValue(obj.parts as [string, string, string, string]);
+    }
+    return Object.fromEntries(
+      Object.entries(obj).map(([k, v]) => [k, reviveCodecValues(v)])
+    );
+  }
+  return node;
+}
+
+function parseShipJson(text: string): DecodedShip {
+  return reviveCodecValues(JSON.parse(text)) as DecodedShip;
+}
+
+function blankImageData(side: number): ImageDataLike {
+  const pixels = side * side;
+  const data = new Uint8ClampedArray(pixels * 4);
+  for (let i = 3; i < data.length; i += 4) data[i] = 255;
+  return { data, width: side, height: side };
+}
+
+function sideForPayload(encodedLength: number): number {
+  // 4-byte length prefix + payload, with headroom for gzip framing variance
+  const neededBytes = 4 + Math.ceil(encodedLength * 1.25) + 1024;
+  let side = 64;
+  while (side < MAX_IMAGE_DIMENSION && (side * side * 3) / 8 < neededBytes) {
+    side *= 2;
+  }
+  if ((side * side * 3) / 8 < neededBytes) {
+    throw new Error("ship JSON too large to fit in a single PNG");
+  }
+  return side;
 }
 
 interface Part {
@@ -25,10 +86,10 @@ interface Part {
 
 export default function DebugShipTool() {
   const [parsed, setParsed] = useState<ParsedShip>({
-    ship: null,
     data: null,
     originalFile: null,
   });
+  const shipRef = useRef<Ship | null>(null);
   const [stats, setStats] = useState<ShipStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [jsonText, setJsonText] = useState<string>("");
@@ -55,25 +116,20 @@ export default function DebugShipTool() {
   const generateEncodedBlob = useCallback(async (data: DecodedShip): Promise<Blob> => {
     let ship: Ship;
 
-    if (parsed.ship) {
-      ship = parsed.ship;
+    if (shipRef.current) {
+      ship = shipRef.current;
       ship.data = data;
     } else {
-      const blankCanvas = document.createElement("canvas");
-      blankCanvas.width = 512;
-      blankCanvas.height = 512;
-      const ctx = blankCanvas.getContext("2d")!;
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0, 0, 512, 512);
-      const imageData = ctx.getImageData(0, 0, 512, 512);
-      ship = new Ship(imageData);
+      const sizer = new Ship(blankImageData(1));
+      const encodedLength = new Uint8Array(sizer.encode(data)).length;
+      ship = new Ship(blankImageData(sideForPayload(encodedLength)));
       ship.data = data;
     }
 
     const encoded = await ship.write();
     const { imageDataToPngBlob } = await import("@/lib/cosmoShip");
     return imageDataToPngBlob(encoded);
-  }, [parsed.ship]);
+  }, []);
 
   const calculateStats = useCallback(async (data: DecodedShip) => {
     setIsCalculating(true);
@@ -96,8 +152,8 @@ export default function DebugShipTool() {
       const ship = await Ship.fromSource(file);
       const data = ship.data as DecodedShip;
 
+      shipRef.current = ship;
       setParsed({
-        ship,
         data,
         originalFile: file,
       });
@@ -143,8 +199,9 @@ export default function DebugShipTool() {
     setShowJsonInput(false);
 
     try {
-      const data = JSON.parse(jsonInputText) as DecodedShip;
-      setParsed({ ship: null, data, originalFile: null });
+      const data = parseShipJson(jsonInputText);
+      shipRef.current = null;
+      setParsed({ data, originalFile: null });
       setJsonText(JSON.stringify(data, null, 2));
       calculateStats(data);
     } catch {
@@ -153,15 +210,12 @@ export default function DebugShipTool() {
   }, [jsonInputText, calculateStats]);
 
   const handleSave = useCallback(async () => {
-    if (!parsed.ship || !parsed.data) return;
+    if (!parsed.data) return;
     setIsSaving(true);
     setError(null);
 
     try {
-      parsed.ship.data = parsed.data;
-      const imageData = await parsed.ship.write();
-      const { imageDataToPngBlob } = await import("@/lib/cosmoShip");
-      const blob = await imageDataToPngBlob(imageData);
+      const blob = await generateEncodedBlob(parsed.data);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -176,7 +230,7 @@ export default function DebugShipTool() {
     } finally {
       setIsSaving(false);
     }
-  }, [parsed.ship, parsed.data]);
+  }, [parsed.data, generateEncodedBlob]);
 
   const handleJsonChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setJsonText(e.target.value);
@@ -184,7 +238,7 @@ export default function DebugShipTool() {
 
   const handleApplyJson = useCallback(async () => {
     try {
-      const data = JSON.parse(jsonText) as DecodedShip;
+      const data = parseShipJson(jsonText);
       setParsed(prev => ({ ...prev, data }));
       setError(null);
       calculateStats(data);
@@ -212,7 +266,8 @@ export default function DebugShipTool() {
   }, [parsed.data, generateEncodedBlob]);
 
   const handleReset = useCallback(() => {
-    setParsed({ ship: null, data: null, originalFile: null });
+    shipRef.current = null;
+    setParsed({ data: null, originalFile: null });
     setStats(null);
     setJsonText("");
     setError(null);
@@ -402,7 +457,7 @@ export default function DebugShipTool() {
       {!parsed.data && !showJsonInput && (
         <div className="text-center py-12">
           <p className="text-gray-500">
-            Upload a .ship.png file or click "Paste JSON" to get started
+            Upload a .ship.png file or click &quot;Paste JSON&quot; to get started
           </p>
         </div>
       )}
