@@ -132,6 +132,8 @@ Each step ends verifiable:
 - Non-directional parts (quarters, control rooms, storage, shields) rotate freely; weapons and thrusters stay at rot 0 until arc/exhaust reservations learn rotated directions.
 - Door selection is a Prim expansion from the quarters with walk-speed costs: corridor doors are free, room doors cost 1, routing through weapons or thrusters costs +2. Each part gets exactly one door on its path to the core.
 - Weapons place immediately after the reactor so their firing arcs reserve before core parts pick spots.
+- Export writes the game's full native schema, not just Parts/Doors. The game rejects minimal JSON; a loadable file carries all 45 top-level keys (Version 3, ShipRulesID, Roles, RoofBase*, ...). A real game-exported ship (`scripts/qa-fixtures/valid-ship-template.json`) is the template; `buildGameShipJson` overrides Parts/Doors and regenerates the part-referencing fields (CrewSourceRoles quarters -> Redshirt mask, PartUIToggleStates for control rooms, airlocks, extinguishers).
+- The .ship.png payload is `[u32 BE length]["COSMOSHIP"][gzip(OBNode)]`. Omitting the COSMOSHIP magic produces a file the site can read but the game rejects. The image itself is the sprite render from the rawdata tool (not a blank canvas) so the blueprint previews as the ship it contains.
 
 ## First job
 

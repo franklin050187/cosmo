@@ -1,27 +1,41 @@
 /**
- * shipgen-export.ts — convert generated ship JSON into a game-ready .ship.png
- * (LSB-steganographic blueprint the same format Cosmoteer and the site upload
- * flow read).
+ * shipgen-export.ts — convert a generated ship layout into game-ready files:
  *
- * Usage: npx tsx scripts/shipgen-export.ts <ship.json> <out.ship.png>
+ *   <outBase>.json      full game-schema ship JSON (loadable by the game)
+ *   <outBase>.ship.png  sprite-rendered preview with the ship JSON embedded
+ *                       as [u32 BE length]["COSMOSHIP"][gzip] LSB payload
+ *
+ * Usage: npx tsx scripts/shipgen-export.ts <layout.json> <outBase>
+ *
+ * The layout file is the generator's minimal JSON ({Parts, Doors, Name?, ...});
+ * the full schema (Version, ShipRulesID, Roles, RoofBase*, ...) comes from
+ * scripts/qa-fixtures/valid-ship-template.json via buildGameShipJson.
+ * The preview needs the dev server on http://localhost:8001 (rawdata tool).
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
 import zlib from "node:zlib";
-import { FloatValue, ColorValue, Ship } from "../src/lib/cosmoShip";
+import { chromium } from "playwright";
+import { ColorValue, FloatValue, Ship } from "../src/lib/cosmoShip";
 import { embedLsb, encodePng } from "../rawdata/generate-ships";
+import {
+  buildGameShipJson,
+  type GameShipLayout,
+} from "../src/lib/shipgen/game-ship-json";
+import { decodePngPixels } from "../src/lib/server-decode";
 
-const [, , inPath, outPath] = process.argv;
-if (!inPath || !outPath) {
-  console.error("usage: tsx scripts/shipgen-export.ts <ship.json> <out.ship.png>");
+const [, , inPath, outBase] = process.argv;
+if (!inPath || !outBase) {
+  console.error("usage: tsx scripts/shipgen-export.ts <layout.json> <outBase>");
   process.exit(1);
 }
 
-const MAX_IMAGE_DIMENSION = 4096;
+const RAWDATA_URL = "http://localhost:8001/rawdata";
+const MAGIC = new TextEncoder().encode("COSMOSHIP");
 
 /**
- * JSON has no classes, so the codec's FloatValue/ColorValue wrappers arrive as
- * {"value": n} / {"parts": [hex,hex,hex,hex]}. Restore them or encode() writes
+ * JSON.parse() loses the codec's FloatValue/ColorValue wrappers
+ * ({"value": n} / {"parts": [...]}); restore them or encode() writes
  * corrupt maps where floats and colors belong.
  */
 function revive(node: unknown): unknown {
@@ -53,28 +67,85 @@ function revive(node: unknown): unknown {
   return node;
 }
 
-const data = revive(JSON.parse(readFileSync(inPath, "utf8")));
+const layout = JSON.parse(readFileSync(inPath, "utf8")) as GameShipLayout;
 
-const sizer = new Ship({ data: new Uint8ClampedArray(4), width: 1, height: 1 });
-const encodedLength = new Uint8Array(sizer.encode(data)).length;
+async function main(): Promise<void> {
+  const tree = buildGameShipJson(layout);
 
-// 4-byte length prefix + payload with headroom for gzip framing variance
-const neededBytes = 4 + Math.ceil(encodedLength * 1.25) + 1024;
-let side = 64;
-while (side < MAX_IMAGE_DIMENSION && (side * side * 3) / 8 < neededBytes) side *= 2;
-if ((side * side * 3) / 8 < neededBytes) {
-  console.error(`ship too large: needs ${neededBytes} bytes, max image capacity reached`);
-  process.exit(1);
+  writeFileSync(outBase + ".json", JSON.stringify(tree, null, 2));
+
+  // ── Encode payload: [COSMOSHIP][gzip(OBNode)]; embedLsb adds the u32 length ─
+
+  const sizer = new Ship({ data: new Uint8ClampedArray(4), width: 1, height: 1 });
+  const encoded = new Uint8Array(sizer.encode(revive(tree)));
+  const encodedLength = encoded.length;
+  const compressed = zlib.gzipSync(Buffer.from(encoded));
+  const payload = new Uint8Array(MAGIC.length + compressed.length);
+  payload.set(MAGIC, 0);
+  payload.set(compressed, MAGIC.length);
+
+  const neededBytes = 4 + payload.length;
+
+  // ── Sprite render via the rawdata debug tool, then LSB-embed the payload ────
+
+  let reachable = false;
+  try {
+    const res = await fetch(RAWDATA_URL, { signal: AbortSignal.timeout(3000) });
+    reachable = res.ok;
+  } catch {
+    reachable = false;
+  }
+  if (!reachable) {
+    console.error(`dev server not reachable at ${RAWDATA_URL} — start it first (npx next dev -p 8001)`);
+    process.exit(1);
+  }
+
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1400, height: 1200 } });
+    await page.goto(RAWDATA_URL, { waitUntil: "networkidle" });
+
+    await page.getByRole("button", { name: "Paste JSON" }).click();
+    await page.locator("textarea").first().fill(JSON.stringify(tree));
+    await page.getByRole("button", { name: "Load JSON" }).click();
+
+    await page.waitForSelector('canvas[aria-label="Ship reconstruction"]', { timeout: 30000 });
+    await page.waitForFunction(
+      () => !document.querySelector('[role="status"][aria-label="Generating ship image"]'),
+      { timeout: 60000 },
+    );
+    await page.waitForTimeout(1500);
+
+    const shot = await page
+      .locator('canvas[aria-label="Ship reconstruction"]')
+      .screenshot();
+
+    const img = decodePngPixels(
+      shot.buffer.slice(shot.byteOffset, shot.byteOffset + shot.byteLength),
+    );
+    const capacity = Math.floor((img.width * img.height * 3) / 8);
+    if (capacity < neededBytes) {
+      console.error(`sprite render too small: ${img.width}x${img.height} holds ${capacity} bytes, need ${neededBytes}`);
+      process.exit(1);
+    }
+
+    embedLsb(img.data, img.width, img.height, payload);
+    writeFileSync(
+      outBase + ".ship.png",
+      Buffer.from(encodePng(new Uint8Array(img.data), img.width, img.height)),
+    );
+
+    console.log(
+      `wrote ${outBase}.json (${Object.keys(tree).length} top-level keys)\n` +
+      `wrote ${outBase}.ship.png (${img.width}x${img.height}, ${layout.Parts.length} parts, ` +
+      `${layout.Doors.length} doors, ${encodedLength} bytes OBNode, ${payload.length} bytes payload)`,
+    );
+  } finally {
+    await browser.close();
+  }
 }
 
-const rgba = new Uint8Array(side * side * 4);
-for (let i = 3; i < rgba.length; i += 4) rgba[i] = 255;
-
-const compressed = zlib.gzipSync(Buffer.from(new Uint8Array(sizer.encode(data))));
-embedLsb(rgba, side, side, new Uint8Array(compressed));
-
-writeFileSync(outPath, Buffer.from(encodePng(rgba, side, side)));
-console.log(
-  `wrote ${outPath} (${side}x${side}, ${encodedLength} bytes payload, ` +
-  `${compressed.length} bytes gzipped)`,
-);
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
