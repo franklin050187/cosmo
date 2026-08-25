@@ -7,7 +7,7 @@ import {
 import { buildShipFromPartList } from "./shuffle";
 import { autoDoors, pruneDoors, validateShip } from "./generator";
 import { buildOwnersMap } from "./connectivity";
-import { footprintCells, doorEndpoints, key } from "./model";
+import { footprintCells, doorEndpoints, key, wedgeShapeOf, localToWorldOffset } from "./model";
 import type { PlacedPart } from "./model";
 import { calculatePrice } from "@/lib/price";
 
@@ -99,6 +99,20 @@ describe("shuffle pipeline", () => {
         expect(countCells(parts), `budget ${budget} v${variant} overlap`).toBe(
           parts.reduce((s, p) => s + footprintCells(p).size, 0),
         );
+
+        // Every wedge's hypotenuse faces open space (attached by flat edges).
+        const shell = new Set<string>();
+        for (const p of parts) for (const c of footprintCells(p)) shell.add(c);
+        for (const w of parts) {
+          const shape = wedgeShapeOf(w.part.id);
+          if (!shape) continue;
+          for (const [lx, ly] of shape.slope) {
+            expect(
+              shell.has(key(localToWorldOffset(w, [lx, ly]))),
+              `budget ${budget} v${variant}: ${w.part.id}@${w.loc} slope blocked`,
+            ).toBe(false);
+          }
+        }
 
         // Mandatory set survives placement.
         expect(

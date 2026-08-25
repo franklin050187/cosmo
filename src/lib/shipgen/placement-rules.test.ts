@@ -1,11 +1,24 @@
 import { describe, expect, it } from "vitest";
 
 import { genPartsById, generatorRotsFor } from "./parts-db";
-import type { PlacedPart } from "./model";
+import type { PlacedPart, Rotation } from "./model";
+import {
+  footprintCells,
+  key,
+  localToWorldOffset,
+  wedgePlacementLegal,
+  wedgeShapeOf,
+} from "./model";
 import { exhaustDepthFor, reservedCellsFor } from "./constraints";
 
-function placed(id: string, loc: [number, number], rot: 0 | 1 | 2 | 3 = 0): PlacedPart {
+function placed(id: string, loc: [number, number], rot: Rotation = 0): PlacedPart {
   return { part: genPartsById[id], loc, rot };
+}
+
+function cellsOf(...ps: PlacedPart[]): Set<string> {
+  const s = new Set<string>();
+  for (const p of ps) for (const c of footprintCells(p)) s.add(c);
+  return s;
 }
 
 describe("game-authoritative placement data (part rules files)", () => {
@@ -86,5 +99,70 @@ describe("per-part exhaust depth", () => {
     const cells = reservedCellsFor(p).map((c) => c.split(","));
     const ys = cells.map(([, y]) => Number(y));
     expect(Math.max(...ys)).toBe(12);
+  });
+});
+
+describe("wedge armor attachment (rules-file geometry)", () => {
+  it("knows the slope and flat faces of every wedge type", () => {
+    expect(wedgeShapeOf("cosmoteer.armor_wedge")).toEqual({
+      slope: [[0, -1], [-1, 0]],
+      flat: [[1, 0], [0, 1]],
+    });
+    // Bottom edge only: both upper sides are slope.
+    expect(wedgeShapeOf("cosmoteer.armor_tri")?.flat).toEqual([[0, 1]]);
+    expect(wedgeShapeOf("cosmoteer.armor_1x3_wedge")?.slope).toEqual([
+      [0, -1],
+      [-1, 0],
+      [-1, 1],
+      [-1, 2],
+    ]);
+    expect(wedgeShapeOf("cosmoteer.armor")).toBeNull();
+  });
+
+  it("never maps a face offset into the part's own footprint", () => {
+    for (const id of Object.keys(genPartsById)) {
+      const shape = wedgeShapeOf(id);
+      if (!shape) continue;
+      for (const rot of [0, 1, 2, 3] as Rotation[]) {
+        const p = placed(id, [5, 7], rot);
+        const own = footprintCells(p);
+        for (const face of [...shape.slope, ...shape.flat]) {
+          expect(own.has(key(localToWorldOffset(p, face))), `${id} rot ${rot} ${face}`).toBe(false);
+        }
+      }
+    }
+  });
+
+  it("attaches wedges by their flat edges with slopes facing open space", () => {
+    const hull = placed("cosmoteer.armor", [0, 0]);
+
+    // Wedge above the hull piece: flat bottom edge bonds, slope faces up/left.
+    expect(wedgePlacementLegal(placed("cosmoteer.armor_wedge", [0, -1]), cellsOf(hull))).toBe(true);
+
+    // Slope cell occupied by another part reads as detached - reject.
+    expect(
+      wedgePlacementLegal(
+        placed("cosmoteer.armor_wedge", [0, -1]),
+        cellsOf(hull, placed("cosmoteer.armor", [-1, -1])),
+      ),
+    ).toBe(false);
+
+    // Touching only diagonally: no flat bond - reject.
+    expect(wedgePlacementLegal(placed("cosmoteer.armor_wedge", [1, -1]), cellsOf(hull))).toBe(false);
+
+    // Flat parts are never subject to the rule.
+    expect(wedgePlacementLegal(placed("cosmoteer.armor", [1, 0]), cellsOf(hull))).toBe(true);
+  });
+
+  it("keeps rotated wedges honest via the shared door-frame transform", () => {
+    // armor_1x2_wedge rot 1: its open (slope) side must land on one world
+    // side and its bottom flat on the opposite side of the rotated box.
+    const w = placed("cosmoteer.armor_1x2_wedge", [3, 4], 1);
+    const own = footprintCells(w); // 2x1 box at (3,4)-(4,4)
+    const a = localToWorldOffset(w, [-1, 0]);
+    const b = localToWorldOffset(w, [0, 2]);
+    expect(own.has(key(a))).toBe(false);
+    expect(own.has(key(b))).toBe(false);
+    expect(a[1]).not.toBe(b[1]);
   });
 });

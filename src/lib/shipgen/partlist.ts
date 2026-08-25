@@ -73,9 +73,12 @@ const THRUSTER_IDS = [
   "cosmoteer.thruster_small_2way",
 ];
 
+// Wedge armor only: straight wedges attach by a full flat edge. The corner
+// piece armor_tri needs open cells on BOTH upper sides, which the snail
+// shell never offers, so it would skip every placement.
 const ARMOR_FILLER: string[][] = [
-  ["cosmoteer.armor_2x1", "cosmoteer.armor_wedge", "cosmoteer.armor_tri"],
-  ["cosmoteer.armor_wedge", "cosmoteer.armor_tri", "cosmoteer.armor_2x1"],
+  ["cosmoteer.armor_2x1", "cosmoteer.armor_wedge", "cosmoteer.armor"],
+  ["cosmoteer.armor_wedge", "cosmoteer.armor", "cosmoteer.armor_2x1"],
 ];
 
 function countOf(entries: PartListEntry[], id: string): number {

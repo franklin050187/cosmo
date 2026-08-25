@@ -1,5 +1,14 @@
 import type { PlacedPart, DoorSpec, Rotation } from "./model";
-import { footprintCells, doorEndpoints, isDoorLegal, key, unkey } from "./model";
+import {
+  footprintCells,
+  doorEndpoints,
+  isDoorLegal,
+  key,
+  unkey,
+  wedgePlacementLegal,
+  wedgeShapeOf,
+  localToWorldOffset,
+} from "./model";
 import { buildOwnersMap } from "./connectivity";
 import { genPartsById, generatorRotsFor } from "./parts-db";
 import type { PartListResult } from "./partlist";
@@ -150,6 +159,22 @@ function rotsFor(partId: string): Rotation[] {
   return generatorRotsFor(partId);
 }
 
+/**
+ * World cells facing some wedge's hypotenuse. No part may occupy these -
+ * a piece sitting on open air past a slope reads as detached.
+ */
+function blockedSlopeCells(parts: PlacedPart[]): Set<string> {
+  const s = new Set<string>();
+  for (const p of parts) {
+    const shape = wedgeShapeOf(p.part.id);
+    if (!shape) continue;
+    for (const [lx, ly] of shape.slope) {
+      s.add(key(localToWorldOffset(p, [lx, ly])));
+    }
+  }
+  return s;
+}
+
 function findPlacement(
   placed: PlacedPart[],
   partId: string,
@@ -162,6 +187,7 @@ function findPlacement(
   for (const p of placed) {
     for (const c of footprintCells(p)) occupied.add(c);
   }
+  const slopeBlocked = blockedSlopeCells(placed);
   const touchesReserved = (cand: PlacedPart): boolean => {
     for (const c of footprintCells(cand)) {
       if (reserved.has(c)) return true;
@@ -184,6 +210,8 @@ function findPlacement(
         const cand = pp(partId, [x, y], rot);
         if (overlaps(cand, occupied)) continue;
         if (touchesReserved(cand)) continue;
+        if ([...footprintCells(cand)].some((c) => slopeBlocked.has(c))) continue;
+        if (!wedgePlacementLegal(cand, occupied)) continue;
         if (placed.length > 0) {
           const ok = noDoorPart
             ? hasPhysicalAdjacency(cand, occupied)
@@ -401,6 +429,10 @@ export function buildShipFromPartList(spec: ShuffleSpec): {
   //    and fills interior gaps before reaching outward. Weapon-arc and
   //    exhaust reservations stay forbidden, exposing guns and engines.
   const armorIds = ids.filter((id) => id.startsWith("cosmoteer.armor"));
+  // Flats build the shell; wedges go last so their slopes face the open
+  // space past the finished hull instead of cells later pieces need.
+  armorIds.sort((a, b) => Number(wedgeShapeOf(a) !== null) - Number(wedgeShapeOf(b) !== null));
+  const deferredArmor: string[] = [];
   const occupiedCells = new Set<string>();
   for (const p of placed) {
     for (const c of footprintCells(p)) occupiedCells.add(c);
@@ -466,7 +498,19 @@ export function buildShipFromPartList(spec: ShuffleSpec): {
       placed.push(p);
       for (const c of footprintCells(p)) occupiedCells.add(c);
     } else {
-      skipped.push(armorIds[i]);
+      deferredArmor.push(armorIds[i]);
+    }
+  }
+
+  // A wedge rejected early often fits once neighboring shell pieces land
+  // and give its flat edge something to bond to. One retry pass, then give up.
+  for (const id of deferredArmor) {
+    const retry = place(placed, id, centroidOf(placed), reserved, 8);
+    if (retry) {
+      placed.push(retry);
+      for (const c of footprintCells(retry)) occupiedCells.add(c);
+    } else {
+      skipped.push(id);
     }
   }
 
@@ -505,12 +549,14 @@ export function buildShipFromPartList(spec: ShuffleSpec): {
         displaced.add(blocker);
       }
       if (!legal) continue;
+      const survivorsPre = others.filter((p) => !displaced.has(p));
+      const slopeBlocked = blockedSlopeCells(survivorsPre);
       const blocked = new Set<string>();
       for (const p of others) {
         if (displaced.has(p)) continue;
         for (const c of reservedCellsFor(p)) blocked.add(c);
       }
-      if (targetCells.some((k) => blocked.has(k))) continue;
+      if (targetCells.some((k) => blocked.has(k) || slopeBlocked.has(k))) continue;
       const survivors = others.filter((p) => !displaced.has(p));
       const movedT = pp(t.part.id, [t.loc[0] + dx, t.loc[1]], t.rot);
       const survivorAt = new Map<string, PlacedPart>();
@@ -528,7 +574,7 @@ export function buildShipFromPartList(spec: ShuffleSpec): {
       if (survivors.length > 0 && !hasLegalDoorAdjacency(movedT, buildOwnersMap(survivors))) {
         continue;
       }
-      const vacated = [...ownCells].filter((k) => !blocked.has(k));
+      const vacated = [...ownCells].filter((k) => !blocked.has(k) && !slopeBlocked.has(k));
       if (vacated.length < displaced.size) continue;
       t.loc = [t.loc[0] + dx, t.loc[1]];
       for (const a of displaced) {

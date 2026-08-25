@@ -110,6 +110,78 @@ export function doorFrameShift(rot: number, w: number, h: number): [number, numb
   return [0, 0];
 }
 
+/**
+ * Wedge/triangle armor geometry, read from the game's rules files
+ * (ExternalWalls / InternalWalls per cell = which sides are solid).
+ *
+ * Slope cells are OUTSIDE cells the hypotenuse faces: another part there
+ * would sit on open air visually and read as detached. Flat cells are
+ * outside cells along solid edges: the legitimate attachment faces.
+ * Offsets are sprite-frame (y down), relative to the part's min corner,
+ * matching the ADL convention.
+ */
+export interface WedgeShape {
+  slope: [number, number][];
+  flat: [number, number][];
+}
+
+const WEDGE_SHAPES: Record<string, WedgeShape> = {
+  // Right edge + bottom edge solid; hypotenuse runs top-right -> bottom-left.
+  "cosmoteer.armor_wedge": { slope: [[0, -1], [-1, 0]], flat: [[1, 0], [0, 1]] },
+  "cosmoteer.armor_structure_hybrid_tri": {
+    slope: [[0, -1], [-1, 0], [1, 0]],
+    flat: [[0, 1]],
+  },
+  // Bottom edge solid only; both upper sides are slope.
+  "cosmoteer.armor_tri": { slope: [[0, -1], [-1, 0], [1, 0]], flat: [[0, 1]] },
+  // Tall wedges: solid right edge + bottom, open left side and top.
+  "cosmoteer.armor_1x2_wedge": {
+    slope: [[0, -1], [-1, 0], [-1, 1]],
+    flat: [[1, 0], [1, 1], [0, 2]],
+  },
+  "cosmoteer.armor_structure_hybrid_1x2": {
+    slope: [[0, -1], [-1, 0], [-1, 1]],
+    flat: [[1, 0], [1, 1], [0, 2]],
+  },
+  "cosmoteer.armor_1x3_wedge": {
+    slope: [[0, -1], [-1, 0], [-1, 1], [-1, 2]],
+    flat: [[1, 0], [1, 1], [1, 2], [0, 3]],
+  },
+  "cosmoteer.armor_structure_hybrid_1x3": {
+    slope: [[0, -1], [-1, 0], [-1, 1], [-1, 2]],
+    flat: [[1, 0], [1, 1], [1, 2], [0, 3]],
+  },
+};
+
+export function wedgeShapeOf(id: string): WedgeShape | null {
+  return WEDGE_SHAPES[id] ?? null;
+}
+
+/** Map a sprite-frame offset (same frame as ADL) to a world cell. */
+export function localToWorldOffset(
+  p: PlacedPart,
+  local: [number, number],
+): [number, number] {
+  const [, , w, h] = p.part.rect;
+  const sh = doorFrameShift(p.rot, w, h);
+  const u = rotCcw([local[0] - p.part.rect[0], local[1] - p.part.rect[1]], p.rot);
+  return [p.loc[0] + u[0] + sh[0], p.loc[1] + u[1] + sh[1]];
+}
+
+/**
+ * A wedge may sit only where its hypotenuse faces open space (every slope
+ * cell unoccupied) and at least one flat edge bonds to the existing hull.
+ * Non-wedge parts always pass.
+ */
+export function wedgePlacementLegal(p: PlacedPart, occupied: Set<string>): boolean {
+  const shape = wedgeShapeOf(p.part.id);
+  if (!shape) return true;
+  return (
+    shape.slope.every(([lx, ly]) => !occupied.has(key(localToWorldOffset(p, [lx, ly])))) &&
+    shape.flat.some(([lx, ly]) => occupied.has(key(localToWorldOffset(p, [lx, ly]))))
+  );
+}
+
 export function isDoorAllowedForPart(p: PlacedPart, door: DoorSpec): DoorCheckResult {
   const { part, loc, rot } = p;
   if (part.allowedDoors === null) return { valid: true, part, localOffset: null };
