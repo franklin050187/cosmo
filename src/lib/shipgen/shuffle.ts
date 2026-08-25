@@ -1,7 +1,7 @@
 import type { PlacedPart, DoorSpec, Rotation } from "./model";
 import { footprintCells, doorEndpoints, isDoorLegal, key, unkey } from "./model";
 import { buildOwnersMap } from "./connectivity";
-import { genPartsById } from "./parts-db";
+import { genPartsById, generatorRotsFor } from "./parts-db";
 import type { PartListResult } from "./partlist";
 import { expandList } from "./partlist";
 import { reservedCellsFor, isThrusterPart } from "./constraints";
@@ -147,7 +147,7 @@ function hasPhysicalAdjacency(
 }
 
 function rotsFor(partId: string): Rotation[] {
-  return genPartsById[partId].isRotateable ? [0, 1, 2, 3] : [0];
+  return generatorRotsFor(partId);
 }
 
 function findPlacement(

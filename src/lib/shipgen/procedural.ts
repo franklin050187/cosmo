@@ -1,7 +1,7 @@
 import type { PlacedPart, DoorSpec, Rotation } from "./model";
 import { footprintCells, isDoorLegal, key } from "./model";
 import { buildOwnersMap } from "./connectivity";
-import { genPartsById } from "./parts-db";
+import { genPartsById, generatorRotsFor } from "./parts-db";
 
 /**
  * Data-driven procedural ship builder.
@@ -179,7 +179,7 @@ function findPlacement(
 
 /** Rotations a part may adopt. Non-rotatable parts keep rot 0 only. */
 function rotsFor(partId: string): Rotation[] {
-  return genPartsById[partId].isRotateable ? [0, 1, 2, 3] : [0];
+  return generatorRotsFor(partId);
 }
 
 /**

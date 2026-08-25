@@ -5,9 +5,17 @@ import { key, unkey, footprintCells } from "./model";
  * Directional placement rules. North is -y.
  *
  * - Weapons fire north: nothing may occupy the column north of a weapon,
- *   all the way past the hull edge. Weapons are the front of the ship.
+ *   all the way past the hull edge (design rule — clean firing arcs). The
+ *   game's own hard prohibition is the part's barrel clearance
+ *   (`prohibit` above-depth); the design rule subsumes it.
  * - Thrusters exhaust south: nothing may occupy the cells south of a
- *   thruster's exhaust edge. Thrusters may stack behind each other.
+ *   thruster's exhaust edge, per the game's ProhibitBelow depth (3 for a
+ *   small thruster, up to 18 for boost). Thrusters may stack behind each
+ *   other.
+ *
+ * Zones are expressed in each part's LOCAL frame; the generator pins all
+ * directional parts at rot 0 (generatorRotsFor), so local above = world
+ * north and local below = world south.
  */
 
 export const WEAPON_ARC_DEPTH = 64;
@@ -32,6 +40,11 @@ function extremeRowCells(p: PlacedPart, side: "min" | "max"): [number, number][]
   return cells.filter(([, y]) => (side === "min" ? y === bound : y === boundMax));
 }
 
+/** Exhaust depth for a thruster: game ProhibitBelow, or the small-thruster default. */
+export function exhaustDepthFor(p: PlacedPart): number {
+  return p.part.prohibit?.[3] ?? THRUSTER_EXHAUST_DEPTH;
+}
+
 /** Cells this part reserves so the layout respects arcs and exhausts. */
 export function reservedCellsFor(p: PlacedPart): string[] {
   const reserved: string[] = [];
@@ -41,8 +54,9 @@ export function reservedCellsFor(p: PlacedPart): string[] {
     }
   }
   if (isThrusterPart(p)) {
+    const depth = Math.max(THRUSTER_EXHAUST_DEPTH, exhaustDepthFor(p));
     for (const [x, y] of extremeRowCells(p, "max")) {
-      for (let d = 1; d <= THRUSTER_EXHAUST_DEPTH; d++) reserved.push(key([x, y + d]));
+      for (let d = 1; d <= depth; d++) reserved.push(key([x, y + d]));
     }
   }
   return reserved;
