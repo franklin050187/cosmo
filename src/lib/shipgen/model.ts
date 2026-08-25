@@ -130,6 +130,16 @@ export function isDoorAllowedForPart(p: PlacedPart, door: DoorSpec): DoorCheckRe
 }
 
 /**
+ * Adjacent corridor instances merge into one walkable space in the game,
+ * which silently strips any door placed between two corridors on load
+ * (v5 re-export evidence: all 10 corridor-corridor doors dropped, all
+ * other doors kept).
+ */
+export function isCorridorPart(p: PlacedPart): boolean {
+  return p.part.typeCategories.includes("corridor");
+}
+
+/**
  * Full door-legality rule: a door needs acceptance from BOTH sides. Each
  * side with owning parts must accept the door (null-ADL parts accept
  * anywhere); a side with no owner is fine. Verified against a

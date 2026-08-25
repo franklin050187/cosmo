@@ -43,6 +43,62 @@
   "Doors": [
     {
       "Cell": [
+        -4,
+        1
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 1
+    },
+    {
+      "Cell": [
+        -3,
+        1
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 1
+    },
+    {
+      "Cell": [
+        -2,
+        0
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 1
+    },
+    {
+      "Cell": [
+        -1,
+        0
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 1
+    },
+    {
+      "Cell": [
+        -1,
+        1
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 0
+    },
+    {
+      "Cell": [
+        -1,
+        1
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 1
+    },
+    {
+      "Cell": [
+        -1,
+        2
+      ],
+      "ID": "cosmoteer.door",
+      "Orientation": 0
+    },
+    {
+      "Cell": [
         0,
         0
       ],
@@ -79,6 +135,14 @@
         0
       ],
       "ID": "cosmoteer.door",
+      "Orientation": 0
+    },
+    {
+      "Cell": [
+        2,
+        0
+      ],
+      "ID": "cosmoteer.door",
       "Orientation": 1
     },
     {
@@ -91,35 +155,11 @@
     },
     {
       "Cell": [
-        -1,
-        0
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 1
-    },
-    {
-      "Cell": [
-        -1,
-        1
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 0
-    },
-    {
-      "Cell": [
-        -2,
-        0
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 1
-    },
-    {
-      "Cell": [
         2,
-        0
+        2
       ],
       "ID": "cosmoteer.door",
-      "Orientation": 0
+      "Orientation": 1
     },
     {
       "Cell": [
@@ -141,126 +181,6 @@
       "Cell": [
         4,
         -1
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 1
-    },
-    {
-      "Cell": [
-        -3,
-        1
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 1
-    },
-    {
-      "Cell": [
-        -1,
-        1
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 1
-    },
-    {
-      "Cell": [
-        -1,
-        2
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 0
-    },
-    {
-      "Cell": [
-        2,
-        2
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 1
-    },
-    {
-      "Cell": [
-        -4,
-        1
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 1
-    },
-    {
-      "Cell": [
-        2,
-        2
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 0
-    },
-    {
-      "Cell": [
-        2,
-        3
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 0
-    },
-    {
-      "Cell": [
-        3,
-        2
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 1
-    },
-    {
-      "Cell": [
-        3,
-        1
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 1
-    },
-    {
-      "Cell": [
-        4,
-        1
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 1
-    },
-    {
-      "Cell": [
-        4,
-        2
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 1
-    },
-    {
-      "Cell": [
-        4,
-        1
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 0
-    },
-    {
-      "Cell": [
-        5,
-        1
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 1
-    },
-    {
-      "Cell": [
-        5,
-        0
-      ],
-      "ID": "cosmoteer.door",
-      "Orientation": 1
-    },
-    {
-      "Cell": [
-        3,
-        3
       ],
       "ID": "cosmoteer.door",
       "Orientation": 1

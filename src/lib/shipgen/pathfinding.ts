@@ -1,5 +1,5 @@
 import type { PlacedPart, DoorSpec } from "./model";
-import { footprintCells, doorEndpoints, key } from "./model";
+import { footprintCells, doorEndpoints, key, isCorridorPart } from "./model";
 
 /**
  * Crew pathfinding over a placed layout.
@@ -7,8 +7,8 @@ import { footprintCells, doorEndpoints, key } from "./model";
  * Walk speed per cell comes from the part's crewSpeedFactor, with optional
  * directional overrides in crewSpeedByDir (part-local [forward, right,
  * backward, left] multipliers rotated into world space). Crossing between two
- * different parts requires a door. Armor and other zero-speed cells block
- * movement entirely.
+ * different parts requires a door, except adjacent corridors which merge.
+ * Armor and other zero-speed cells block movement entirely.
  */
 
 export const CREW_BASE_SPEED = 3.2;
@@ -69,8 +69,9 @@ export function buildWalkGraph(parts: PlacedPart[], doors: DoorSpec[]): WalkGrap
       const nb = cells.get(nbKey);
       if (!nb) continue;
       const sameOwner = nb.part === info.part;
+      const mergedCorridor = isCorridorPart(info.part) && isCorridorPart(nb.part);
       const hasDoor = doorSet.has(`${cellKey}|${nbKey}`);
-      if (!sameOwner && !hasDoor) continue;
+      if (!sameOwner && !mergedCorridor && !hasDoor) continue;
       if (nb.speedFactor <= 0) continue;
       const mult = dirMultiplier(nb.part, dirIdx);
       const seconds = 1 / (CREW_BASE_SPEED * Math.max(0.01, mult));

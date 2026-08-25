@@ -1,5 +1,5 @@
 import type { PlacedPart, DoorSpec } from "./model";
-import { footprintCells, doorEndpoints, key, isDoorLegal } from "./model";
+import { footprintCells, doorEndpoints, key, isDoorLegal, isCorridorPart } from "./model";
 import {
   buildOwnersMap,
   checkCrewConnectivity,
@@ -68,6 +68,9 @@ export function autoDoors(parts: PlacedPart[]): DoorSpec[] {
             seen.add(doorId);
             if (isDoorLegal(doorSpec, owners)) {
               const sides = [...new Set([...(owners.get(key(doorSpec.cell)) ?? []), ...(owners.get(key(doorEndpoints(doorSpec)[1])) ?? [])])];
+              // Adjacent corridors merge in-game; a door between them is
+              // stripped on load, so never generate one.
+              if (sides.length > 0 && sides.every(isCorridorPart)) continue;
               if (sides.some(atCap)) continue;
               doors.push(doorSpec);
               for (const s of sides) doorCount.set(s, (doorCount.get(s) ?? 0) + 1);
@@ -94,13 +97,42 @@ export function pruneDoors(parts: PlacedPart[], doors: DoorSpec[]): DoorSpec[] {
   const indexOf = new Map<PlacedPart, number>();
   parts.forEach((p, i) => indexOf.set(p, i));
 
-  // Part graph; each undirected edge keeps its cheapest representative door.
+  // Adjacent corridor instances merge into one walkable space in-game, so the
+  // tree spans merged blobs rather than individual corridor pieces: one door
+  // into a blob serves every piece inside it.
+  const blobOf = new Map<PlacedPart, number>();
+  let blobCount = 0;
+  for (const p of parts) {
+    if (!isCorridorPart(p) || blobOf.has(p)) continue;
+    const queue = [p];
+    blobOf.set(p, blobCount);
+    while (queue.length) {
+      const cur = queue.shift()!;
+      for (const cell of footprintCells(cur)) {
+        const [cx, cy] = cell.split(",").map(Number);
+        for (const [dx, dy] of [[0, -1], [-1, 0], [0, 1], [1, 0]] as [number, number][]) {
+          for (const nb of owners.get(key([cx + dx, cy + dy])) ?? []) {
+            if (nb === cur || !isCorridorPart(nb) || blobOf.has(nb)) continue;
+            blobOf.set(nb, blobCount);
+            queue.push(nb);
+          }
+        }
+      }
+    }
+    blobCount++;
+  }
+  const nodeOf = (p: PlacedPart): string =>
+    isCorridorPart(p) ? `corridor:${blobOf.get(p)}` : `part:${indexOf.get(p)}`;
+  const allNodes = new Set(parts.map(nodeOf));
+
+  // Part graph over merged nodes; each undirected edge keeps its cheapest
+  // representative door.
   const edgeDoor = new Map<string, DoorSpec>();
   const edgeCost = new Map<string, number>();
-  const graph = new Map<number, Set<number>>();
-  for (const p of parts) graph.set(indexOf.get(p)!, new Set());
+  const graph = new Map<string, Set<string>>();
+  for (const node of allNodes) graph.set(node, new Set());
 
-  const isCorridor = (p: PlacedPart) => p.part.id === "cosmoteer.corridor";
+  const isFastPassage = (p: PlacedPart) => p.part.id === "cosmoteer.corridor";
   const isPassagePenalty = (p: PlacedPart) =>
     p.part.typeCategories.includes("weapon") || p.part.thrusterForce > 0;
 
@@ -110,48 +142,47 @@ export function pruneDoors(parts: PlacedPart[], doors: DoorSpec[]): DoorSpec[] {
     const oa = owners.get(key(a)) ?? [];
     const ob = owners.get(key(b)) ?? [];
     for (const pa of oa) {
-      const ia = indexOf.get(pa);
-      if (ia === undefined) continue;
+      const na = nodeOf(pa);
       for (const pb of ob) {
-        const ib = indexOf.get(pb);
-        if (ib === undefined || ia === ib) continue;
-        const ek = ia < ib ? `${ia}:${ib}` : `${ib}:${ia}`;
+        const nb = nodeOf(pb);
+        if (na === nb) continue;
+        const ek = na < nb ? `${na}|${nb}` : `${nb}|${na}`;
         // Crew walks corridors at full speed and rooms at half, so
         // corridor-involved doors make the fastest passages. Routing crew
         // through weapons or thrusters works but is slow and exposes the
         // part, so those cost more.
-        let cost = isCorridor(pa) || isCorridor(pb) ? 0 : 1;
+        let cost = isFastPassage(pa) || isFastPassage(pb) ? 0 : 1;
         if (isPassagePenalty(pa) || isPassagePenalty(pb)) cost += 2;
         if (!edgeDoor.has(ek) || cost < edgeCost.get(ek)!) {
           edgeDoor.set(ek, door);
           edgeCost.set(ek, cost);
         }
-        graph.get(ia)!.add(ib);
-        graph.get(ib)!.add(ia);
+        graph.get(na)!.add(nb);
+        graph.get(nb)!.add(na);
       }
     }
   }
 
   // Prim expansion from the crew core (quarters, then reactor): every part
   // gets exactly one door on its path to the core, so leaf parts keep a
-  // single door and nothing redundant survives.
-  const root = parts.findIndex((p) => p.part.providesCrew > 0);
-  const start = root >= 0 ? root : 0;
-  const visited = new Set<number>([start]);
+  // single door and nothing redundant survives. Corridor blobs count as one
+  // node — pieces inside a blob need no doors between them.
+  const rootPart = parts.find((p) => p.part.providesCrew > 0) ?? parts[0];
+  const visited = new Set<string>([nodeOf(rootPart)]);
   const kept = new Set<string>();
-  while (visited.size < parts.length) {
-    let best: { cost: number; from: number; to: number } | null = null;
+  while (visited.size < allNodes.size) {
+    let best: { cost: string; from: string; to: string } | null = null;
     for (const from of visited) {
       for (const to of graph.get(from) ?? []) {
         if (visited.has(to)) continue;
-        const ek = from < to ? `${from}:${to}` : `${to}:${from}`;
-        const cost = edgeCost.get(ek) ?? 99;
+        const ek = from < to ? `${from}|${to}` : `${to}|${from}`;
+        const cost = `${edgeCost.get(ek) ?? 99}:${ek}`;
         if (!best || cost < best.cost) best = { cost, from, to };
       }
     }
     if (!best) break;
     visited.add(best.to);
-    const ek = best.from < best.to ? `${best.from}:${best.to}` : `${best.to}:${best.from}`;
+    const ek = best.from < best.to ? `${best.from}|${best.to}` : `${best.to}|${best.from}`;
     const d = edgeDoor.get(ek);
     if (d) kept.add(`${d.cell[0]},${d.cell[1]},${d.orientation}`);
   }

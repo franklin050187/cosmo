@@ -1,5 +1,5 @@
 import type { PlacedPart, DoorSpec } from "./model";
-import { footprintCells, doorEndpoints, key, isDoorLegal } from "./model";
+import { footprintCells, doorEndpoints, key, isDoorLegal, isCorridorPart } from "./model";
 
 /**
  * Cell-key -> parts owning that cell. A cell can be shared by several
@@ -70,6 +70,21 @@ function crewGraph(
         if (pa === pb || !isWalkable(pb)) continue;
         graph.get(pa)!.add(pb);
         graph.get(pb)!.add(pa);
+      }
+    }
+  }
+  // Adjacent corridors merge into one walkable space without a door
+  // (game-verified: corridor-corridor doors are stripped on load).
+  for (const p of parts) {
+    if (!isWalkable(p) || !isCorridorPart(p)) continue;
+    for (const cell of footprintCells(p)) {
+      const [cx, cy] = cell.split(",").map(Number);
+      for (const [dx, dy] of [[0, -1], [-1, 0], [0, 1], [1, 0]] as [number, number][]) {
+        for (const nb of owners.get(key([cx + dx, cy + dy])) ?? []) {
+          if (nb === p || !isWalkable(nb) || !isCorridorPart(nb)) continue;
+          graph.get(p)!.add(nb);
+          graph.get(nb)!.add(p);
+        }
       }
     }
   }

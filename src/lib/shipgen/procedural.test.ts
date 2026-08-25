@@ -67,9 +67,12 @@ describe("procedural generator", () => {
     const allDoors = autoDoors(parts);
     const pruned = pruneDoors(parts, allDoors);
 
-    // A connected ship of N parts needs at least N-1 doors (spanning tree).
-    expect(pruned.length).toBeGreaterThanOrEqual(parts.length - 1);
+    // Merged corridors need no doors between pieces, so the tree is smaller
+    // than a part-count spanning tree. The real invariant is connectivity:
+    // the pruned set must keep every walkable part reachable from quarters.
     expect(pruned.length).toBeLessThan(allDoors.length);
+    const crew = checkCrewConnectivity(parts, pruned);
+    expect(crew.ok, `unreachable: ${crew.unreachable.map((p) => p.part.id + "@" + p.loc).join(", ")}`).toBe(true);
   });
 
   it("keeps the reactor reachable from crew quarters and thrusters", () => {
