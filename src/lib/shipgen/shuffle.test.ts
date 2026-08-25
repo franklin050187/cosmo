@@ -51,9 +51,9 @@ describe("budget-first part list", () => {
   });
 
   it("reports a small budget as outside budget when the mandatory set cannot fit", () => {
-    // 60k cannot fit the mandatory set (reactor+control+quarters+2 lasers+4
-    // thrusters+2 airlocks+power+fire ≈ 57.7k) under the 80% functional cap.
-    const result = buildPartList({ budget: 60000 });
+    // 40k cannot fit the mandatory set (reactor+control+quarters+2 lasers+4
+    // thrusters+2 airlocks+fire ≈ 51.7k) under the 80% functional cap.
+    const result = buildPartList({ budget: 40000 });
     expect(result.withinBudget).toBe(false);
     // Mandatory parts are still all present; the list is honest about cost.
     const ids = expandList(result.entries);
@@ -80,7 +80,6 @@ describe("budget-first part list", () => {
       ).toBeGreaterThanOrEqual(4);
       expect(count("cosmoteer.airlock"), "airlocks").toBeGreaterThanOrEqual(2);
       expect(count("cosmoteer.fire_extinguisher"), "fire extinguisher").toBeGreaterThanOrEqual(1);
-      expect(count("cosmoteer.power_storage"), "power storage").toBeGreaterThanOrEqual(1);
     }
   });
 });

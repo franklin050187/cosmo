@@ -63,7 +63,6 @@ function mandatoryCore(): CoreSpec[] {
     { id: "cosmoteer.thruster_small", count: 4 },
     { id: "cosmoteer.airlock", count: 2 },
     { id: "cosmoteer.fire_extinguisher", count: 1 },
-    { id: "cosmoteer.power_storage", count: 1 },
   ];
 }
 
@@ -144,10 +143,23 @@ export function buildPartList({
       const report = analyzeSustain(counts(), (id) => genPartsById[id]);
       let fixed = false;
       if (!report.energyOk) {
-        const tier = REACTOR_TIERS_BY_PRICE.find(fitsCap);
-        if (tier) {
-          addPart(tier);
+        // One reactor per ship: upgrade the existing one instead of adding a
+        // second. Separate reactors only pay off on large ships where crew
+        // would otherwise cross the whole hull.
+        const current = REACTOR_TIERS_BY_PRICE.findIndex((id) => countOf(entries, id) > 0);
+        const next = REACTOR_TIERS_BY_PRICE[current + 1] ?? REACTOR_TIERS_BY_PRICE[0];
+        const removed: string[] = [];
+        for (const id of REACTOR_TIERS_BY_PRICE) {
+          while (countOf(entries, id) > 0) {
+            removePart(id);
+            removed.push(id);
+          }
+        }
+        if (fitsCap(next)) {
+          addPart(next);
           fixed = true;
+        } else {
+          for (const id of removed) addPart(id);
         }
       } else if (!report.crewOk) {
         const tier = QUARTERS_TIERS_BY_PRICE.find(fitsCap);
@@ -167,7 +179,6 @@ export function buildPartList({
   const supportOrder = [
     "cosmoteer.shield_gen_small",
     "cosmoteer.thruster_med",
-    "cosmoteer.power_storage",
   ];
   const rotatedSupport = supportOrder
     .slice(variant % supportOrder.length)

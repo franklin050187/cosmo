@@ -1,0 +1,494 @@
+{
+ "Name": "Gen Laser 100k v2 core",
+ "FlightDirection": 0,
+ "Parts": [
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.reactor_small",
+   "Location": [
+    0,
+    0
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.reactor_small",
+   "Location": [
+    -1,
+    -2
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.crew_quarters_med",
+   "Location": [
+    -3,
+    -3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.crew_quarters_med",
+   "Location": [
+    1,
+    -3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.control_room_small",
+   "Location": [
+    -3,
+    -1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.thruster_small",
+   "Location": [
+    -2,
+    1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.thruster_small",
+   "Location": [
+    -3,
+    1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.thruster_small",
+   "Location": [
+    1,
+    2
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.thruster_small",
+   "Location": [
+    -4,
+    1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.laser_blaster_small",
+   "Location": [
+    -4,
+    -4
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.laser_blaster_small",
+   "Location": [
+    -3,
+    -5
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.laser_blaster_small",
+   "Location": [
+    -2,
+    -6
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.laser_blaster_small",
+   "Location": [
+    2,
+    -5
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.laser_blaster_small",
+   "Location": [
+    3,
+    -6
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.airlock",
+   "Location": [
+    -4,
+    -2
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.airlock",
+   "Location": [
+    3,
+    -2
+   ],
+   "Rotation": 1
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.fire_extinguisher",
+   "Location": [
+    3,
+    -3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    -1,
+    0
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    -1,
+    1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    -4,
+    -1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    -5,
+    -2
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    -2,
+    -4
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    -1,
+    -4
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    -1,
+    -5
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    0,
+    -4
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    1,
+    -4
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    0,
+    -3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    1,
+    -1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    2,
+    -1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    2,
+    0
+   ],
+   "Rotation": 0
+  }
+ ],
+ "Doors": [
+  {
+   "Cell": [
+    0,
+    0
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    0,
+    0
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    0,
+    1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    1,
+    0
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    2,
+    0
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    1,
+    2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    -1,
+    -2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -1,
+    -1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    0,
+    -2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    1,
+    -2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -3,
+    -1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -3,
+    1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    -1,
+    1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -3,
+    1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -3,
+    -4
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -4,
+    -2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    -2,
+    -4
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -2,
+    -4
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    3,
+    -5
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    2,
+    -4
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    3,
+    -2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    -1,
+    -4
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -1,
+    -4
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    0,
+    -4
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    0,
+    -3
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    1,
+    -4
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    2,
+    -1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  }
+ ]
+}

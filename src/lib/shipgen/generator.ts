@@ -15,13 +15,38 @@ function pp(id: string, loc: [number, number], rot: 0 | 1 | 2 | 3 = 0): PlacedPa
 }
 
 /**
+ * Game rule (confirmed in game): some parts accept at most one door no
+ * matter how many slots their ADL lists. Quarters cannot serve as
+ * passages; an airlock is a single hatch.
+ */
+export const MAX_DOORS_PER_PART: Record<string, number> = {
+  provides_crew: 1,
+  airlock: 1,
+};
+
+function doorCapFor(p: PlacedPart): number {
+  let cap = Infinity;
+  for (const c of p.part.typeCategories) {
+    const v = MAX_DOORS_PER_PART[c];
+    if (v !== undefined) cap = Math.min(cap, v);
+  }
+  return cap;
+}
+
+/**
  * Auto-discover legal doors between adjacent cells of different parts.
  * Uses includes() so parts sharing a location are compared correctly.
+ * Per-part door caps are respected: a part at its cap blocks new doors.
  */
 export function autoDoors(parts: PlacedPart[]): DoorSpec[] {
   const doors: DoorSpec[] = [];
   const owners = buildOwnersMap(parts);
   const seen = new Set<string>();
+  const doorCount = new Map<PlacedPart, number>();
+
+  const atCap = (p: PlacedPart): boolean => {
+    return (doorCount.get(p) ?? 0) >= doorCapFor(p);
+  };
 
   for (const p of parts) {
     for (const cell of footprintCells(p)) {
@@ -42,7 +67,10 @@ export function autoDoors(parts: PlacedPart[]): DoorSpec[] {
           if (!seen.has(doorId)) {
             seen.add(doorId);
             if (isDoorLegal(doorSpec, owners)) {
+              const sides = [...new Set([...(owners.get(key(doorSpec.cell)) ?? []), ...(owners.get(key(doorEndpoints(doorSpec)[1])) ?? [])])];
+              if (sides.some(atCap)) continue;
               doors.push(doorSpec);
+              for (const s of sides) doorCount.set(s, (doorCount.get(s) ?? 0) + 1);
             }
           }
         }
@@ -66,10 +94,15 @@ export function pruneDoors(parts: PlacedPart[], doors: DoorSpec[]): DoorSpec[] {
   const indexOf = new Map<PlacedPart, number>();
   parts.forEach((p, i) => indexOf.set(p, i));
 
-  // Build a part graph where each undirected edge records one representative door.
+  // Part graph; each undirected edge keeps its cheapest representative door.
   const edgeDoor = new Map<string, DoorSpec>();
+  const edgeCost = new Map<string, number>();
   const graph = new Map<number, Set<number>>();
-  for (const p of parts) graph.set(graph.size, new Set());
+  for (const p of parts) graph.set(indexOf.get(p)!, new Set());
+
+  const isCorridor = (p: PlacedPart) => p.part.id === "cosmoteer.corridor";
+  const isPassagePenalty = (p: PlacedPart) =>
+    p.part.typeCategories.includes("weapon") || p.part.thrusterForce > 0;
 
   for (const door of doors) {
     if (!isDoorLegal(door, owners)) continue;
@@ -82,32 +115,45 @@ export function pruneDoors(parts: PlacedPart[], doors: DoorSpec[]): DoorSpec[] {
       for (const pb of ob) {
         const ib = indexOf.get(pb);
         if (ib === undefined || ia === ib) continue;
+        const ek = ia < ib ? `${ia}:${ib}` : `${ib}:${ia}`;
+        // Crew walks corridors at full speed and rooms at half, so
+        // corridor-involved doors make the fastest passages. Routing crew
+        // through weapons or thrusters works but is slow and exposes the
+        // part, so those cost more.
+        let cost = isCorridor(pa) || isCorridor(pb) ? 0 : 1;
+        if (isPassagePenalty(pa) || isPassagePenalty(pb)) cost += 2;
+        if (!edgeDoor.has(ek) || cost < edgeCost.get(ek)!) {
+          edgeDoor.set(ek, door);
+          edgeCost.set(ek, cost);
+        }
         graph.get(ia)!.add(ib);
         graph.get(ib)!.add(ia);
-        const ek = ia < ib ? `${ia}:${ib}` : `${ib}:${ia}`;
-        if (!edgeDoor.has(ek)) edgeDoor.set(ek, door);
       }
     }
   }
 
-  // BFS spanning forest; collect the door for every tree edge.
-  const visited = new Set<number>();
+  // Prim expansion from the crew core (quarters, then reactor): every part
+  // gets exactly one door on its path to the core, so leaf parts keep a
+  // single door and nothing redundant survives.
+  const root = parts.findIndex((p) => p.part.providesCrew > 0);
+  const start = root >= 0 ? root : 0;
+  const visited = new Set<number>([start]);
   const kept = new Set<string>();
-  for (let seed = 0; seed < parts.length; seed++) {
-    if (visited.has(seed)) continue;
-    visited.add(seed);
-    const queue = [seed];
-    while (queue.length) {
-      const cur = queue.shift()!;
-      for (const nb of graph.get(cur) ?? []) {
-        if (visited.has(nb)) continue;
-        visited.add(nb);
-        queue.push(nb);
-        const ek = cur < nb ? `${cur}:${nb}` : `${nb}:${cur}`;
-        const d = edgeDoor.get(ek);
-        if (d) kept.add(`${d.cell[0]},${d.cell[1]},${d.orientation}`);
+  while (visited.size < parts.length) {
+    let best: { cost: number; from: number; to: number } | null = null;
+    for (const from of visited) {
+      for (const to of graph.get(from) ?? []) {
+        if (visited.has(to)) continue;
+        const ek = from < to ? `${from}:${to}` : `${to}:${from}`;
+        const cost = edgeCost.get(ek) ?? 99;
+        if (!best || cost < best.cost) best = { cost, from, to };
       }
     }
+    if (!best) break;
+    visited.add(best.to);
+    const ek = best.from < best.to ? `${best.from}:${best.to}` : `${best.to}:${best.from}`;
+    const d = edgeDoor.get(ek);
+    if (d) kept.add(`${d.cell[0]},${d.cell[1]},${d.orientation}`);
   }
 
   return doors.filter(
@@ -227,6 +273,24 @@ export function validateShip(
   for (const door of doors) {
     if (!isDoorLegal(door, owners)) {
       errors.push(`Illegal door at ${door.cell[0]},${door.cell[1]} orient=${door.orientation}`);
+    }
+  }
+
+  const doorCount = new Map<PlacedPart, number>();
+  for (const door of doors) {
+    const [a, b] = doorEndpoints(door);
+    const sides = new Set([
+      ...(owners.get(key(a)) ?? []),
+      ...(owners.get(key(b)) ?? []),
+    ]);
+    for (const s of sides) doorCount.set(s, (doorCount.get(s) ?? 0) + 1);
+  }
+  for (const p of parts) {
+    const cap = doorCapFor(p);
+    if ((doorCount.get(p) ?? 0) > cap) {
+      errors.push(
+        `${p.part.id} at ${p.loc.join(",")} has ${doorCount.get(p)} doors, cap ${cap}`,
+      );
     }
   }
 

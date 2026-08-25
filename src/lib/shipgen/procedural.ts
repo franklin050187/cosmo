@@ -90,6 +90,15 @@ function hasLegalDoorAdjacency(
             : dy === 1
               ? { cell: [cx, cy + 1], orientation: 0 }
               : { cell: [cx + 1, cy], orientation: 1 };
+      // Parts capped at one door (quarters, airlocks) spend it on their own
+      // placement; later parts may not anchor on them.
+      const capped = [...nb, ...owners.get(key([cx, cy])) ?? []].some(
+        (o) =>
+          o !== candidate &&
+          (o.part.typeCategories.includes("provides_crew") ||
+            o.part.typeCategories.includes("airlock")),
+      );
+      if (capped) continue;
       if (isDoorLegal(door, owners)) return true;
     }
   }
@@ -192,39 +201,50 @@ export function buildProceduralShip(spec: ProceduralSpec = {}): {
   // Seed: reactor at origin.
   placed.push(pp("cosmoteer.reactor_small", [0, 0]));
 
-  // Crew quarters: crew quarters only accepts doors on its top edge, so place it
-  // directly above the reactor (reactor accepts doors anywhere).
+  // Crew quarters accept their single door on the north edge only, so they
+  // sit south of the reactor with that edge facing it.
   const quarters = findPlacement(
     placed,
     "cosmoteer.crew_quarters_med",
     rotsFor("cosmoteer.crew_quarters_med"),
-    { x: 0, y: -3 },
+    { x: 0, y: 2 },
   );
   if (quarters) placed.push(quarters);
 
-  // Rear thrusters (high y = rear), alternating small/med. The exhaust side has
-  // no door, so the engine's own-door check orients them correctly.
+  // Corridor spine: quarters are capped at one door, so crew passage to the
+  // engine group routes around them through corridors hung off the storage.
+  for (const t of [[2, 2], [2, 3], [2, 4]]) {
+    const c = findPlacement(placed, "cosmoteer.corridor", [0], { x: t[0], y: t[1] });
+    if (c) placed.push(c);
+  }
+
+  // Rear thrusters (high y = rear), alternating small/med, hung off the
+  // corridor spine via their side door slots. The exhaust side has no door,
+  // so the engine's own-door check orients them correctly.
   const thrusterIds =
     variant % 2 === 0
       ? ["cosmoteer.thruster_small", "cosmoteer.thruster_med"]
       : ["cosmoteer.thruster_med", "cosmoteer.thruster_small"];
+  const thrusterTargets = [[1, 4], [3, 4], [1, 5], [3, 5]];
   for (let i = 0; i < thrusterCount; i++) {
-    const t = findPlacement(
+    const t = thrusterTargets[i % thrusterTargets.length];
+    const th = findPlacement(
       placed,
       thrusterIds[i % thrusterIds.length],
       [0],
-      { x: 0, y: 6 },
+      { x: t[0], y: t[1] },
     );
-    if (t) placed.push(t);
+    if (th) placed.push(th);
   }
 
-  // Weapon(s): front (low y).
+  // Weapon(s): front (low y). A laser's door slots sit on its bottom
+  // cell's sides and south edge, so it hugs the reactor's north face.
   for (let i = 0; i < laserCount; i++) {
     const laser = findPlacement(
       placed,
       "cosmoteer.laser_blaster_small",
       [0, 3],
-      { x: 0, y: -6 },
+      { x: 0, y: -2 },
     );
     if (laser) placed.push(laser);
   }
@@ -235,7 +255,7 @@ export function buildProceduralShip(spec: ProceduralSpec = {}): {
       placed,
       "cosmoteer.control_room_small",
       rotsFor("cosmoteer.control_room_small"),
-      { x: -5, y: -1 },
+      { x: -2, y: 0 },
     );
     if (cr) placed.push(cr);
   }
@@ -244,7 +264,7 @@ export function buildProceduralShip(spec: ProceduralSpec = {}): {
       placed,
       "cosmoteer.storage_2x2",
       rotsFor("cosmoteer.storage_2x2"),
-      { x: 5, y: 1 },
+      { x: 2, y: 0 },
     );
     if (st) placed.push(st);
   }

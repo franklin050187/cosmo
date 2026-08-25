@@ -1,5 +1,5 @@
 import type { PlacedPart } from "./model";
-import { key } from "./model";
+import { key, unkey, footprintCells } from "./model";
 
 /**
  * Directional placement rules. North is -y.
@@ -22,21 +22,7 @@ export function isThrusterPart(p: PlacedPart): boolean {
 }
 
 function worldCells(p: PlacedPart): [number, number][] {
-  const out: [number, number][] = [];
-  const [x0, y0, w, h] = p.part.rect;
-  const [, sh] = p.part.size;
-  const cyBase = sh - y0 - h;
-  for (let i = 0; i < w; i++) {
-    for (let j = 0; j < h; j++) {
-      const rx = x0 + i;
-      const ry = cyBase + j;
-      let wx = rx;
-      let wy = ry;
-      for (let r = 0; r < p.rot; r++) [wx, wy] = [-wy, wx];
-      out.push([p.loc[0] + wx, p.loc[1] + wy]);
-    }
-  }
-  return out;
+  return [...footprintCells(p)].map(unkey);
 }
 
 function extremeRowCells(p: PlacedPart, side: "min" | "max"): [number, number][] {

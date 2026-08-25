@@ -107,7 +107,12 @@ export function checkCrewConnectivity(
   doors: DoorSpec[],
 ): { ok: boolean; unreachable: PlacedPart[] } {
   const reached = reachFromQuarters(parts, doors);
-  const unreachable = parts.filter((p) => isCrewedPart(p) && !reached.has(p));
+  // Every part crew can walk through needs door access: weapons and control
+  // rooms are crewed, but airlocks and fire extinguishers are not crewed
+  // and still must be reachable (game-verified misses).
+  const unreachable = parts.filter(
+    (p) => (p.part.crew > 0 || p.part.crewSpeedFactor > 0) && !reached.has(p),
+  );
   return { ok: unreachable.length === 0, unreachable };
 }
 

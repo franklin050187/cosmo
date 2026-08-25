@@ -46,41 +46,27 @@ export interface PlacedPart {
  * - World cell = `Location + rotCcw([rect[0]+i, cyBase+j], Rotation)`.
  */
 export function footprintCells(p: PlacedPart): Set<string> {
-  const { part, loc, rot } = p;
-  const [x0, y0, w, h] = part.rect;
-  const [, sh] = part.size;
-  const cyBase = sh - y0 - h;
+  // Game convention (verified against a round-tripped ship and the site's
+  // physics code): Location is the min corner of the collision box, whose
+  // dims are part.rect w/h; rotation swaps them. The sprite (part.size)
+  // may overhang - weapon barrels - and never collides.
+  const [, , w, h] = p.part.rect;
+  const rw = p.rot % 2 === 1 ? h : w;
+  const rh = p.rot % 2 === 1 ? w : h;
   const cells = new Set<string>();
-  for (let i = 0; i < w; i++) {
-    for (let j = 0; j < h; j++) {
-      const [ri, rj] = rotCcw([x0 + i, cyBase + j], rot);
-      cells.add(key([loc[0] + ri, loc[1] + rj]));
+  for (let i = 0; i < rw; i++) {
+    for (let j = 0; j < rh; j++) {
+      cells.add(key([p.loc[0] + i, p.loc[1] + j]));
     }
   }
   return cells;
 }
 
 export function footprintBounds(p: PlacedPart): { minX: number; minY: number; maxX: number; maxY: number } {
-  const { part, loc, rot } = p;
-  const [x0, y0, w, h] = part.rect;
-  const [, sh] = part.size;
-  const cyBase = sh - y0 - h;
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  for (let i = 0; i < w; i++) {
-    for (let j = 0; j < h; j++) {
-      const [ri, rj] = rotCcw([x0 + i, cyBase + j], rot);
-      const wx = loc[0] + ri;
-      const wy = loc[1] + rj;
-      minX = Math.min(minX, wx);
-      minY = Math.min(minY, wy);
-      maxX = Math.max(maxX, wx);
-      maxY = Math.max(maxY, wy);
-    }
-  }
-  return { minX, minY, maxX, maxY };
+  const [, , w, h] = p.part.rect;
+  const rw = p.rot % 2 === 1 ? h : w;
+  const rh = p.rot % 2 === 1 ? w : h;
+  return { minX: p.loc[0], minY: p.loc[1], maxX: p.loc[0] + rw - 1, maxY: p.loc[1] + rh - 1 };
 }
 
 export function neighborCell([x, y]: [number, number], dx: number, dy: number): [number, number] {
@@ -103,65 +89,64 @@ export interface DoorCheckResult {
   valid: boolean;
   part: GenPartDef | null;
   localOffset: [number, number] | null;
-  frame: "locUp" | "sizeTL" | null;
 }
 
 /**
- * Door-ADL frame convention (empirically fitted against builtin ships):
- * - Compute the neighbor ("outside") offset in world, then unrotate with
- *   `rotCw` (unrot = cw, opposite of the footprint's ccw).
- * - Full-box-PR parts (`rect[1] === 0`) use the `locUp` frame: `local = u`.
- * - Inset-PR parts (`rect[1] > 0`) use the `sizeTL` frame, y-down from the
- *   size-box top: `local = [u[0], (Size[1]-1) - u[1]]`.
- * - `allowedDoors === null` means doors are allowed anywhere (auto-pass).
- * - `allowedDoors === []` means no doors on this part.
+ * Door-ADL frame, fitted against a game-round-tripped ship (18/18 door
+ * observations, including rotated quarters and a rotated control room):
+ *
+ *   local = rotCw(worldOffset - shift, rot) + (rect.x, rect.y)
+ *
+ * `shift` re-anchors the offset for the rotated box's min corner and grows
+ * with the collision-box dims (rect w/h). ADL offsets live in sprite frame,
+ * y-down from the sprite top-left; the sprite may overhang the collision
+ * box (weapon barrels). Location anchors the collision box min corner.
+ * `allowedDoors === null` means doors anywhere; `[]` means no doors.
  */
+export function doorFrameShift(rot: number, w: number, h: number): [number, number] {
+  if (rot === 1) return [h - 1, 0];
+  if (rot === 2) return [w - 1, h - 1];
+  if (rot === 3) return [0, w - 1];
+  return [0, 0];
+}
+
 export function isDoorAllowedForPart(p: PlacedPart, door: DoorSpec): DoorCheckResult {
   const { part, loc, rot } = p;
-  if (part.allowedDoors === null) return { valid: true, part, localOffset: null, frame: null };
-  if (part.allowedDoors.length === 0) return { valid: false, part, localOffset: null, frame: null };
+  if (part.allowedDoors === null) return { valid: true, part, localOffset: null };
+  if (part.allowedDoors.length === 0) return { valid: false, part, localOffset: null };
 
   const myCells = footprintCells(p);
   const [a, b] = doorEndpoints(door);
   const inside = myCells.has(key(a)) ? a : myCells.has(key(b)) ? b : null;
-  if (!inside) return { valid: false, part, localOffset: null, frame: null };
+  if (!inside) return { valid: false, part, localOffset: null };
 
   const outside = inside === a ? b : a;
   const worldOffset: [number, number] = [outside[0] - loc[0], outside[1] - loc[1]];
-  const u = rotCw(worldOffset, rot);
-
-  const [, sh] = part.size;
-  const useSizeTL = part.rect[1] > 0;
-  const local: [number, number] = useSizeTL ? [u[0], sh - 1 - u[1]] : u;
-
+  const sh = doorFrameShift(rot, part.rect[2], part.rect[3]);
+  const u = rotCw([worldOffset[0] - sh[0], worldOffset[1] - sh[1]], rot);
+  const local: [number, number] = [u[0] + part.rect[0], u[1] + part.rect[1]];
   const allowed = part.allowedDoors.some(([ax, ay]) => ax === local[0] && ay === local[1]);
-  return { valid: allowed, part, localOffset: local, frame: useSizeTL ? "sizeTL" : "locUp" };
+  return { valid: allowed, part, localOffset: local };
 }
 
 /**
- * Full door-legality rule, as fitted against the builtin-ship corpus:
- * - A door with no owning part on either cell is treated as OK.
- * - If any single part owns both cells (internal door), it is OK.
- * - If every exclusive owner of either cell is the same part ID, it is OK.
- * - Otherwise the door is OK if ANY exclusive owner side passes its ADL check
- *   (one side suffices; null-ADL parts auto-pass).
- * `owners` maps cell-key -> PlacedPart[] for every occupied cell.
+ * Full door-legality rule: a door needs acceptance from BOTH sides. Each
+ * side with owning parts must accept the door (null-ADL parts accept
+ * anywhere); a side with no owner is fine. Verified against a
+ * game-round-tripped ship: all 23 of its doors pass, and one-sided
+ * acceptance (the old rule) produced doors the game rejects.
  */
 export function isDoorLegal(door: DoorSpec, owners: Map<string, PlacedPart[]>): boolean {
   const [a, b] = doorEndpoints(door);
   const oa = owners.get(key(a)) ?? [];
   const ob = owners.get(key(b)) ?? [];
   if (oa.length === 0 && ob.length === 0) return true;
-  if (oa.some((o) => ob.includes(o))) return true;
+  if (oa.length === 1 && ob.length === 1 && oa[0] === ob[0]) return true;
 
-  const exclusive = [...oa.filter((o) => !ob.includes(o)), ...ob.filter((o) => !oa.includes(o))];
-  if (exclusive.length === 0) return true;
-  if (exclusive.some((o) => o.part.allowedDoors !== null && o.part.allowedDoors.length === 0)) {
-    return false;
-  }
-  if (exclusive.every((o) => o.part.id === exclusive[0].part.id)) return true;
-
-  return exclusive.some((o) => isDoorAllowedForPart(o, door).valid);
+  const sideOk = (list: PlacedPart[]) => list.every((o) => isDoorAllowedForPart(o, door).valid);
+  if (oa.length > 0 && !sideOk(oa)) return false;
+  if (ob.length > 0 && !sideOk(ob)) return false;
+  return true;
 }
 
 /**
@@ -173,11 +158,10 @@ export function isDoorLegal(door: DoorSpec, owners: Map<string, PlacedPart[]>): 
 export function allowedDoorOutsideCells(p: PlacedPart): [number, number][] | null {
   const { part, loc, rot } = p;
   if (part.allowedDoors === null) return null;
-  const [, sh] = part.size;
-  const useSizeTL = part.rect[1] > 0;
+  const sh = doorFrameShift(rot, part.rect[2], part.rect[3]);
   return part.allowedDoors.map(([ax, ay]) => {
-    const u: [number, number] = useSizeTL ? [ax, sh - 1 - ay] : [ax, ay];
-    const [ox, oy] = rotCcw(u, rot);
-    return [loc[0] + ox, loc[1] + oy];
+    const c: [number, number] = [ax - part.rect[0], ay - part.rect[1]];
+    const [ox, oy] = rotCcw(c, rot);
+    return [loc[0] + ox + sh[0], loc[1] + oy + sh[1]];
   });
 }

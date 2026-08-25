@@ -1,0 +1,612 @@
+{
+ "Name": "Gen Laser 100k v1 core",
+ "FlightDirection": 0,
+ "Parts": [
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.reactor_small",
+   "Location": [
+    0,
+    0
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.crew_quarters_med",
+   "Location": [
+    -1,
+    -2
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.crew_quarters_med",
+   "Location": [
+    1,
+    -3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.crew_quarters_med",
+   "Location": [
+    -3,
+    -1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.crew_quarters_med",
+   "Location": [
+    2,
+    -1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.control_room_small",
+   "Location": [
+    -2,
+    1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.power_storage",
+   "Location": [
+    2,
+    1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.power_storage",
+   "Location": [
+    -4,
+    1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.thruster_med",
+   "Location": [
+    0,
+    2
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.thruster_med",
+   "Location": [
+    -2,
+    3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.thruster_med",
+   "Location": [
+    2,
+    3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.thruster_small",
+   "Location": [
+    -4,
+    3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.thruster_small",
+   "Location": [
+    3,
+    3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.thruster_small",
+   "Location": [
+    -5,
+    3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.thruster_small",
+   "Location": [
+    4,
+    3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.laser_blaster_small",
+   "Location": [
+    -3,
+    -3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.laser_blaster_small",
+   "Location": [
+    -4,
+    -4
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.laser_blaster_small",
+   "Location": [
+    1,
+    -5
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.laser_blaster_small",
+   "Location": [
+    2,
+    -6
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.laser_blaster_small",
+   "Location": [
+    3,
+    -6
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.airlock",
+   "Location": [
+    -4,
+    -2
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.airlock",
+   "Location": [
+    3,
+    -2
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.fire_extinguisher",
+   "Location": [
+    3,
+    -3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    1,
+    2
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    -1,
+    0
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    -4,
+    0
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    -2,
+    -2
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    -2,
+    -3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    -1,
+    -3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    0,
+    -3
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    1,
+    -1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    0,
+    -4
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    4,
+    -1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    4,
+    0
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    4,
+    1
+   ],
+   "Rotation": 0
+  },
+  {
+   "FlipX": false,
+   "ID": "cosmoteer.corridor",
+   "Location": [
+    1,
+    3
+   ],
+   "Rotation": 0
+  }
+ ],
+ "Doors": [
+  {
+   "Cell": [
+    0,
+    0
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    0,
+    0
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    0,
+    1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    0,
+    2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    1,
+    0
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    2,
+    0
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    1,
+    2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    2,
+    1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -1,
+    -2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    -1,
+    -2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -1,
+    -1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    0,
+    -2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    1,
+    -2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    1,
+    -3
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    -3,
+    0
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    3,
+    -1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    4,
+    -1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    4,
+    0
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -2,
+    1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -2,
+    3
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    2,
+    3
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    4,
+    1
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    3,
+    3
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    -4,
+    3
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    1,
+    3
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -4,
+    3
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    4,
+    3
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -3,
+    -3
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -3,
+    -2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    -2,
+    -2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    2,
+    -5
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    3,
+    -6
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    3,
+    -2
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  },
+  {
+   "Cell": [
+    -1,
+    -3
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 1
+  },
+  {
+   "Cell": [
+    0,
+    -3
+   ],
+   "ID": "cosmoteer.door",
+   "Orientation": 0
+  }
+ ]
+}

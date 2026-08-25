@@ -82,6 +82,15 @@ function hasLegalDoorAdjacency(
   candidate: PlacedPart,
   placedOwners: Map<string, PlacedPart[]>,
 ): boolean {
+  // Parts capped at one door (quarters, airlocks) spend it on their own
+  // placement; later parts may not anchor on them.
+  const cappedAnchor = (list: PlacedPart[]) =>
+    list.some(
+      (o) =>
+        o !== candidate &&
+        (o.part.typeCategories.includes("provides_crew") ||
+          o.part.typeCategories.includes("airlock")),
+    );
   const candidateCells = footprintCells(candidate);
   for (const cell of candidateCells) {
     const [cx, cy] = cell.split(",").map(Number);
@@ -109,6 +118,9 @@ function hasLegalDoorAdjacency(
       const owners = new Map<string, PlacedPart[]>();
       owners.set(key(a), candidateCells.has(key(a)) ? [candidate] : placedOwners.get(key(a)) ?? []);
       owners.set(key(b), candidateCells.has(key(b)) ? [candidate] : placedOwners.get(key(b)) ?? []);
+      if (cappedAnchor(owners.get(key(a)) ?? []) || cappedAnchor(owners.get(key(b)) ?? [])) {
+        continue;
+      }
       if (isDoorLegal(door, owners)) return true;
     }
   }
@@ -251,7 +263,6 @@ export function buildShipFromPartList(spec: ShuffleSpec): {
   parts: PlacedPart[];
   skipped: string[];
 } {
-  const variant = spec.variant ?? 0;
   const ids = expandList(spec.list.entries);
   const placed: PlacedPart[] = [];
   const skipped: string[] = [];
@@ -265,6 +276,35 @@ export function buildShipFromPartList(spec: ShuffleSpec): {
     const p = place(placed, "cosmoteer.reactor_small", { x: 0, y: 0 }, reserved);
     if (p) placed.push(p);
     else skipped.push("cosmoteer.reactor_small");
+  }
+
+  const coreCounts = new Map<string, number>();
+  for (const id of ids) coreCounts.set(id, (coreCounts.get(id) ?? 0) + 1);
+
+  // 1b. Fire extinguisher: accepts its single door on the south edge only,
+  //     so it sits directly above the reactor (reactor accepts anywhere).
+  //     Placed early to guarantee the cell stays free.
+  const feCount = coreCounts.get("cosmoteer.fire_extinguisher") ?? 0;
+  for (let i = 0; i < feCount; i++) {
+    const p = place(placed, "cosmoteer.fire_extinguisher", { x: i, y: -1 }, reserved, 2);
+    if (p) {
+      placed.push(p);
+      reserveFor(p, reserved);
+    } else skipped.push("cosmoteer.fire_extinguisher");
+  }
+
+  // 1c. Weapons front and center, placed before anything else so their
+  //     firing arcs are reserved before core parts pick spots. A laser's
+  //     door slots sit on its bottom cell's sides and south edge, so the
+  //     bank hugs the reactor's north face.
+  const laserCount = coreCounts.get("cosmoteer.laser_blaster_small") ?? 0;
+  for (let i = 0; i < laserCount; i++) {
+    const t = { x: Math.round((i - (laserCount - 1) / 2) * 2), y: -2 };
+    const p = place(placed, "cosmoteer.laser_blaster_small", t, reserved);
+    if (p) {
+      placed.push(p);
+      reserveFor(p, reserved);
+    } else skipped.push("cosmoteer.laser_blaster_small");
   }
 
   // 2. Functional core around the reactor, mirrored left/right about the
@@ -293,8 +333,6 @@ export function buildShipFromPartList(spec: ShuffleSpec): {
       [-3, 4],
     ],
   };
-  const coreCounts = new Map<string, number>();
-  for (const id of ids) coreCounts.set(id, (coreCounts.get(id) ?? 0) + 1);
   for (const [id, targets] of Object.entries(coreTargets)) {
     const n = coreCounts.get(id) ?? 0;
     for (let i = 0; i < n; i++) {
@@ -340,16 +378,6 @@ export function buildShipFromPartList(spec: ShuffleSpec): {
       reserveFor(p, reserved);
     } else skipped.push("cosmoteer.thruster_small_2way");
   }
-  const laserCount = coreCounts.get("cosmoteer.laser_blaster_small") ?? 0;
-  const laserX = computeBalance(placed).com.x;
-  for (let i = 0; i < laserCount; i++) {
-    const t = { x: laserX + (i - (laserCount - 1) / 2) * 3, y: -5 };
-    const p = place(placed, "cosmoteer.laser_blaster_small", t, reserved);
-    if (p) {
-      placed.push(p);
-      reserveFor(p, reserved);
-    } else skipped.push("cosmoteer.laser_blaster_small");
-  }
 
   // 4. Utility on exposed edges.
   const airlockCount = coreCounts.get("cosmoteer.airlock") ?? 0;
@@ -361,20 +389,12 @@ export function buildShipFromPartList(spec: ShuffleSpec): {
       reserveFor(p, reserved);
     } else skipped.push("cosmoteer.airlock");
   }
-  const feCount = coreCounts.get("cosmoteer.fire_extinguisher") ?? 0;
-  for (let i = 0; i < feCount; i++) {
-    const t = { x: 3 - i, y: -3 };
-    const p = place(placed, "cosmoteer.fire_extinguisher", t, reserved);
-    if (p) {
-      placed.push(p);
-      reserveFor(p, reserved);
-    } else skipped.push("cosmoteer.fire_extinguisher");
-  }
 
   // 5. Corridors: fill the interior around the centroid.
   const corridorCount = coreCounts.get("cosmoteer.corridor") ?? 0;
   const centroid = centroidOf(placed);
   placeN(placed, "cosmoteer.corridor", corridorCount, centroid, 2, reserved);
+
 
   // 6. Armor last, grown like a snail shell: each piece targets the free
   //    cell closest to the existing ship, so armor wraps the hull tightly

@@ -125,6 +125,13 @@ Each step ends verifiable:
 - Firing direction is forward for most weapons, rearward for missile launchers.
 - No diagonal layouts.
 - Ships must balance in flight. The center of thrust sits within 0.5 tiles of the center of mass laterally, or the ship yaws under throttle. Mass uses maxHealth as a proxy since the parts db has no mass field; armor (4000 hp) out-massing corridors (1000 hp) matches the game. Three mechanisms cooperate: the thruster bank and laser row center on the core's mass center, armor growth steers per piece toward the anchor that lands the final COM on the thrust line, and a post-armor pass slides thrusters sideways, swapping cells with 1x1 armor where needed.
+- Footprints follow the game exactly: Location anchors the collision box (rect w/h; rotation swaps dims), and the sprite may overhang it - weapon barrels never collide. Verified against a game-round-tripped ship.
+- Door rules, fitted to 23 doors from a game-round-tripped ship (18/18 offset observations): a door needs BOTH sides to accept; ADL offsets are sprite-frame via `local = rotCw(worldOffset - shift, rot) + (rect.x, rect.y)` with a min-corner shift per rotation (`doorFrameShift`); quarters take one door on their north side only, airlocks one door on their south edge (`MAX_DOORS_PER_PART`); placement never anchors on a part whose single door is spent; reachability covers every part crew can walk through, so airlocks and fire extinguishers count.
+- One reactor per ship. When power runs short, buyFixes upgrades small -> medium -> large instead of adding a duplicate; separate reactors only pay off on large hulls to split crew travel.
+- No batteries in the core list. Storage pays off only as a remote refill buffer with dedicated crews, not inside one compact hull.
+- Non-directional parts (quarters, control rooms, storage, shields) rotate freely; weapons and thrusters stay at rot 0 until arc/exhaust reservations learn rotated directions.
+- Door selection is a Prim expansion from the quarters with walk-speed costs: corridor doors are free, room doors cost 1, routing through weapons or thrusters costs +2. Each part gets exactly one door on its path to the core.
+- Weapons place immediately after the reactor so their firing arcs reserve before core parts pick spots.
 
 ## First job
 

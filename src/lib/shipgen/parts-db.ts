@@ -33,7 +33,7 @@ export const genParts: GenPartDef[] = [
     providesCrew: 0,
     typeCategories: ["airlock"],
     allowedDoors: [[0,1]],
-    isRotateable: false,
+    isRotateable: true,
     crewSpeedFactor: 0.5,
     crewSpeedByDir: null,
     batteryCapacity: 0,
@@ -2097,3 +2097,24 @@ export const genConstants: GenConstants = {
 };
 
 export const genPartsById: Record<string, GenPartDef> = Object.fromEntries(genParts.map((p) => [p.id, p]));
+
+
+// Game-verified rotation flags: the extractor marked most parts fixed, but a
+// round-tripped ship contains rotated quarters (rot 1/3), a rotated control
+// room (rot 2), and rotated armor. Non-directional parts rotate freely;
+// weapons, thrusters, and fire extinguishers stay rot 0 because their
+// gameplay direction (firing north, exhaust south) must rotate with them and
+// the arc/exhaust reservation logic assumes rot 0.
+const ROTATABLE_OVERRIDE = new Set([
+  "cosmoteer.crew_quarters_med",
+  "cosmoteer.crew_quarters_small",
+  "cosmoteer.crew_quarters_large",
+  "cosmoteer.control_room_small",
+  "cosmoteer.power_storage",
+  "cosmoteer.storage_2x2",
+  "cosmoteer.shield_gen_small",
+]);
+
+for (const p of genParts) {
+  if (ROTATABLE_OVERRIDE.has(p.id)) p.isRotateable = true;
+}

@@ -58,36 +58,26 @@ describe("rotCw / rotCcw", () => {
   });
 });
 
-describe("footprintCells (Location = bottom-left of Size box, footRot=ccw)", () => {
-  it("railgun_launcher rect [0,1,2,3] size [2,4] at rot 0", () => {
+describe("footprintCells (Location = collision box min corner)", () => {
+  it("railgun_launcher rect [0,1,2,3] collides on a 2x3 box", () => {
     expect(cells(placed("cosmoteer.railgun_launcher", [0, 0]))).toEqual([
       "0,0", "0,1", "0,2", "1,0", "1,1", "1,2",
     ]);
   });
 
-  it("disruptor rect [0,1,1,3] size [1,4] occupies the bottom 3 cells (top cell empty)", () => {
+  it("disruptor rect [0,1,1,3] collides on a 1x3 box", () => {
     expect(cells(placed("cosmoteer.disruptor", [0, 0]))).toEqual(["0,0", "0,1", "0,2"]);
   });
 
-  it("chaingun_magazine rect [0,0,1,2] size [1,2] (full box)", () => {
+  it("chaingun_magazine rect [0,0,1,2] (full box)", () => {
     expect(cells(placed("cosmoteer.chaingun_magazine", [0, 0]))).toEqual(["0,0", "0,1"]);
   });
 
-  it("ion_beam_emitter rect [0,1,2,4] size [2,5] occupies rows 0..3", () => {
-    const set = footprintCells(placed("cosmoteer.ion_beam_emitter", [0, 0]));
-    hasKey(set, [0, 0], [1, 0], [0, 3], [1, 3]);
-    expect(set.has(key([0, 4]))).toBe(false);
-    expect(set.has(key([1, 4]))).toBe(false);
-  });
-
-  it("rotates the footprint ccw", () => {
-    // disruptor rot 1: local +y maps to world -x
-    expect(cells(placed("cosmoteer.disruptor", [0, 0], 1))).toEqual([
-      "-2,0", "-1,0", "0,0",
-    ]);
-    expect(cells(placed("cosmoteer.disruptor", [0, 0], 3))).toEqual([
-      "0,0", "1,0", "2,0",
-    ]);
+  it("odd rotations swap the box dims", () => {
+    expect(cells(placed("cosmoteer.disruptor", [0, 0], 1))).toEqual(["0,0", "1,0", "2,0"]);
+    const set = footprintCells(placed("cosmoteer.railgun_launcher", [0, 0], 1));
+    hasKey(set, [0,0],[1,0],[2,0],[0,1],[1,1],[2,1]);
+    expect(set.size).toBe(6);
   });
 
   it("offsets by Location", () => {
@@ -125,42 +115,32 @@ describe("doorEndpoints", () => {
   });
 });
 
-describe("isDoorAllowedForPart (unrot=cw, per-part frame)", () => {
-  it("disruptor (inset PR -> sizeTL frame) accepts a side door on its bottom cell", () => {
+describe("isDoorAllowedForPart (ADL in sprite frame, Location anchors collision box)", () => {
+  it("disruptor (rect y0=1) accepts a side door on its bottom collision cell", () => {
     const pp = placed("cosmoteer.disruptor", [0, 0]);
-    const door: DoorSpec = { cell: [1, 0], orientation: 1 }; // (1,0)<->(0,0)
+    const door: DoorSpec = { cell: [0, 2], orientation: 1 }; // (0,2)<->(-1,2)
     const r = isDoorAllowedForPart(pp, door);
     expect(r.valid).toBe(true);
-    expect(r.frame).toBe("sizeTL");
-    expect(r.localOffset).toEqual([1, 3]);
+    expect(r.localOffset).toEqual([-1, 3]);
   });
 
-  it("disruptor rejects a side door one row up from its bottom", () => {
+  it("disruptor rejects a side door on its middle collision cell", () => {
     const pp = placed("cosmoteer.disruptor", [0, 0]);
-    const door: DoorSpec = { cell: [1, 2], orientation: 1 }; // (1,2)<->(0,2)
+    const door: DoorSpec = { cell: [0, 1], orientation: 1 }; // (0,1)<->(-1,1)
     expect(isDoorAllowedForPart(pp, door).valid).toBe(false);
   });
 
-  it("disruptor accepts a door directly below the box", () => {
+  it("disruptor accepts a door below the collision box", () => {
     const pp = placed("cosmoteer.disruptor", [0, 0]);
-    const door: DoorSpec = { cell: [0, 0], orientation: 0 }; // (0,0)<->(0,-1)
+    const door: DoorSpec = { cell: [0, 3], orientation: 0 }; // (0,3)<->(0,2)
     expect(isDoorAllowedForPart(pp, door).valid).toBe(true);
   });
 
-  it("chaingun_magazine (full-box PR -> locUp frame) accepts top + side doors", () => {
+  it("chaingun_magazine (rect y0=0) accepts top + side doors", () => {
     const pp = placed("cosmoteer.chaingun_magazine", [0, 0]);
     expect(isDoorAllowedForPart(pp, { cell: [0, 2], orientation: 0 }).valid).toBe(true); // (0,2)<->(0,1)
     expect(isDoorAllowedForPart(pp, { cell: [0, 1], orientation: 1 }).valid).toBe(true); // (0,1)<->(-1,1)
-    expect(isDoorAllowedForPart(pp, { cell: [0, 1], orientation: 0 }).valid).toBe(false); // (0,1)<->(0,0)
-  });
-
-  it("applies the unrot correctly under rotation", () => {
-    // magazine rot 1: owned cells (0,0),(-1,0); door (-1,1)<->(-1,0)
-    const pp = placed("cosmoteer.chaingun_magazine", [0, 0], 1);
-    const door: DoorSpec = { cell: [-1, 1], orientation: 0 };
-    const r = isDoorAllowedForPart(pp, door);
-    expect(r.valid).toBe(true);
-    expect(r.localOffset).toEqual([1, 1]); // locUp [1,1] is in ADL
+    expect(isDoorAllowedForPart(pp, { cell: [0, 0], orientation: 0 }).valid).toBe(false); // (0,0)<->(0,-1)
   });
 
   it("null allowedDoors auto-passes (corridor)", () => {
@@ -191,14 +171,16 @@ describe("isDoorLegal (full rule)", () => {
     expect(isDoorLegal({ cell: [0, 1], orientation: 0 }, owners)).toBe(true);
   });
 
-  it("same-part-ID-only doors pass without an ADL match", () => {
+  it("same-part-ID doors still need ADL acceptance on both sides", () => {
     const a = placed("cosmoteer.disruptor", [0, 0]);
     const b = placed("cosmoteer.disruptor", [1, 0]);
     const owners = new Map<string, PlacedPart[]>();
     for (const c of footprintCells(a)) owners.set(c, [a]);
     for (const c of footprintCells(b)) owners.set(c, [b]);
-    // door (0,1)<->(1,1): neither side matches the disruptor ADL, but same ID
-    expect(isDoorLegal({ cell: [1, 1], orientation: 1 }, owners)).toBe(true);
+    // door (0,1)<->(1,1): middle-cell side slots are not in the ADL
+    expect(isDoorLegal({ cell: [1, 1], orientation: 1 }, owners)).toBe(false);
+    // door (0,2)<->(1,2): bottom-cell side slots are, on both sides
+    expect(isDoorLegal({ cell: [1, 2], orientation: 1 }, owners)).toBe(true);
   });
 
   it("one side suffices: weapon + null-ADL corridor", () => {
@@ -232,12 +214,12 @@ describe("allowedDoorOutsideCells", () => {
     expect(allowedDoorOutsideCells(placed("cosmoteer.corridor", [0, 0]))).toBeNull();
   });
 
-  it("disruptor converts ADL through the sizeTL frame", () => {
+  it("disruptor converts ADL through the sprite frame", () => {
     const set = allowedDoorOutsideCells(placed("cosmoteer.disruptor", [0, 0]));
     expect(set).toEqual([
-      [-1, 0],
-      [1, 0],
-      [0, -1],
+      [-1, 2],
+      [1, 2],
+      [0, 3],
     ]);
   });
 
@@ -252,12 +234,15 @@ describe("allowedDoorOutsideCells", () => {
 
   it("rotates ADL positions with the part", () => {
     const set = allowedDoorOutsideCells(placed("cosmoteer.chaingun_magazine", [0, 0], 1));
-    // locUp u -> world offset = rotCcw(u, 1)
-    const expected = [
+    // ADL -> collision-local -> rotCcw -> + min-corner shift (h-1, 0) for rot 1
+    const expected: [number, number][] = [
       [0, 2],
       [-1, 1],
       [1, 1],
-    ].map((u) => rotCcw(u as [number, number], 1));
+    ].map((u) => {
+      const [ox, oy] = rotCcw(u as [number, number], 1);
+      return [ox + 1, oy] as [number, number];
+    });
     expect(set).toEqual(expected);
   });
 
