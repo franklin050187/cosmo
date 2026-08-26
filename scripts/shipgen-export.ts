@@ -22,6 +22,7 @@ import {
   buildGameShipJson,
   type GameShipLayout,
 } from "../src/lib/shipgen/game-ship-json";
+import { genPartsById } from "../src/lib/shipgen/parts-db";
 import { decodePngPixels } from "../src/lib/server-decode";
 
 const [, , inPath, outBase] = process.argv;
@@ -115,6 +116,66 @@ async function main(): Promise<void> {
       { timeout: 60000 },
     );
     await page.waitForTimeout(1500);
+
+    // ── Overlay doors on the rendered canvas ────────────────────────────────
+    // Mirror ShipReconstruction's fit transform (SIZE 512, PADDING 8, bounds
+    // over sprite sizes, zoom 1, pan 0) so each door lands on the shared
+    // edge of its two cells: orientation 0 = horizontal edge at Cell's top,
+    // orientation 1 = vertical edge at Cell's left.
+    {
+      let minX = Infinity;
+      let maxX = -Infinity;
+      let minY = Infinity;
+      let maxY = -Infinity;
+      for (const p of layout.Parts) {
+        const def = genPartsById[p.ID];
+        const pw = def ? def.size[0] : 1;
+        const ph = def ? def.size[1] : 1;
+        if (p.Location[0] < minX) minX = p.Location[0];
+        if (p.Location[0] + pw > maxX) maxX = p.Location[0] + pw;
+        if (p.Location[1] < minY) minY = p.Location[1];
+        if (p.Location[1] + ph > maxY) maxY = p.Location[1] + ph;
+      }
+      const PADDING = 8;
+      const SIZE = 512;
+      minX -= PADDING;
+      minY -= PADDING;
+      maxX += PADDING;
+      maxY += PADDING;
+      const scale = SIZE / Math.max(maxX - minX, maxY - minY);
+      const offX = SIZE / 2 - ((minX + maxX) / 2) * scale;
+      const offY = SIZE / 2 - ((minY + maxY) / 2) * scale;
+
+      await page.evaluate(
+        ({ doors, s, ox, oy }) => {
+          const canvas = document.querySelector<HTMLCanvasElement>(
+            'canvas[aria-label="Ship reconstruction"]',
+          );
+          if (!canvas) return;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+          const lw = Math.max(2, s * 0.16);
+          const g = lw * 0.9;
+          ctx.strokeStyle = "#00e5ff";
+          ctx.lineCap = "round";
+          ctx.lineWidth = lw;
+          for (const d of doors) {
+            ctx.beginPath();
+            if (d.Orientation === 0) {
+              const y = d.Cell[1] * s + oy;
+              ctx.moveTo(d.Cell[0] * s + ox + g, y);
+              ctx.lineTo((d.Cell[0] + 1) * s + ox - g, y);
+            } else {
+              const x = d.Cell[0] * s + ox;
+              ctx.moveTo(x, d.Cell[1] * s + oy + g);
+              ctx.lineTo(x, (d.Cell[1] + 1) * s + oy - g);
+            }
+            ctx.stroke();
+          }
+        },
+        { doors: layout.Doors.map((d) => ({ Cell: [...d.Cell], Orientation: d.Orientation })), s: scale, ox: offX, oy: offY },
+      );
+    }
 
     const shot = await page
       .locator('canvas[aria-label="Ship reconstruction"]')
