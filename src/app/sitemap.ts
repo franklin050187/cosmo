@@ -1,6 +1,8 @@
 import { MetadataRoute } from "next";
 import { fetchAll } from "@/lib/db";
 
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.CLIENT_URL ?? "http://localhost:3000";
 

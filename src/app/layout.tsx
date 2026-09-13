@@ -8,8 +8,6 @@ import Footer from "@/components/layout/Footer";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
-export const dynamic = "force-dynamic";
-
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   display: "swap",
