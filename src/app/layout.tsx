@@ -31,14 +31,21 @@ export const metadata: Metadata = {
     title: "CosmoShip : Cosmoteer Library",
     description:
       "Website for sharing, searching, browsing and downloading ships design for Cosmoteer: Starship Architect & Commander.",
-    images: [{ url: "/favicon/android-chrome-512x512.png" }],
+    images: [
+      {
+        url: "/favicon/og-cover.png",
+        width: 1200,
+        height: 630,
+        alt: "CosmoShip : Cosmoteer Library",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "CosmoShip : Cosmoteer Library",
     description:
       "Website for sharing, searching, browsing and downloading ships design for Cosmoteer: Starship Architect & Commander.",
-    images: [{ url: "/favicon/android-chrome-512x512.png" }],
+    images: [{ url: "/favicon/og-cover.png", width: 1200, height: 630 }],
     creator: "@CosmoteerGame",
   },
 };
