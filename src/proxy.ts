@@ -40,13 +40,10 @@ function isApiPath(pathname: string): boolean {
   return pathname.startsWith("/api/");
 }
 
-function applyCsp(request: NextRequest): NextResponse {
-  const nonce = crypto.randomUUID().replace(/-/g, "");
-  const isDev = process.env.NODE_ENV === "development";
-
-  const cspHeader = `
+export function buildCspHeader(isDev: boolean): string {
+  return `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ''};
+    script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""};
     style-src 'self' 'unsafe-inline';
     img-src 'self' https: data:;
     font-src 'self';
@@ -60,12 +57,13 @@ function applyCsp(request: NextRequest): NextResponse {
   `
     .replace(/\s{2,}/g, " ")
     .trim();
+}
 
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
-  requestHeaders.set("Content-Security-Policy", cspHeader);
+function applyCsp(): NextResponse {
+  const isDev = process.env.NODE_ENV === "development";
+  const cspHeader = buildCspHeader(isDev);
 
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  const response = NextResponse.next();
   response.headers.set("Content-Security-Policy", cspHeader);
   return response;
 }
@@ -93,12 +91,12 @@ export async function proxy(req: NextRequest) {
       });
     }
 
-    const response = isApi ? NextResponse.next() : applyCsp(req);
+    const response = isApi ? NextResponse.next() : applyCsp();
     applyHeaders(response, headers);
     return response;
   }
 
-  const response = isApi ? NextResponse.next() : applyCsp(req);
+  const response = isApi ? NextResponse.next() : applyCsp();
   applyHeaders(response, cors);
   return response;
 }
