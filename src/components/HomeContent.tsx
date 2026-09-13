@@ -70,6 +70,9 @@ export default function HomeContent({ initialShips, initialTotalCount, initialMa
   });
   const isInitialMount = useRef(true);
   const prevPage = useRef(filters.page);
+  const initialHasFilters = useRef(
+    activeCount > 0 || filters.order !== "new" || filters.page > 1
+  );
 
   useEffect(() => {
     if (prevPage.current !== filters.page) {
@@ -113,7 +116,7 @@ export default function HomeContent({ initialShips, initialTotalCount, initialMa
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      return;
+      if (!initialHasFilters.current) return;
     }
     const abortController = new AbortController();
     setLoading(true);
