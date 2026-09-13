@@ -1,0 +1,19 @@
+# CosmoShip
+
+> A community library for sharing, searching, and downloading ship designs for Cosmoteer: Starship Architect & Commander. Browse over 2,000 player-created ships, curate collections, and join multiplayer tournaments.
+
+## Pages
+
+- [Browse ships](https://cosmoship.duckdns.org/?order=new&page=1): Search and filter the full ship library by name, faction, size, cost, and more.
+- [Collections](https://cosmoship.duckdns.org/collections): Player-curated sets of ships grouped by theme, faction, or strategy.
+- [Games](https://cosmoship.duckdns.org/games): Community tournaments and multiplayer matches with bracket support.
+- [Upload](https://cosmoship.duckdns.org/upload): Share your own ship design with the community.
+- [About CosmoShip](https://cosmoship.duckdns.org/about): Background on the project and how to contribute.
+- [About Cosmoteer](https://cosmoship.duckdns.org/about-game): Overview of the game, links to official resources and wiki.
+
+## Game
+
+- [Cosmoteer on Steam](https://store.steampowered.com/app/798090/Cosmoteer_Starship_Architect_Commander/)
+- [Official website](https://cosmoteer.net/)
+- [Official Discord](https://discord.gg/cosmoteer)
+- [Cosmoteer Wiki](https://cosmoteer.wiki.gg/wiki/Cosmoteer_Wiki)
