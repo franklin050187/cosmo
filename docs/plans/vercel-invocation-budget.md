@@ -19,6 +19,34 @@ Date: 2026-11-11 · Status: plan, no code yet · Trigger: Vercel Hobby usage war
 
 Reading: of 559K CDN requests, ~359K hit a function (64%). Only ~200K were served straight from cache. The problem is not traffic volume. It is how much of each request path touches a Node function.
 
+## Observability cross-check (12h window, Nov 11)
+
+The function/middleware split for the same 30 days: **function 243,535 (67.9%), middleware 115,042 (32.1%)**. The proxy alone is a third of the entire invocation bill, which settles the P1 estimate: narrowing the matcher cannot save less than 32%.
+
+Top function routes in the last 12 hours (40 routes total; everything past row 10 is under 25 invocations):
+
+| Route | Invocations | GB-Hours | Error rate |
+|---|---:|---:|---:|
+| `/ship/[id]` | 1.2K | 0.028 | 0% |
+| `/auth/discord` | 227 | 0.0079 | 0% |
+| `/ship/[id]` (second row) | 166 | 0.0034 | 0% |
+| `/api/ship/search` | 104 | 0.013 | 0% |
+| `/` | 92 | 0.0081 | 0% |
+| `/collections.segments/_tree.segment` | 43 | 0.0014 | 0% |
+| `/api/analytics/log` | 36 | 0.0020 | 0% |
+| `/api/auth/session` | 32 | 0.0040 | 0% |
+| `/api/collections` | 29 | 0.0038 | 0% |
+| `/collections/[id]` | 25 | 0.00037 | 0% |
+
+Three things worth acting on, one thing to ignore:
+
+- `/ship/[id]` dominates at roughly 10× everything else. At 1.2K/12h it annualises to ~72K/30d, about 30% of function invocations, and the volume lines up with the 83K ISR-write bill. P2 targets exactly this row.
+- `/auth/discord` at 227/12h is real login traffic. Each attempt also passes the proxy, so P1 must keep that path in the matcher.
+- `/api/ship/search` is only 104 calls/12h yet burns more GB-hours than 227 login calls (0.013 vs 0.0079). It is the heaviest function per call, which is expected: each search runs the count, facets, and page queries. It is small in count, so leave it alone.
+- No error rate anywhere above 0%. Nothing is failing; this is purely a cost shape.
+
+The duplicate `/ship/[id]` row (166) is most likely the `perf/reduce-function-invocations` preview deployment showing up alongside production. Check Observability grouped by deployment before counting it twice in projections.
+
 ## Root causes
 
 ### 1. The proxy runs as a Node function on every page and API request
@@ -48,11 +76,18 @@ The CSP it sets on pages (`applyCsp`) is only needed on non-API paths, and commi
 
 ## Plan
 
-### P0: Measure before cutting (30 min)
+### P0: Measure before cutting (partially done)
 
-Vercel dashboard → project → Observability → Functions, group by route, 30-day window. Screenshot the top-10 table as the baseline. Confirm the ranking matches the model above before changing anything. (The usage PDF has no per-route breakdown; Observability does.)
+The 12h Observability export already answers the big question: the route ranking matches the model, and middleware is 32.1% of the 30-day bill. Two checks remain before code changes:
 
-### P1: Static CSP + narrow proxy matcher (est. −30–50% of invocations)
+1. Group Functions by **deployment** to confirm the duplicate `/ship/[id]` row (166) is the `perf/reduce-function-invocations` preview and not a second production path.
+2. Keep the top-10 table screenshot as the before/after baseline for P1 and P2.
+
+(The usage PDF has no per-route breakdown; Observability does.)
+
+### P1: Static CSP + narrow proxy matcher (est. −85K invocations/30d, floor 32%)
+
+The 30-day middleware count is 115,042, so this is no longer an estimate about shape, only about the exact matcher. Steps:
 
 1. Move `buildCspHeader` output into `next.config.ts` `headers()`. Delete `applyCsp` and the CSP branch from the proxy. Headers are served at the CDN edge and apply to cached HTML too.
 2. Narrow the matcher to the paths that genuinely need per-request logic:
@@ -60,9 +95,13 @@ Vercel dashboard → project → Observability → Functions, group by route, 30
    - `/callback`, `/auth/discord` (login limiter)
    Pages stop invoking the proxy entirely; API paths keep full protection.
 
+Post-P1 middleware volume: the 12h table puts API + login traffic at roughly 500 invocations/12h, so middleware should fall from ~3.8K/day to ~1K/day, about 85K/30d saved. Pages served from the ISR cache stop paying both a middleware and a function invocation.
+
 Risk check: rate-limit tests (`src/proxy.test.ts`), CSP still present on prod HTML (`curl -sI https://cosmo-lilac.vercel.app | grep -i content-security`), qa-suite auth phase.
 
-### P2: Ship detail pages, on-demand revalidation only (est. −most ISR writes)
+### P2: Ship detail pages, on-demand revalidation only (est. −70K invocations and most ISR writes per 30d)
+
+The 12h table makes `/ship/[id]` the confirmed top function route (1.2K/12h, ~10× the next route, ~72K/30d projected). ISR writes (83K/30d) track the same traffic.
 
 `revalidate = 300` → `revalidate = false` on `/ship/[id]`. Next builds each page once, and `revalidatePath` from mutations is what rebuilds it; those calls all exist already. ISR writes drop to mutation-driven volume (tens per day, not thousands).
 
@@ -73,17 +112,13 @@ Tradeoff to accept: the **Popularity** number displayed on the ship page freezes
 - `/collections`: 60 → 600 (collection changes are rare; add `revalidatePath('/collections')` to collection mutations if freshness matters).
 - `/`: 300 → 900.
 
-### P4: API-side trims (only if P0 data still shows hot routes)
+### P4: API-side trims (demoted: the 12h data says the API is not the problem)
 
-Candidates, in expected-value order:
-
-- `/api/ship/authors`, `/api/ship/tags`: the data changes only on upload/delete and is already 5-min cached in the DB layer. Serve with `Cache-Control: s-maxage=600, stale-while-revalidate` so the CDN answers instead of the function.
-- `/api/auth/session`: already client-cached 60s; leave alone.
-- `/api/ship/search`: real work per filter interaction; leave alone.
+The route table settles this phase before we even get there: every API route is under 110 invocations/12h. `/api/ship/search` is the only one with meaningful per-call cost (0.013 GB-hours for 104 calls), and 104 calls/12h is a rounding error. The authors/tags cache-header idea from the first draft is shelved unless P0 grouping by route shows otherwise after P1–P2. Keep `/api/auth/session` and `/api/ship/search` untouched.
 
 ### P5: Watch the budget
 
-After P1–P3, projected steady state at current traffic: invocations well under 150K/30d, ISR writes under 10K/30d. Hobby holds unless traffic grows several-fold. Re-check Observability 7 days after each deploy. If invocations still trend up after P4, the growth is organic traffic and Pro is the honest answer; further micro-optimising would be polishing a rounding error.
+Combined projection after P1–P3: middleware ~30K/30d (from 115K), function invocations ~140–160K/30d (from 243K), ISR writes in the low thousands (from 83K). Every quota sits under 20% at current traffic, and the 12h error rate is 0% across the board, so there is no reliability motive pushing on any of this. Re-check Observability 7 days after each deploy. If invocations still trend up after that, the growth is organic traffic and Pro is the honest answer; further micro-optimising would be polishing a rounding error.
 
 ## Note: the view counter interacts with this plan
 
