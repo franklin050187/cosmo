@@ -1,21 +1,9 @@
 import { fetchAll, fetchOne, PAGE_SIZE } from "./core";
 import { cachedQuery } from "@/lib/cache";
+import { filtersFromQueryString, type SearchFilters } from "./search-parse";
 
-export interface SearchFilters {
-  page?: number;
-  author?: string;
-  desc?: string;
-  minprice?: string;
-  maxprice?: string;
-  "max-crew"?: string;
-  "min-crew"?: string;
-  order?: string;
-  dir?: string;
-  fulltext?: string;
-  brand?: string;
-  tagsOn?: string[];
-  tagsOff?: string[];
-}
+export { filtersFromQueryString } from "./search-parse";
+export type { SearchFilters } from "./search-parse";
 
 export async function getSearchPlus(filters: SearchFilters) {
   return cachedQuery("search", 30_000, JSON.stringify(filters), async () => {
@@ -118,46 +106,7 @@ export async function getSearchPlus(filters: SearchFilters) {
 
 // Also parse from query string — supports both old and new URL formats
 export async function searchFromQueryString(queryString: string) {
-  const params = new URLSearchParams(queryString ?? "");
-  const filters: SearchFilters = {};
-  let page = 1;
-  const tagsOn: string[] = [];
-  const tagsOff: string[] = [];
-
-  const SCALAR_KEYS = ["author", "desc", "minprice", "maxprice", "max-crew", "min-crew", "fulltext", "brand"];
-
-  const pageStr = params.get("page");
-  if (pageStr) page = parseInt(pageStr, 10) || 1;
-
-  if (params.has("order")) filters.order = params.get("order")!;
-  if (params.has("dir")) filters.dir = params.get("dir")!;
-  if (params.has("q")) filters.desc = params.get("q")!;
-
-  tagsOn.push(...params.getAll("tag"));
-  tagsOff.push(...params.getAll("notag"));
-
-  const NUMERIC_KEYS = new Set(["minprice", "maxprice", "min-crew", "max-crew"]);
-
-  for (const key of SCALAR_KEYS) {
-    if (!params.has(key)) continue;
-    const value = params.get(key)!;
-    // Numeric filters that fail coercion are ignored rather than passed to
-    // Postgres, where they would error the comparison and 500 the request.
-    if (NUMERIC_KEYS.has(key) && !Number.isFinite(Number(value))) continue;
-    (filters as Record<string, string>)[key] = value;
-  }
-
-  for (const key of params.keys()) {
-    if (key === "page" || key === "order" || key === "q" || key === "tag" || key === "notag") continue;
-    if (SCALAR_KEYS.includes(key)) continue;
-    const val = params.get(key)!;
-    if (val === "1") tagsOn.push(key);
-    else if (val === "0") tagsOff.push(key);
-  }
-
-  if (tagsOn.length) filters.tagsOn = tagsOn;
-  if (tagsOff.length) filters.tagsOff = tagsOff;
-  filters.page = page;
+  const { filters } = filtersFromQueryString(queryString);
   return getSearchPlus(filters);
 }
 

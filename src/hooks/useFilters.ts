@@ -3,6 +3,13 @@
 import { useCallback, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
+// Params the app controls but that must never persist into filter URLs.
+// `just_logged_in=1` is set by the OAuth callback and stripped from
+// window.location by useAuth via replaceState — which Next's router doesn't
+// see, so it would otherwise ride along into every sort/filter URL and (as a
+// legacy tag toggle) zero out the results.
+const TRANSIENT_KEYS = ["just_logged_in"];
+
 export interface Filters {
   q: string;
   author: string;
@@ -38,8 +45,14 @@ export function useFilters() {
 
   const pushRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  const nextWithoutTransient = useCallback((base: URLSearchParams | string) => {
+    const next = new URLSearchParams(base);
+    for (const key of TRANSIENT_KEYS) next.delete(key);
+    return next;
+  }, []);
+
   const setFilter = useCallback((key: string, value: string | string[]) => {
-    const next = new URLSearchParams(searchParams);
+    const next = nextWithoutTransient(searchParams);
 
     if (Array.isArray(value)) {
       next.delete(key);
@@ -56,14 +69,14 @@ export function useFilters() {
     pushRef.current = setTimeout(() => {
       router.push(`${pathname}?${next.toString()}`, { scroll: false });
     }, 150);
-  }, [searchParams, router, pathname]);
+  }, [searchParams, router, pathname, nextWithoutTransient]);
 
   useEffect(() => {
     return () => clearTimeout(pushRef.current);
   }, []);
 
   const setFilters = useCallback((entries: [string, string | string[]][]) => {
-    const next = new URLSearchParams(searchParams);
+    const next = nextWithoutTransient(searchParams);
     for (const [key, value] of entries) {
       if (Array.isArray(value)) {
         next.delete(key);
@@ -79,7 +92,7 @@ export function useFilters() {
     pushRef.current = setTimeout(() => {
       router.push(`${pathname}?${next.toString()}`, { scroll: false });
     }, 150);
-  }, [searchParams, router, pathname]);
+  }, [searchParams, router, pathname, nextWithoutTransient]);
 
   const clearFilters = useCallback(() => {
     const order = searchParams.get("order");
