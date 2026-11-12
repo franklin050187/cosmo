@@ -3,12 +3,11 @@
 import { useCallback, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
-// Params the app controls but that must never persist into filter URLs.
-// `just_logged_in=1` is set by the OAuth callback and stripped from
-// window.location by useAuth via replaceState — which Next's router doesn't
-// see, so it would otherwise ride along into every sort/filter URL and (as a
-// legacy tag toggle) zero out the results.
-const TRANSIENT_KEYS = ["just_logged_in"];
+// Params the app controls but that must never persist into filter URLs. The
+// OAuth callback used to append `just_logged_in=1` (and failure redirects
+// `auth_error=...`) to the return URL; the URL-based markers are now cookies,
+// so these strips only matter for old bookmarks and cached pages.
+const TRANSIENT_KEYS = ["just_logged_in", "auth_error"];
 
 export interface Filters {
   q: string;

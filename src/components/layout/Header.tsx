@@ -56,11 +56,14 @@ export default function Header() {
   }, [user]);
 
   useEffect(() => {
+    // Failed-login code: the callback sets a short-lived auth_error cookie
+    // (never a query param — see callback/route.ts). Read + expire it, then
+    // show the mapped message.
     const id = setTimeout(() => {
-      const error = new URLSearchParams(window.location.search).get("auth_error");
-      if (error) {
-        window.history.replaceState({}, "", window.location.pathname + window.location.hash);
-        setAuthErrorCode(error);
+      const m = document.cookie.match(/(?:^|;\s*)auth_error=([^;]+)/);
+      if (m) {
+        document.cookie = "auth_error=; path=/; max-age=0";
+        setAuthErrorCode(decodeURIComponent(m[1]));
       }
     }, 0);
     return () => clearTimeout(id);
@@ -205,6 +208,7 @@ export default function Header() {
             ) : hydrated ? (
               <Link
                 href={`/auth/discord?returnTo=${encodeURIComponent(returnTo)}`}
+                prefetch={false}
                 className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
               >
                 Login with Discord
@@ -308,6 +312,7 @@ export default function Header() {
             <div className="border-t border-[#1C598C]/20 mt-2 pt-2">
               <Link
                 href={`/auth/discord?returnTo=${encodeURIComponent(returnTo)}`}
+                prefetch={false}
                 onClick={() => setMenuOpen(false)}
                 className="block px-3 py-2.5 text-sm text-cyan-400 hover:text-cyan-300 hover:bg-white/5 rounded-lg transition-colors"
               >

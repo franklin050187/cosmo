@@ -68,14 +68,14 @@ export function useAuth(): UseAuthReturn {
 
     const onRefetch = () => fetchSession(true).then((u) => apply(u));
 
-    // Signal a fresh login to other tabs; this tab already fetched above.
-    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("just_logged_in") === "1") {
+    // Fresh-login signal: the OAuth callback sets a short-lived just_logged_in
+    // cookie (never a query param — see callback/route.ts). Read + expire it
+    // here so other tabs refetch their session.
+    if (/(?:^|;\s*)just_logged_in=1(?:;|$)/.test(document.cookie)) {
+      document.cookie = "just_logged_in=; path=/; max-age=0";
       try {
         localStorage.setItem("cosmoshipro:auth:login", Date.now().toString());
       } catch { /* storage disabled */ }
-      const url = new URL(window.location.href);
-      url.searchParams.delete("just_logged_in");
-      window.history.replaceState({}, "", url.toString());
     }
 
     const onStorage = (e: StorageEvent) => {

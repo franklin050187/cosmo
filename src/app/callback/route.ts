@@ -10,6 +10,27 @@ function getClientUrl(): string {
   return getRequiredEnv("CLIENT_URL");
 }
 
+// Post-OAuth signals (fresh login, auth failure) ride in short-lived cookies,
+// never query params. A ?just_logged_in=1 or ?auth_error= param diverges from
+// Next's router state as soon as the client strips it with
+// history.replaceState; the router then re-asserts its stale canonical URL,
+// which clobbers the user's first sort/filter navigation right after login
+// (clicks silently did nothing) and re-fires fetch effects. Session cookie:
+// the client reads + deletes it on mount (useAuth / Header).
+function redirectWithSignal(
+  clientUrl: string,
+  returnTo: string,
+  signal: { name: string; value: string }
+): NextResponse {
+  const res = NextResponse.redirect(`${clientUrl}${returnTo}`);
+  res.cookies.set(signal.name, signal.value, {
+    path: "/",
+    sameSite: "lax",
+    secure: true,
+  });
+  return res;
+}
+
 export async function GET(req: NextRequest) {
   const clientUrl = getClientUrl();
 
@@ -19,18 +40,25 @@ export async function GET(req: NextRequest) {
   const returnTo = decodeURIComponent(req.cookies.get("oauth_return")?.value || "/");
 
   if (!state || !csrfCookie || state !== csrfCookie) {
-    return NextResponse.redirect(`${clientUrl}/${returnTo.startsWith("/") ? "" : "/"}${returnTo.replace(/^\//, "")}?auth_error=csrf_failed`);
+    return redirectWithSignal(
+      clientUrl,
+      returnTo.startsWith("/") ? returnTo : `/${returnTo}`,
+      { name: "auth_error", value: "csrf_failed" }
+    );
   }
 
   // Discord returned an error (e.g. user cancelled)
   const error = req.nextUrl.searchParams.get("error");
   if (error) {
-    return NextResponse.redirect(`${clientUrl}${returnTo}?auth_error=${encodeURIComponent(error)}`);
+    return redirectWithSignal(clientUrl, returnTo, {
+      name: "auth_error",
+      value: encodeURIComponent(error),
+    });
   }
 
   const code = req.nextUrl.searchParams.get("code");
   if (!code) {
-    return NextResponse.redirect(`${clientUrl}${returnTo}?auth_error=no_code`);
+    return redirectWithSignal(clientUrl, returnTo, { name: "auth_error", value: "no_code" });
   }
 
   try {
@@ -47,7 +75,10 @@ export async function GET(req: NextRequest) {
     });
 
     if (!tokenRes.ok) {
-      return NextResponse.redirect(`${clientUrl}${returnTo}?auth_error=token_exchange_failed`);
+      return redirectWithSignal(clientUrl, returnTo, {
+        name: "auth_error",
+        value: "token_exchange_failed",
+      });
     }
 
     const { access_token } = await tokenRes.json();
@@ -57,7 +88,10 @@ export async function GET(req: NextRequest) {
     });
 
     if (!userRes.ok) {
-      return NextResponse.redirect(`${clientUrl}${returnTo}?auth_error=user_fetch_failed`);
+      return redirectWithSignal(clientUrl, returnTo, {
+        name: "auth_error",
+        value: "user_fetch_failed",
+      });
     }
 
     const discordUser = await userRes.json();
@@ -110,9 +144,9 @@ export async function GET(req: NextRequest) {
 
     await migrateUsernameOnLogin(user.id, user.username, prevUsername ?? null, discordUser.username);
 
-    // Clear OAuth cookies and set session cookie (never in URL — prevents token leakage)
-    const successReturn = `${returnTo}${returnTo.includes("?") ? "&" : "?"}just_logged_in=1`;
-    const res = NextResponse.redirect(`${clientUrl}${successReturn}`);
+    // Clear OAuth cookies, set session cookie, and signal the fresh login via
+    // a short-lived cookie (never in the URL — see redirectWithSignal).
+    const res = redirectWithSignal(clientUrl, returnTo, { name: "just_logged_in", value: "1" });
     res.cookies.set("__session", token, {
       path: "/",
       httpOnly: true,
@@ -124,6 +158,6 @@ export async function GET(req: NextRequest) {
     res.cookies.set("oauth_return", "", { path: "/", maxAge: 0 });
     return res;
   } catch {
-    return NextResponse.redirect(`${clientUrl}${returnTo}?auth_error=auth_failed`);
+    return redirectWithSignal(clientUrl, returnTo, { name: "auth_error", value: "auth_failed" });
   }
 }

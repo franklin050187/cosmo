@@ -334,6 +334,7 @@ export default function ShipDetailView({ shipId, initialShip }: ShipDetailViewPr
               ) : (
                 <Link
                   href={`/auth/discord?returnTo=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/")}`}
+                  prefetch={false}
                   suppressHydrationWarning
                   className="px-4 py-2 border border-[#1C598C] rounded bg-gradient-to-b from-[#5865F2]/25 to-[#4752C4]/25 text-[#5865F2] hover:bg-[#5865F2]/20 hover:text-white transition-colors"
                 >

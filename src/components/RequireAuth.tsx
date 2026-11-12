@@ -61,6 +61,7 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
         <div className="flex gap-3">
           <Link
             href={`/auth/discord?returnTo=${encodeURIComponent(returnTo)}`}
+            prefetch={false}
             className="px-6 py-2.5 bg-[#5865F2] hover:bg-[#4752C4] text-white text-sm font-medium rounded-lg transition-colors"
           >
             Login with Discord

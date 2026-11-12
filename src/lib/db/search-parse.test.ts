@@ -45,10 +45,19 @@ describe("filtersFromQueryString", () => {
 
   it("never treats reserved keys as legacy tags", () => {
     const { filters } = filtersFromQueryString(
-      "page=2&order=new&dir=asc&q=x&tag=a&notag=b&author=x&desc=x&minprice=1&maxprice=1&min-crew=1&max-crew=1&fulltext=x&brand=exl&just_logged_in=1",
+      "page=2&order=new&dir=asc&q=x&tag=a&notag=b&author=x&desc=x&minprice=1&maxprice=1&min-crew=1&max-crew=1&fulltext=x&brand=exl&just_logged_in=1&auth_error=csrf_failed",
     );
     expect(filters.tagsOn).toEqual(["a"]);
     expect(filters.tagsOff).toEqual(["b"]);
+  });
+
+  it("regression: auth_error from a failed login must not become a tag filter", () => {
+    // Failure redirects used to append ?auth_error=... to the return URL; a
+    // bare value would otherwise parse as a legacy tag toggle and zero out
+    // the results on the post-failure page.
+    const { filters } = filtersFromQueryString("auth_error=csrf_failed");
+    expect(filters.tagsOn).toBeUndefined();
+    expect(filters.tagsOff).toBeUndefined();
   });
 
   it("defaults page to 1 on garbage input", () => {

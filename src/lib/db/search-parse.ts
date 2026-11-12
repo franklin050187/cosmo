@@ -26,7 +26,7 @@ const NUMERIC_KEYS = new Set(["minprice", "maxprice", "min-crew", "max-crew"]);
 // Keys with special meaning to the app that must never be interpreted as
 // legacy tag toggles. `just_logged_in=1` is appended by the OAuth callback;
 // reading it as a tag filter made every post-login sort return zero ships.
-const RESERVED_KEYS = new Set([...SCALAR_KEYS, "page", "order", "dir", "q", "tag", "notag", "just_logged_in"]);
+const RESERVED_KEYS = new Set([...SCALAR_KEYS, "page", "order", "dir", "q", "tag", "notag", "just_logged_in", "auth_error"]);
 
 export interface ParsedSearch {
   filters: SearchFilters;
