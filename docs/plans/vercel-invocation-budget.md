@@ -103,7 +103,9 @@ Risk check: rate-limit tests (`src/proxy.test.ts`), CSP still present on prod HT
 
 The 12h table makes `/ship/[id]` the confirmed top function route (1.2K/12h, ~10× the next route, ~72K/30d projected). ISR writes (83K/30d) track the same traffic.
 
-`revalidate = 300` → `revalidate = false` on `/ship/[id]`. Next builds each page once, and `revalidatePath` from mutations is what rebuilds it; those calls all exist already. ISR writes drop to mutation-driven volume (tens per day, not thousands).
+`revalidate = 300` → `revalidate = 31_536_000` (one year) on `/ship/[id]`. Next builds each page once, and `revalidatePath` from mutations is what rebuilds it; those calls all exist already. ISR writes drop to mutation-driven volume (tens per day, not thousands).
+
+Correction from implementation: the planned `revalidate = false` turned out to render this dynamic-params route uncached on every request (`Cache-Control: private, no-cache`, verified locally), the opposite of the goal. The docs describe `false` as "cache indefinitely", but that only holds for prerendered routes; a dynamic-param route with `false` degrades to fully dynamic. A one-year window keeps the ISR cache with revalidation that practically never fires on its own, while `revalidatePath` still rebuilds immediately. Favorite/unfavorite now also call `revalidatePath` so the fav count on the static page stays fresh.
 
 Tradeoff to accept: the **Popularity** number displayed on the ship page freezes between mutations (it already lagged behind the 5-min window; the downloads column that drives the "pop" sort lives in the DB and is unaffected). If we ever want live counters on a static page, fetch them client-side, but note that is one invocation per view, which partially undoes P2. Decision: keep it frozen for now.
 

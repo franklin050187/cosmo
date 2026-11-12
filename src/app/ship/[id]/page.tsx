@@ -2,7 +2,14 @@ import type { Metadata } from "next";
 import { getImageData } from "@/lib/db";
 import ShipDetailView from "@/components/ship/ShipDetailView";
 
-export const revalidate = 300;
+// On-demand revalidation: ship content changes solely through
+// upload/replace/edit/delete, which all call revalidatePath. A time-based
+// window here re-generated the page on nearly every visit (~72K invocations
+// and most of the ISR-write budget per month). `revalidate = false` renders
+// this dynamic-params route uncached on every request, so we pin a 1-year
+// window instead; revalidatePath still rebuilds immediately on mutation.
+// See docs/plans/vercel-invocation-budget.md.
+export const revalidate = 31_536_000;
 
 const cleanName = (raw: string) => raw.replace(/\.ship\.png$/i, "");
 

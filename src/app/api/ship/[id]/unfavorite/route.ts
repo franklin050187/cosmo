@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { deleteFromFavorites } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { ok, badRequest, error } from "@/lib/api";
@@ -19,6 +20,8 @@ export async function POST(
 
   try {
     await deleteFromFavorites(user.username, user.id, shipId);
+    // The ship page is statically revalidated; keep its fav count fresh.
+    revalidatePath(`/ship/${shipId}`);
     return ok({ success: true });
   } catch (err) {
     console.error("ship/[id]/unfavorite error:", err);

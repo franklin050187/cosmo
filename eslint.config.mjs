@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Dev analysis scripts run as CommonJS with require().
     "scripts/**/*.js",
+    // Downloaded web-page archives ("save page as" dumps) in the repo root.
+    "**/*_files/**",
   ]),
 ]);
 

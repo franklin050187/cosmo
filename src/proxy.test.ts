@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCspHeader } from "./proxy";
+import { buildCspHeader } from "@/lib/csp";
 
 describe("buildCspHeader", () => {
   it("allows same-origin scripts and inline flight scripts for static pages", () => {

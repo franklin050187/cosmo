@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { addToFavorites, isShipFavorited } from "@/lib/db";
 import { requireAuth, getUserFromRequest } from "@/lib/auth";
 import { ok, badRequest, error } from "@/lib/api";
@@ -39,6 +40,8 @@ export async function POST(
 
   try {
     await addToFavorites(user.username, user.id, shipId);
+    // The ship page is statically revalidated; keep its fav count fresh.
+    revalidatePath(`/ship/${shipId}`);
     return ok({ success: true });
   } catch (err) {
     console.error("ship/[id]/favorite error:", err);

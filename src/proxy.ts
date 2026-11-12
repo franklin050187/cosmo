@@ -36,38 +36,6 @@ function applyHeaders(res: NextResponse, headers: Record<string, string>) {
   Object.entries(headers).forEach(([k, v]) => res.headers.set(k, v));
 }
 
-function isApiPath(pathname: string): boolean {
-  return pathname.startsWith("/api/");
-}
-
-export function buildCspHeader(isDev: boolean): string {
-  return `
-    default-src 'self';
-    script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""};
-    style-src 'self' 'unsafe-inline';
-    img-src 'self' https: data:;
-    font-src 'self';
-    connect-src 'self' https://discord.com https://challenges.cloudflare.com https://i.ibb.co https://*.ufs.sh https://res.cloudinary.com https://*.uploadthing.com;
-    frame-src https://challenges.cloudflare.com;
-    object-src 'none';
-    base-uri 'self';
-    form-action 'self';
-    frame-ancestors 'none';
-    upgrade-insecure-requests;
-  `
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
-
-function applyCsp(): NextResponse {
-  const isDev = process.env.NODE_ENV === "development";
-  const cspHeader = buildCspHeader(isDev);
-
-  const response = NextResponse.next();
-  response.headers.set("Content-Security-Policy", cspHeader);
-  return response;
-}
-
 export async function proxy(req: NextRequest) {
   const cors = corsHeaders(req.headers.get("origin"));
 
@@ -75,41 +43,30 @@ export async function proxy(req: NextRequest) {
     return new NextResponse(null, { status: 204, headers: cors });
   }
 
-  const pathname = req.nextUrl.pathname;
-  const isApi = isApiPath(pathname);
-  const limiter = getLimiterForPath(pathname);
+  const limiter = getLimiterForPath(req.nextUrl.pathname);
+  if (!limiter) return NextResponse.next();
 
-  if (limiter) {
-    const ip = getClientIp(req);
-    const result = await limiter.limit(ip);
-    const headers = { ...rateLimitHeaders(result), ...cors };
+  const ip = getClientIp(req);
+  const result = await limiter.limit(ip);
+  const headers = { ...rateLimitHeaders(result), ...cors };
 
-    if (!result.success) {
-      return new NextResponse(JSON.stringify({ ok: false, error: "Too many requests" }), {
-        status: 429,
-        headers: { ...headers, "Content-Type": "application/json" },
-      });
-    }
-
-    const response = isApi ? NextResponse.next() : applyCsp();
-    applyHeaders(response, headers);
-    return response;
+  if (!result.success) {
+    return new NextResponse(JSON.stringify({ ok: false, error: "Too many requests" }), {
+      status: 429,
+      headers: { ...headers, "Content-Type": "application/json" },
+    });
   }
 
-  const response = isApi ? NextResponse.next() : applyCsp();
-  applyHeaders(response, cors);
+  const response = NextResponse.next();
+  applyHeaders(response, headers);
   return response;
 }
 
+// The proxy is the only place rate limiting can live, but in Next 16 it runs
+// as a Node.js function billed per invocation, so it must match as little as
+// possible. Rate limiting and CORS only matter for the API and the two login
+// routes; page requests (including the CSP header, now in next.config.ts
+// headers()) must never reach this code.
 export const config = {
-  matcher: [
-    {
-      source:
-        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:webp|svg|png|jpg|jpeg|gif|avif|ico|css|js|mjs|txt|xml|json|woff|woff2|ttf|otf|eot|pdf)).*)",
-      missing: [
-        { type: "header", key: "next-router-prefetch" },
-        { type: "header", key: "purpose", value: "prefetch" },
-      ],
-    },
-  ],
+  matcher: ["/api/:path*", "/callback", "/auth/discord"],
 };
